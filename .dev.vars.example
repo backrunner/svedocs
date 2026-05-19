@@ -1,0 +1,19 @@
+# Copy this file to .dev.vars for local Cloudflare-related development.
+# Never commit real credentials.
+
+CLOUDFLARE_ACCOUNT_ID=
+CLOUDFLARE_API_TOKEN=
+SVEDOCS_AI_SEARCH_INSTANCE=svedocs
+
+# Optional hosted search providers.
+ALGOLIA_APP_ID=
+ALGOLIA_SEARCH_KEY=
+ALGOLIA_INDEX_NAME=docs
+TYPESENSE_HOST=
+TYPESENSE_SEARCH_KEY=
+TYPESENSE_COLLECTION=docs
+
+# Optional OpenAI-compatible Ask AI provider.
+OPENAI_COMPATIBLE_API_KEY=
+OPENAI_COMPATIBLE_BASE_URL=https://api.openai.com/v1
+OPENAI_COMPATIBLE_MODEL=gpt-4.1-mini
