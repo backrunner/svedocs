@@ -1,0 +1,29 @@
+{
+  "name": "@svedocs/site",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Official svedocs site and live demo.",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run --passWithNoTests --exclude e2e/**",
+    "test:e2e": "playwright test",
+    "check": "svelte-kit sync && tsc -p tsconfig.json --noEmit",
+    "lint": "svelte-kit sync && tsc -p tsconfig.json --noEmit",
+    "dev": "vite dev --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@sveltejs/adapter-auto": "7.0.1",
+    "@sveltejs/adapter-cloudflare": "7.2.8",
+    "@sveltejs/adapter-static": "3.0.10",
+    "@sveltejs/kit": "2.60.1",
+    "@sveltejs/vite-plugin-svelte": "7.1.2",
+    "@tailwindcss/vite": "4.3.0",
+    "svelte": "5.55.7",
+    "tailwindcss": "4.3.0",
+    "svedocs": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "8.0.13"
+  }
+}

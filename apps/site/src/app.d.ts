@@ -1,0 +1,45 @@
+declare module 'virtual:svedocs/config' {
+  import type { SvedocsResolvedConfig } from 'svedocs/core';
+  const config: SvedocsResolvedConfig;
+  export default config;
+}
+
+declare module 'virtual:svedocs/pages' {
+  import type { SvedocsPage } from 'svedocs/core';
+  const pages: SvedocsPage[];
+  export default pages;
+}
+
+declare module 'virtual:svedocs/tree' {
+  import type { SvedocsTreeItem } from 'svedocs/core';
+  const tree: SvedocsTreeItem[];
+  export default tree;
+}
+
+declare module 'virtual:svedocs/search' {
+  import type { SvedocsSearchRecord } from 'svedocs/core';
+  const records: SvedocsSearchRecord[];
+  export default records;
+}
+
+declare namespace App {
+  interface Platform {
+    env: {
+      SVEDOCS_AI_SEARCH?: import('svedocs/search').CloudflareAiSearchInstance;
+      AI?: import('svedocs/ai').CloudflareWorkersAiBinding;
+      ALGOLIA_APP_ID?: string;
+      ALGOLIA_SEARCH_KEY?: string;
+      ALGOLIA_INDEX_NAME?: string;
+      TYPESENSE_HOST?: string;
+      TYPESENSE_SEARCH_KEY?: string;
+      TYPESENSE_COLLECTION?: string;
+      OPENAI_COMPATIBLE_API_KEY?: string;
+      OPENAI_COMPATIBLE_BASE_URL?: string;
+      OPENAI_COMPATIBLE_MODEL?: string;
+    };
+    context: {
+      waitUntil(promise: Promise<unknown>): void;
+    };
+    caches: CacheStorage;
+  }
+}

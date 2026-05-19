@@ -1,0 +1,10 @@
+{
+  "extends": "./.svelte-kit/tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "include": ["src/**/*.ts", "src/**/*.svelte", ".svelte-kit/ambient.d.ts", ".svelte-kit/types/**/*.ts"]
+}

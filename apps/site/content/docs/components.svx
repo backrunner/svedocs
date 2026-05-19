@@ -1,0 +1,28 @@
+---
+title: Svelte Components
+description: Author interactive Svelte components inside SVX and MDX-style documentation pages.
+order: 4
+---
+
+<script>
+  let target = 'SvelteKit';
+</script>
+
+## Interactive authoring
+
+svedocs can route `.svx` and `.mdx` files through a Svelte-compatible authoring path while keeping the same manifest, search records, SEO metadata, and navigation model.
+
+<Callout tone="edge">
+  Components can be injected by the `svedocs()` Vite plugin and used directly in authoring files.
+</Callout>
+
+<button class="sd-button" type="button" on:click={() => (target = target === 'SvelteKit' ? 'Cloudflare' : 'SvelteKit')}>
+  Toggle {target}
+</button>
+
+The component above is compiled as Svelte, not rendered through a React MDX runtime.
+
+```ts title="component-authoring.ts" {1}
+export const runtime = 'svelte';
+export const framework = 'svedocs';
+```
