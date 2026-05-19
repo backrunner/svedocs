@@ -1,0 +1,39 @@
+{
+  "name": "@svedocs/cli",
+  "version": "0.0.0",
+  "description": "CLI for the svedocs documentation framework.",
+  "license": "MIT",
+  "type": "module",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "bin": {
+    "svedocs": "./dist/svedocs.js",
+    "create-svedocs": "./dist/create-svedocs.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "templates",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts src/svedocs.ts src/create-svedocs.ts --format esm --dts --clean",
+    "test": "vitest run",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "pack:dry-run": "pnpm pack --dry-run",
+    "dev": "tsup src/index.ts src/svedocs.ts src/create-svedocs.ts --format esm --dts --watch"
+  },
+  "dependencies": {
+    "commander": "14.0.3",
+    "svedocs": "workspace:*"
+  }
+}

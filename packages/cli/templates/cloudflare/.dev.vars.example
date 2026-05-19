@@ -1,0 +1,14 @@
+SVEDOCS_AI_SEARCH_INSTANCE=svedocs
+
+# Optional hosted search providers. Keep real keys in .dev.vars or platform secrets.
+ALGOLIA_APP_ID=
+ALGOLIA_SEARCH_KEY=
+ALGOLIA_INDEX_NAME=docs
+TYPESENSE_HOST=
+TYPESENSE_SEARCH_KEY=
+TYPESENSE_COLLECTION=docs
+
+# Optional OpenAI-compatible Ask AI provider.
+OPENAI_COMPATIBLE_API_KEY=
+OPENAI_COMPATIBLE_BASE_URL=https://api.openai.com/v1
+OPENAI_COMPATIBLE_MODEL=gpt-4.1-mini
