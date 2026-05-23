@@ -25,8 +25,8 @@ export default defineConfig({
     },
     radius: '2px',
     codeTheme: {
-      light: 'github-light',
-      dark: 'github-dark'
+      light: 'light-plus',
+      dark: 'dark-plus'
     },
     nav: [
       { label: 'Docs', href: '/docs' },
@@ -38,14 +38,12 @@ export default defineConfig({
       href: '/',
       mark: 'pixel'
     },
-    social: [
-      { label: 'GitHub', href: 'https://github.com/svedocs/svedocs', external: true }
-    ],
+    social: [],
     footer: {
-      text: 'MIT licensed. Built with the workspace version of svedocs.',
+      text: 'Made by Alkinum with ♥',
       links: [
-        { label: 'Cloudflare', href: '/docs/cloudflare' },
-        { label: 'SEO', href: '/docs/seo-og' }
+        { label: 'MIT Open Source', href: 'https://github.com/svedocs/svedocs/blob/main/LICENSE', external: true },
+        { label: 'GitHub', href: 'https://github.com/svedocs/svedocs', external: true }
       ]
     },
     home: {
@@ -67,7 +65,17 @@ export default defineConfig({
   ai: {
     enabled: true,
     provider: 'cloudflare-ai-search',
-    scope: 'current'
+    scope: 'current',
+    label: 'Ask AI',
+    placeholder: 'Ask anything about svedocs',
+    welcomeMessage: 'Hi! I can answer questions about svedocs. Try one of the suggestions below or write your own.',
+    suggestions: [
+      'How do I configure the theme?',
+      'How do I deploy to Cloudflare Pages?',
+      'What MDX components are built in?'
+    ],
+    systemPrompt: 'You are the svedocs documentation assistant. Answer questions strictly from the provided documentation sources, cite the relevant pages, and clearly say when something is missing.',
+    maxResults: 5
   },
   i18n: {
     defaultLocale: 'en',

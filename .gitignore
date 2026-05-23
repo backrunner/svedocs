@@ -15,3 +15,4 @@ test-results/
 .dev.vars
 !.dev.vars.example
 *.tsbuildinfo
+output/

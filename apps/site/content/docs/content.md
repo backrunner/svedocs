@@ -22,6 +22,12 @@ description: Explain the content pipeline.
 - [x] Task lists
 - [x] Autolinks
 
+| Capability | Default behavior | Long-form notes |
+| --- | --- | --- |
+| Page manifest | Each content file becomes a typed `SvedocsPage` with route, SEO metadata, headings, search text, previous and next links. | Wide tables keep a solid panel background and scroll horizontally instead of pushing the whole document shell out of view. |
+| Search records | Pages and sections are extracted into structured records for local, Algolia, Typesense, and Cloudflare providers. | Long cell content wraps inside the cell while the table itself can scroll when there are many columns. |
+| Authoring formats | `.md`, `.mdx`, and `.svx` share the same Markdown pipeline and can opt into Svelte components where needed. | This row is intentionally verbose so the default theme demonstrates comfortable vertical reading space in dense reference tables. |
+
 ## Math
 
 Inline math like $a^2 + b^2 = c^2$ and block math are passed through the Markdown pipeline.
