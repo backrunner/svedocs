@@ -2,4 +2,5 @@
   <rect width="64" height="64" fill="#11130f"/>
   <rect x="12" y="12" width="16" height="16" fill="#50d6b3"/>
   <rect x="28" y="28" width="16" height="16" fill="#ff8a66"/>
+  <rect x="12" y="44" width="16" height="8" fill="#f4f1e8"/>
 </svg>

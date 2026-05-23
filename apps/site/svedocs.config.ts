@@ -36,7 +36,7 @@ export default defineConfig({
     brand: {
       label: 'svedocs',
       href: '/',
-      mark: 'pixel'
+      logo: '/favicon.svg'
     },
     social: [],
     footer: {
