@@ -4,7 +4,7 @@
   import { createPageAlternates, createPageMetadata } from '../og/metadata.js';
   import type { SearchScope } from '../search/types.js';
   import AskAiPanel from './AskAiPanel.svelte';
-  import CommandPalette from './CommandPalette.svelte';
+  import FloatingToolbar from './FloatingToolbar.svelte';
   import SearchDialog from './SearchDialog.svelte';
   import ScopeSwitcher from './ScopeSwitcher.svelte';
   import ThemeToggle from './ThemeToggle.svelte';
@@ -29,6 +29,8 @@
   $: themeStyle = createThemeStyle(config);
   $: searchScope = createRuntimeScope(config.search.scope, page);
   $: aiScope = createRuntimeScope(config.ai.scope, page);
+  $: surface = page?.frontmatter.layout === 'home' || page?.routePath === '/' ? 'home' : 'reading';
+  $: isDocsPage = page?.kind === 'doc';
 
   let mounted = false;
 
@@ -37,7 +39,11 @@
     markHydratedRoute();
   });
 
-  $: if (mounted) markHydratedRoute();
+  $: if (mounted) {
+    page?.routePath;
+    page?.locale;
+    markHydratedRoute();
+  }
 
   function markHydratedRoute() {
     document.documentElement.dataset.svedocsRoute = page?.routePath ?? '';
@@ -57,14 +63,22 @@
     return [
       `--font-sans:${config.theme.fonts.sans}`,
       `--font-mono:${config.theme.fonts.mono}`,
-      `--sd-font-display:${config.theme.fonts.display}`,
+      `--sd-font-display:${config.theme.fonts.sans}`,
       `--sd-radius:${config.theme.radius}`,
       `--sd-accent:${accent}`
     ].join(';');
   }
 
+  function createThemeInitScript(defaultMode: 'light' | 'dark' | 'system'): string {
+    return `<script>(function(){try{var d=${JSON.stringify(defaultMode)};var s=localStorage.getItem('svedocs-theme');var t=s==='dark'||s==='light'?s:(d==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):d);document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;}catch(e){}})();<\/script>`;
+  }
+
   function linkRel(item: { external?: boolean; rel?: string }): string | undefined {
     return item.external ? 'noreferrer' : item.rel;
+  }
+
+  function isGithubFooterLink(item: { label: string; href: string }): boolean {
+    return item.label.trim().toLowerCase().includes('github');
   }
 
   function resolveColor(value: string, fallback: string): string {
@@ -74,6 +88,7 @@
 </script>
 
 <svelte:head>
+  {@html createThemeInitScript(config.theme.defaultMode)}
   <title>{metadata?.title ?? config.site.title}</title>
   <meta name="description" content={metadata?.description ?? config.site.description} />
   {#if metadata?.canonical}
@@ -112,7 +127,7 @@
   {/if}
 </svelte:head>
 
-<div class="sd-root" data-theme={config.theme.defaultMode} style={themeStyle}>
+<div class="sd-root" data-surface={surface} style={themeStyle}>
   <a class="sd-skip" href="#content">Skip to content</a>
   <header class="sd-topbar">
     <a class="sd-brand" href={config.theme.brand.href}>
@@ -130,6 +145,11 @@
         </a>
     {/each}
     </nav>
+    <div class="sd-topbar-spacer" aria-hidden="true"></div>
+    {#if config.search.enabled}
+      <SearchDialog records={search} scope={searchScope} provider={config.search.provider} buildMode={config.build.mode} />
+    {/if}
+    <ScopeSwitcher {page} {pages} locales={config.i18n.locales} versions={config.versions.items} />
     {#if config.theme.social.length > 0}
       <nav class="sd-socialnav" aria-label="Social links">
         {#each config.theme.social as item}
@@ -139,22 +159,37 @@
         {/each}
       </nav>
     {/if}
-    {#if config.search.enabled}
-      <SearchDialog records={search} scope={searchScope} provider={config.search.provider} />
-    {/if}
-    <ScopeSwitcher {page} {pages} locales={config.i18n.locales} versions={config.versions.items} />
-    <CommandPalette {config} {page} {pages} records={search} scope={searchScope} />
-    <AskAiPanel {config} records={search} scope={aiScope} />
     <ThemeToggle defaultMode={config.theme.defaultMode} />
   </header>
   <slot />
-  {#if config.theme.footer !== false}
+  {#if isDocsPage}
+    {#if config.ai.enabled}
+      <AskAiPanel {config} records={search} scope={aiScope} buildMode={config.build.mode} />
+    {/if}
+    <FloatingToolbar {config} />
+  {/if}
+  {#if config.theme.footer !== false && !isDocsPage}
     <footer class="sd-footer">
       <span>{config.theme.footer.text}</span>
       {#if config.theme.footer.links.length > 0}
         <nav aria-label="Footer">
           {#each config.theme.footer.links as item}
-            <a href={item.href} rel={linkRel(item)} target={item.external ? '_blank' : undefined}>{item.label}</a>
+            {#if isGithubFooterLink(item)}
+              <a
+                class="sd-footer-icon"
+                href={item.href}
+                rel={linkRel(item)}
+                target={item.external ? '_blank' : undefined}
+                aria-label={item.label}
+                title={item.label}
+              >
+                <svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16">
+                  <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
+                </svg>
+              </a>
+            {:else}
+              <a href={item.href} rel={linkRel(item)} target={item.external ? '_blank' : undefined}>{item.label}</a>
+            {/if}
           {/each}
         </nav>
       {/if}

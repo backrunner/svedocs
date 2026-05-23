@@ -33,6 +33,11 @@ export interface SvedocsThemeCodeTheme {
   dark?: string;
 }
 
+export interface SvedocsThemeCode {
+  lineNumbers?: boolean;
+  wrap?: boolean;
+}
+
 export interface SvedocsShikiOptions {
   transformers?: unknown[];
 }
@@ -89,6 +94,7 @@ export interface SvedocsConfig {
     fonts?: SvedocsThemeFonts;
       radius?: string;
       codeTheme?: string | SvedocsThemeCodeTheme;
+      code?: SvedocsThemeCode;
       brand?: SvedocsThemeBrand;
       nav?: SvedocsNavItem[];
       social?: SvedocsNavItem[];
@@ -105,6 +111,12 @@ export interface SvedocsConfig {
     enabled?: boolean;
     provider?: 'mock' | 'cloudflare-workers-ai' | 'cloudflare-ai-search' | 'openai-compatible' | string;
     scope?: 'current' | 'all';
+    label?: string;
+    systemPrompt?: string;
+    welcomeMessage?: string;
+    placeholder?: string;
+    suggestions?: string[];
+    maxResults?: number;
   };
   seo?: {
     sitemap?: boolean;
@@ -208,6 +220,12 @@ export const svedocsConfigSchema = z.object({
           })
         ])
         .optional(),
+      code: z
+        .object({
+          lineNumbers: z.boolean().optional(),
+          wrap: z.boolean().optional()
+        })
+        .optional(),
       brand: z
         .object({
           label: z.string().optional(),
@@ -304,7 +322,13 @@ export const svedocsConfigSchema = z.object({
       z.object({
         enabled: z.boolean().optional(),
         provider: z.string().optional(),
-        scope: z.enum(['current', 'all']).optional()
+        scope: z.enum(['current', 'all']).optional(),
+        label: z.string().optional(),
+        systemPrompt: z.string().optional(),
+        welcomeMessage: z.string().optional(),
+        placeholder: z.string().optional(),
+        suggestions: z.array(z.string()).optional(),
+        maxResults: z.number().int().positive().optional()
       })
     ])
     .optional(),

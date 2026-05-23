@@ -14,10 +14,24 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
     provider: config.search?.provider ?? 'local',
     scope: config.search?.scope ?? 'current'
   };
-  const ai = config.ai === false ? { enabled: false, provider: 'mock', scope: 'current' as const } : {
+  const ai = config.ai === false ? {
+    enabled: false,
+    provider: 'mock',
+    scope: 'current' as const,
+    label: 'Ask AI',
+    placeholder: 'Ask about the docs',
+    suggestions: [] as string[],
+    maxResults: 5
+  } : {
     enabled: config.ai?.enabled ?? Boolean(config.ai?.provider),
     provider: config.ai?.provider ?? 'mock',
-    scope: config.ai?.scope ?? 'current'
+    scope: config.ai?.scope ?? 'current',
+    label: config.ai?.label ?? 'Ask AI',
+    placeholder: config.ai?.placeholder ?? 'Ask about the docs',
+    suggestions: config.ai?.suggestions ?? [],
+    maxResults: config.ai?.maxResults ?? 5,
+    ...(config.ai?.systemPrompt ? { systemPrompt: config.ai.systemPrompt } : {}),
+    ...(config.ai?.welcomeMessage ? { welcomeMessage: config.ai.welcomeMessage } : {})
   };
 
   return {
@@ -56,6 +70,10 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
       },
       radius: config.theme?.radius ?? '0px',
       codeTheme: resolveCodeTheme(config.theme?.codeTheme),
+      code: {
+        lineNumbers: config.theme?.code?.lineNumbers ?? true,
+        wrap: config.theme?.code?.wrap ?? false
+      },
       brand: {
         label: config.theme?.brand?.label ?? config.site?.name ?? 'svedocs',
         href: config.theme?.brand?.href ?? '/',

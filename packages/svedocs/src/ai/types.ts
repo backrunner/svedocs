@@ -20,11 +20,19 @@ export interface AskCitation {
   section?: string;
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export interface AskInput {
   question: string;
+  messages?: ChatMessage[];
+  systemPrompt?: string;
   context?: string[];
   records?: SvedocsSearchRecord[];
   scope?: SearchScope;
+  maxResults?: number;
 }
 
 export interface AskResult {
@@ -55,6 +63,8 @@ export interface CreateAskResponseOptions {
   scope?: SearchScope | ((request: Request) => SearchScope);
   rateLimiter?: AiRateLimiter;
   rateLimitKey?: string | ((request: Request) => string);
+  systemPrompt?: string;
+  maxResults?: number;
 }
 
 export interface CloudflareAiChatInstance extends CloudflareAiSearchInstance {

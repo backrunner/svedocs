@@ -1,10 +1,14 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import type { SvedocsLocale, SvedocsPage, SvedocsVersion } from '../core/types.js';
 
   export let page: SvedocsPage | undefined = undefined;
   export let pages: SvedocsPage[] = [];
   export let locales: SvedocsLocale[] = [];
   export let versions: SvedocsVersion[] = [];
+
+  let openMenu: 'locale' | 'version' | undefined;
+  let root: HTMLDivElement;
 
   $: localeOptions = createScopeOptions(
     locales,
@@ -54,37 +58,69 @@
     }));
   }
 
-  function navigate(event: Event) {
-    const select = event.currentTarget as HTMLSelectElement;
-    if (select.value) window.location.href = select.value;
+  function closeMenu() {
+    openMenu = undefined;
   }
+
+  function toggleMenu(menu: 'locale' | 'version') {
+    openMenu = openMenu === menu ? undefined : menu;
+  }
+
+  onMount(() => {
+    function closeOnPointer(event: PointerEvent) {
+      if (!root.contains(event.target as Node)) openMenu = undefined;
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') openMenu = undefined;
+    }
+
+    document.addEventListener('pointerdown', closeOnPointer);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnPointer);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  });
 </script>
 
 {#if localeOptions.length > 1 || versionOptions.length > 1}
-  <div class="sd-scope-switcher" aria-label="Documentation scope">
+  <div bind:this={root} class="sd-scope-switcher" role="group" aria-label="Documentation scope">
     {#if localeOptions.length > 1}
-      <label>
-        <span class="sd-visually-hidden">Locale</span>
-        <select aria-label="Locale" on:change={navigate}>
+      <div class:sd-open={openMenu === 'locale'} class="sd-scope-menu">
+        <button type="button" class="sd-scope-trigger" aria-label="Locale" aria-haspopup="menu" aria-expanded={openMenu === 'locale'} on:click={() => toggleMenu('locale')}>
+          <span>{localeOptions.find((option) => option.current)?.label ?? 'Locale'}</span>
+        </button>
+        {#if openMenu === 'locale'}
+        <div class="sd-scope-options" role="menu" aria-label="Locale options">
           {#each localeOptions as option}
-            <option value={option.path ?? ''} selected={option.current} disabled={!option.path}>
-              {option.label}
-            </option>
+            {#if option.path}
+              <a href={option.path} role="menuitemradio" aria-checked={option.current} aria-current={option.current ? 'page' : undefined} on:click={closeMenu}>{option.label}</a>
+            {:else}
+              <span role="menuitemradio" aria-checked={option.current} aria-disabled="true">{option.label}</span>
+            {/if}
           {/each}
-        </select>
-      </label>
+        </div>
+        {/if}
+      </div>
     {/if}
     {#if versionOptions.length > 1}
-      <label>
-        <span class="sd-visually-hidden">Version</span>
-        <select aria-label="Version" on:change={navigate}>
+      <div class:sd-open={openMenu === 'version'} class="sd-scope-menu">
+        <button type="button" class="sd-scope-trigger" aria-label="Version" aria-haspopup="menu" aria-expanded={openMenu === 'version'} on:click={() => toggleMenu('version')}>
+          <span>{versionOptions.find((option) => option.current)?.label ?? 'Version'}</span>
+        </button>
+        {#if openMenu === 'version'}
+        <div class="sd-scope-options" role="menu" aria-label="Version options">
           {#each versionOptions as option}
-            <option value={option.path ?? ''} selected={option.current} disabled={!option.path}>
-              {option.label}
-            </option>
+            {#if option.path}
+              <a href={option.path} role="menuitemradio" aria-checked={option.current} aria-current={option.current ? 'page' : undefined} on:click={closeMenu}>{option.label}</a>
+            {:else}
+              <span role="menuitemradio" aria-checked={option.current} aria-disabled="true">{option.label}</span>
+            {/if}
           {/each}
-        </select>
-      </label>
+        </div>
+        {/if}
+      </div>
     {/if}
   </div>
 {/if}

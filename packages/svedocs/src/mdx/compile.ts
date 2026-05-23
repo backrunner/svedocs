@@ -26,7 +26,10 @@ export interface CompileMarkdownOptions {
   remarkPlugins?: unknown[];
   rehypePlugins?: unknown[];
   codeTheme?: string;
+  codeThemes?: { light?: string; dark?: string };
   shikiTransformers?: unknown[];
+  codeLineNumbers?: boolean;
+  codeWrap?: boolean;
 }
 
 export async function compileMarkdown(
@@ -50,7 +53,10 @@ export async function compileMarkdown(
         codeBlocks,
         {
           ...(options.codeTheme ? { theme: options.codeTheme } : {}),
-          ...(options.shikiTransformers ? { transformers: options.shikiTransformers } : {})
+          ...(options.codeThemes ? { themes: options.codeThemes } : {}),
+          ...(options.shikiTransformers ? { transformers: options.shikiTransformers } : {}),
+          ...(typeof options.codeLineNumbers === 'boolean' ? { lineNumbers: options.codeLineNumbers } : {}),
+          ...(typeof options.codeWrap === 'boolean' ? { wrap: options.codeWrap } : {})
         }
       )
     .use(remarkRehype, { allowDangerousHtml: true })

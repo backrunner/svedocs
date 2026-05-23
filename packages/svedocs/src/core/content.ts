@@ -88,6 +88,8 @@ async function loadContentFile(
   const order = numberFrontmatter(frontmatter.order);
   const hidden = booleanFrontmatter(frontmatter.hidden);
   const collapsed = booleanFrontmatter(frontmatter.collapsed);
+  const section = booleanFrontmatter(frontmatter.section);
+  const icon = stringFrontmatter(frontmatter.icon);
   const keywords = stringArrayFrontmatter(frontmatter.keywords);
   const type = stringFrontmatter(frontmatter.type) ?? stringFrontmatter(frontmatter.ogType) ?? stringFrontmatter(frontmatter.og_type);
   const author = stringFrontmatter(frontmatter.author) ?? config.seo.defaultAuthor;
@@ -120,6 +122,8 @@ async function loadContentFile(
     ...(typeof order === 'number' ? { order } : {}),
     ...(hidden === true ? { hidden } : {}),
     ...(typeof collapsed === 'boolean' ? { collapsed } : {}),
+    ...(section === true ? { section } : {}),
+    ...(icon ? { icon } : {}),
     html: compiled.html,
     plainText: compiled.plainText,
     headings: compiled.headings,
@@ -153,7 +157,12 @@ function createMarkdownCompileOptions(
     ...(rawConfig?.markdown?.remarkPlugins ? { remarkPlugins: rawConfig.markdown.remarkPlugins } : {}),
     ...(rawConfig?.markdown?.rehypePlugins ? { rehypePlugins: rawConfig.markdown.rehypePlugins } : {}),
     ...(rawConfig?.markdown?.shiki?.transformers ? { shikiTransformers: rawConfig.markdown.shiki.transformers } : {}),
-    codeTheme: resolvedConfig.theme.codeTheme.dark
+    codeThemes: {
+      light: resolvedConfig.theme.codeTheme.light,
+      dark: resolvedConfig.theme.codeTheme.dark
+    },
+    codeLineNumbers: resolvedConfig.theme.code.lineNumbers,
+    codeWrap: resolvedConfig.theme.code.wrap
   };
 }
 

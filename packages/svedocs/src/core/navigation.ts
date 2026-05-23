@@ -8,6 +8,8 @@ interface MutableTreeItem {
   children: MutableTreeItem[];
   collapsed?: boolean;
   order?: number;
+  section?: boolean;
+  icon?: string;
   _weight: number;
 }
 
@@ -93,7 +95,9 @@ function upsertTreeNode(input: {
     _weight: page?.order ?? Number.POSITIVE_INFINITY,
     ...(page ? { path: page.routePath } : {}),
     ...(typeof page?.order === 'number' ? { order: page.order } : {}),
-    ...(typeof page?.collapsed === 'boolean' ? { collapsed: page.collapsed } : {})
+    ...(typeof page?.collapsed === 'boolean' ? { collapsed: page.collapsed } : {}),
+    ...(page?.section === true ? { section: true } : {}),
+    ...(page?.icon ? { icon: page.icon } : {})
   };
   input.nodeByPath.set(input.nodePath, item);
   input.children.push(item);
@@ -107,6 +111,8 @@ function applyPageToTreeItem(item: MutableTreeItem, page: SvedocsPage) {
   item._weight = page.order ?? item._weight;
   if (typeof page.order === 'number') item.order = page.order;
   if (typeof page.collapsed === 'boolean') item.collapsed = page.collapsed;
+  if (page.section === true) item.section = true;
+  if (page.icon) item.icon = page.icon;
 }
 
 function finalizeTree(items: MutableTreeItem[]): SvedocsTreeItem[] {
@@ -123,7 +129,9 @@ function finalizeTree(items: MutableTreeItem[]): SvedocsTreeItem[] {
         ...(item.path ? { path: item.path } : {}),
         ...(children.length > 0 ? { children } : {}),
         ...(typeof item.collapsed === 'boolean' ? { collapsed: item.collapsed } : {}),
-        ...(typeof item.order === 'number' ? { order: item.order } : {})
+        ...(typeof item.order === 'number' ? { order: item.order } : {}),
+        ...(item.section === true ? { section: true } : {}),
+        ...(item.icon ? { icon: item.icon } : {})
       };
     });
 }

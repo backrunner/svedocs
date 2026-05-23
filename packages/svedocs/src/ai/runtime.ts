@@ -35,9 +35,15 @@ export interface CreateConfiguredAskResponseOptions extends Omit<CreateAskRespon
 export function createConfiguredAiProvider(options: CreateConfiguredAiProviderOptions): AiProvider {
   const provider = normalizeProviderName(options.provider ?? options.config.ai.provider);
   if (!options.config.ai.enabled) return createMockAiProvider();
+  const systemPrompt = options.config.ai.systemPrompt;
+  const maxResults = options.config.ai.maxResults;
   if (provider === 'cloudflare-workers-ai') {
     const ai = readWorkersAiBinding(options.env);
-    if (ai) return createWorkersAiProvider({ ai });
+    if (ai) return createWorkersAiProvider({
+      ai,
+      ...(systemPrompt ? { systemPrompt } : {}),
+      ...(typeof maxResults === 'number' ? { citationLimit: maxResults } : {})
+    });
     return createMockAiProvider();
   }
   if (provider === 'cloudflare-ai-search') {
@@ -45,7 +51,9 @@ export function createConfiguredAiProvider(options: CreateConfiguredAiProviderOp
     if (binding) {
       return createCloudflareAiSearchAiProvider({
         binding,
-        instanceName: options.config.cloudflare.aiSearch.instanceName
+        instanceName: options.config.cloudflare.aiSearch.instanceName,
+        ...(systemPrompt ? { systemPrompt } : {}),
+        ...(typeof maxResults === 'number' ? { maxResults } : {})
       });
     }
     return createMockAiProvider();
@@ -61,6 +69,7 @@ export function createConfiguredAiProvider(options: CreateConfiguredAiProviderOp
         model,
         ...(baseUrl ? { baseUrl } : {}),
         ...(typeof temperature === 'number' ? { temperature } : {}),
+        ...(systemPrompt ? { systemPrompt } : {}),
         ...(options.fetch ? { fetch: options.fetch } : {})
       });
     }

@@ -1,7 +1,7 @@
 import type { SvedocsSearchRecord } from '../core.js';
 import { filterSearchRecords } from '../search.js';
 import type { SearchScope } from '../search.js';
-import type { AiProvider, AskResult, CreateAskResponseOptions } from './types.js';
+import type { AiProvider, AskResult, ChatMessage, CreateAskResponseOptions } from './types.js';
 
 export async function createAskResponse(
   provider: AiProvider,
@@ -13,11 +13,14 @@ export async function createAskResponse(
   try {
     const body = await request.json().catch(() => ({})) as {
       question?: string;
+      messages?: ChatMessage[];
       locale?: string;
       version?: string;
       kind?: string;
     };
-    const question = body.question?.trim() ?? '';
+    const messages = sanitizeMessages(body.messages);
+    const lastUserMessage = [...messages].reverse().find((message) => message.role === 'user');
+    const question = (body.question?.trim() ?? lastUserMessage?.content.trim() ?? '');
     if (!question) {
       return askErrorResponse('Question is required.', 400, stream);
     }
@@ -32,14 +35,34 @@ export async function createAskResponse(
     }
     const scope = createRequestScope(request, body, options.scope);
     const records = filterSearchRecords(options.records ?? [], scope);
+    const askInput = {
+      question,
+      records,
+      scope,
+      ...(messages.length > 0 ? { messages } : {}),
+      ...(options.systemPrompt ? { systemPrompt: options.systemPrompt } : {}),
+      ...(options.maxResults ? { maxResults: options.maxResults } : {})
+    };
     if (stream && provider.stream) {
-      return streamProviderResponse(await provider.stream({ question, records, scope }));
+      return streamProviderResponse(await provider.stream(askInput));
     }
-    const result = await provider.ask({ question, records, scope });
+    const result = await provider.ask(askInput);
     return stream ? streamAskResult(result) : jsonResponse(result);
   } catch (error) {
     return askErrorResponse(error instanceof Error ? error.message : 'Ask AI failed.', 500, stream);
   }
+}
+
+function sanitizeMessages(messages: ChatMessage[] | undefined): ChatMessage[] {
+  if (!Array.isArray(messages)) return [];
+  return messages
+    .filter((message): message is ChatMessage =>
+      Boolean(message)
+        && (message.role === 'user' || message.role === 'assistant')
+        && typeof message.content === 'string'
+        && message.content.trim().length > 0
+    )
+    .map((message) => ({ role: message.role, content: message.content }));
 }
 
 function createRequestScope(

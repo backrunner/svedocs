@@ -3,6 +3,7 @@ import type { SvedocsCodeBlock } from '../core/types.js';
 import { createDiffRows, createDiffSplitRows, renderSplitDiffHtml } from './diff.js';
 import {
   escapeAttribute,
+  escapeHtml,
   mergeClassNames,
   mergeHtmlClass,
   normalizeShikiLanguage,
@@ -33,7 +34,9 @@ export function extractCodeBlocks(markdown: string): SvedocsCodeBlock[] {
       diffRows,
       splitRows,
       addedLines: diffRows.filter((row) => row.kind === 'add').length,
-      removedLines: diffRows.filter((row) => row.kind === 'remove').length
+      removedLines: diffRows.filter((row) => row.kind === 'remove').length,
+      ...(parsed.noLineNumbers ? { noLineNumbers: true } : {}),
+      ...(typeof parsed.wrap === 'boolean' ? { wrap: parsed.wrap } : {})
     });
   }
   return blocks;
@@ -68,12 +71,14 @@ export function rehypeCodeBlocks(codeBlocks: SvedocsCodeBlock[] = []) {
 
 export function remarkSvedocsCodeBlocks(
   codeBlocks: SvedocsCodeBlock[] = [],
-  options: { theme?: string; transformers?: unknown[] } = {}
+  options: { theme?: string; themes?: { light?: string; dark?: string }; transformers?: unknown[]; lineNumbers?: boolean; wrap?: boolean } = {}
 ) {
   return async (tree: unknown) => {
     let index = 0;
     const shiki = await import('shiki').catch(() => undefined);
     const transforms: Array<Promise<void>> = [];
+    const showLineNumbers = options.lineNumbers !== false;
+    const globalWrap = options.wrap === true;
 
     visit(tree as any, 'code', (node: any, childIndex: number | undefined, parent: any) => {
       const block = codeBlocks[index++];
@@ -88,23 +93,32 @@ export function remarkSvedocsCodeBlocks(
       }
 
       if (!shiki) return;
+      const themes = options.themes ?? { light: 'github-light', dark: 'github-dark' };
+      const useDualTheme = Boolean(themes.light && themes.dark);
+      const renderLineNumbers = showLineNumbers && !block.noLineNumbers;
+      const wrapLines = typeof block.wrap === 'boolean' ? block.wrap : globalWrap;
       transforms.push(
           shiki
             .codeToHtml(node.value, {
               lang: normalizeShikiLanguage(block.language),
-              theme: options.theme ?? 'github-dark',
+              ...(useDualTheme
+                ? {
+                    themes: { light: themes.light!, dark: themes.dark! },
+                    defaultColor: false
+                  }
+                : { theme: options.theme ?? themes.dark ?? 'github-dark' }),
               ...(options.transformers ? { transformers: options.transformers as never[] } : {})
-            })
+            } as never)
           .then((html) => {
             parent.children[childIndex] = {
               type: 'html',
-              value: decorateHighlightedCode(html, block)
+              value: decorateHighlightedCode(html, block, { showLineNumbers: renderLineNumbers, wrap: wrapLines })
             };
           })
           .catch(() => {
             node.data = {
               ...(node.data ?? {}),
-              hProperties: createCodeProperties(block)
+              hProperties: createCodeProperties(block, renderLineNumbers, wrapLines)
             };
           })
       );
@@ -123,6 +137,12 @@ function parseCodeInfo(info: string): Omit<SvedocsCodeBlock, 'id' | 'raw'> {
   const focusLines = parseLineSet(/focus=("[^"]+"|'[^']+'|[^\s]+)/.exec(meta)?.[1]?.replace(/^["']|["']$/g, ''));
   const diff = language === 'diff' || /\bdiff\b/.test(meta);
   const diffMode = diff && /\bsplit\b/.test(meta) ? 'split' : diff ? 'unified' : undefined;
+  const noLineNumbers = /\b(no-?line-?numbers|nolinenumbers)\b/i.test(meta)
+    || /\bshowLineNumbers=(false|0|no)\b/i.test(meta)
+    || /\blineNumbers=(false|0|no)\b/i.test(meta);
+  const wrapTrue = /\bwrap\b(?!=)/i.test(meta) || /\bwrap=(true|1|yes)\b/i.test(meta);
+  const wrapFalse = /\bno-?wrap\b/i.test(meta) || /\bwrap=(false|0|no)\b/i.test(meta);
+  const wrap = wrapTrue ? true : wrapFalse ? false : undefined;
   return {
     language,
     meta,
@@ -134,11 +154,13 @@ function parseCodeInfo(info: string): Omit<SvedocsCodeBlock, 'id' | 'raw'> {
     diffRows: [],
     splitRows: [],
     addedLines: 0,
-    removedLines: 0
+    removedLines: 0,
+    ...(noLineNumbers ? { noLineNumbers: true } : {}),
+    ...(typeof wrap === 'boolean' ? { wrap } : {})
   };
 }
 
-function createCodeProperties(block: SvedocsCodeBlock): Record<string, string | string[]> {
+function createCodeProperties(block: SvedocsCodeBlock, showLineNumbers: boolean = true, wrap: boolean = false): Record<string, string | string[]> {
   return {
     className: ['sd-code'],
     'data-language': block.language,
@@ -148,15 +170,20 @@ function createCodeProperties(block: SvedocsCodeBlock): Record<string, string | 
     ...(block.diff ? { 'data-diff': 'true' } : {}),
     ...(block.diffMode ? { 'data-diff-mode': block.diffMode } : {}),
     ...(block.addedLines > 0 ? { 'data-added-lines': String(block.addedLines) } : {}),
-    ...(block.removedLines > 0 ? { 'data-removed-lines': String(block.removedLines) } : {})
+    ...(block.removedLines > 0 ? { 'data-removed-lines': String(block.removedLines) } : {}),
+    ...(showLineNumbers ? {} : { 'data-no-line-numbers': 'true' }),
+    ...(wrap ? { 'data-wrap': 'true' } : {})
   };
 }
 
-function decorateHighlightedCode(html: string, block: SvedocsCodeBlock): string {
+function decorateHighlightedCode(html: string, block: SvedocsCodeBlock, options: { showLineNumbers: boolean; wrap: boolean }): string {
+  const showLineNumbers = options.showLineNumbers;
+  const wrap = options.wrap;
+  const trimmed = stripTrailingEmptyLine(html);
   let line = 0;
   const highlighted = new Set(block.highlightLines);
   const focused = new Set(block.focusLines);
-  const withLines = html.replace(/<span class="line">/g, () => {
+  const withLineOpens = trimmed.replace(/<span class="line">/g, () => {
     line += 1;
     const classes = ['line'];
     if (highlighted.has(line)) classes.push('sd-line-highlight');
@@ -168,13 +195,105 @@ function decorateHighlightedCode(html: string, block: SvedocsCodeBlock): string 
       if (diffRow?.kind === 'meta') classes.push('sd-line-meta');
     }
     const diffRow = block.diffRows[line - 1];
-    return `<span class="${classes.join(' ')}" data-line="${line}"${diffRow ? ` data-diff-kind="${diffRow.kind}"` : ''}>`;
+    let lineNoText: string = String(line);
+    if (block.diff && diffRow) {
+      if (diffRow.kind === 'add') lineNoText = '+';
+      else if (diffRow.kind === 'remove') lineNoText = '-';
+      else if (diffRow.kind === 'meta') lineNoText = '·';
+    }
+    const lineNo = showLineNumbers
+      ? `<span class="sd-line-no" aria-hidden="true">${lineNoText}</span>`
+      : '';
+    return `<span class="${classes.join(' ')}" data-line="${line}"${diffRow ? ` data-diff-kind="${diffRow.kind}"` : ''}>${lineNo}<span class="sd-line-content">`;
   });
-  return withLines.replace(
+  const withLineCloses = withLineOpens
+    .replace(/<\/span>(\s*)<span class="line"/g, '</span></span>$1<span class="line"')
+    .replace(/<\/span>(\s*<\/code>)/, '</span></span>$1');
+  const header = renderCodeHeader(block);
+  return withLineCloses.replace(
     /<pre([^>]*)>/,
     (_match, attrs: string) => {
       const cleanAttrs = attrs.replace(/\sclass="[^"]*"/, '').replace(/\stabindex="[^"]*"/, '');
-      return `<pre${cleanAttrs} class="${mergeHtmlClass(attrs, 'sd-code')}" data-language="${escapeAttribute(block.language)}"${block.title ? ` data-title="${escapeAttribute(block.title)}"` : ''}${block.highlightLines.length ? ` data-highlight-lines="${block.highlightLines.join(',')}"` : ''}${block.focusLines.length ? ` data-focus-lines="${block.focusLines.join(',')}"` : ''}${block.diff ? ' data-diff="true"' : ''}${block.diffMode ? ` data-diff-mode="${block.diffMode}"` : ''}${block.addedLines > 0 ? ` data-added-lines="${block.addedLines}"` : ''}${block.removedLines > 0 ? ` data-removed-lines="${block.removedLines}"` : ''}>`;
+      return `<pre${cleanAttrs} class="${mergeHtmlClass(attrs, 'sd-code')}" data-language="${escapeAttribute(block.language)}" data-copy="${escapeAttribute(block.raw)}" data-enhanced="true"${block.title ? ` data-title="${escapeAttribute(block.title)}"` : ''}${block.highlightLines.length ? ` data-highlight-lines="${block.highlightLines.join(',')}"` : ''}${block.focusLines.length ? ` data-focus-lines="${block.focusLines.join(',')}"` : ''}${block.diff ? ' data-diff="true"' : ''}${block.diffMode ? ` data-diff-mode="${block.diffMode}"` : ''}${block.addedLines > 0 ? ` data-added-lines="${block.addedLines}"` : ''}${block.removedLines > 0 ? ` data-removed-lines="${block.removedLines}"` : ''}${showLineNumbers ? '' : ' data-no-line-numbers="true"'}${wrap ? ' data-wrap="true"' : ''}>${header}`;
     }
+  ).replace(
+    /<code([^>]*)>/,
+    (_match, attrs: string) => `<code${attrs} data-copy="${escapeAttribute(block.raw)}">`
   );
+}
+
+function renderCodeHeader(block: SvedocsCodeBlock): string {
+  const language = block.language || 'text';
+  const languageLabel = displayLanguage(language);
+  const parts: string[] = [];
+  parts.push(`<span class="sd-code-language" data-language="${escapeAttribute(language)}">${escapeHtml(languageLabel)}</span>`);
+  if (block.title) {
+    parts.push(`<span class="sd-code-title">${escapeHtml(block.title)}</span>`);
+  }
+  if (block.addedLines > 0 || block.removedLines > 0) {
+    const stats: string[] = [];
+    if (block.addedLines > 0) {
+      stats.push(`<span class="sd-code-stat-add">+${block.addedLines}</span>`);
+    }
+    if (block.removedLines > 0) {
+      stats.push(`<span class="sd-code-stat-remove">-${block.removedLines}</span>`);
+    }
+    parts.push(`<span class="sd-code-stats">${stats.join('')}</span>`);
+  }
+  parts.push(`<button type="button" class="sd-code-copy" data-sd-copy="" aria-label="Copy code" title="Copy code"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h9v14H9zM6 8v12h10"/></svg></button>`);
+  return `<div class="sd-code-header">${parts.join('')}</div>`;
+}
+
+const LANGUAGE_DISPLAY_NAMES: Record<string, string> = {
+  ts: 'TypeScript',
+  tsx: 'TSX',
+  js: 'JavaScript',
+  jsx: 'JSX',
+  mjs: 'JavaScript',
+  cjs: 'JavaScript',
+  svelte: 'Svelte',
+  svx: 'Svelte',
+  vue: 'Vue',
+  html: 'HTML',
+  css: 'CSS',
+  scss: 'SCSS',
+  sass: 'Sass',
+  json: 'JSON',
+  jsonc: 'JSON',
+  yaml: 'YAML',
+  yml: 'YAML',
+  toml: 'TOML',
+  md: 'Markdown',
+  mdx: 'MDX',
+  sh: 'Shell',
+  shell: 'Shell',
+  bash: 'Bash',
+  zsh: 'Zsh',
+  ps1: 'PowerShell',
+  python: 'Python',
+  py: 'Python',
+  rs: 'Rust',
+  rust: 'Rust',
+  go: 'Go',
+  java: 'Java',
+  kt: 'Kotlin',
+  swift: 'Swift',
+  c: 'C',
+  cpp: 'C++',
+  cs: 'C#',
+  sql: 'SQL',
+  diff: 'Diff',
+  text: 'Text',
+  txt: 'Text',
+  plaintext: 'Text'
+};
+
+function displayLanguage(language: string): string {
+  return LANGUAGE_DISPLAY_NAMES[language] ?? language.toUpperCase();
+}
+
+function stripTrailingEmptyLine(html: string): string {
+  return html
+    .replace(/<span class="line"><\/span>(\s*)(<\/code>)/, '$2')
+    .replace(/<span class="line">\s*<\/span>(\s*)(<\/code>)/, '$2');
 }

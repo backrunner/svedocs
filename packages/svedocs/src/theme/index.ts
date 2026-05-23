@@ -8,6 +8,6 @@ export { default as CodeBlock } from './CodeBlock.svelte';
 export { default as ThemeToggle } from './ThemeToggle.svelte';
 export { default as SearchDialog } from './SearchDialog.svelte';
 export { default as AskAiPanel } from './AskAiPanel.svelte';
+export { default as FloatingToolbar } from './FloatingToolbar.svelte';
 export { default as SidebarTree } from './SidebarTree.svelte';
 export { default as ScopeSwitcher } from './ScopeSwitcher.svelte';
-export { default as CommandPalette } from './CommandPalette.svelte';

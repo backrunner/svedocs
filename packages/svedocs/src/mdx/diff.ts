@@ -108,6 +108,10 @@ export function renderSplitDiffHtml(block: SvedocsCodeBlock): string {
     <small>${escapeHtml(counts || block.language)}</small>
   </div>
   <div class="sd-diff-grid" role="table" aria-label="${escapeAttribute(title)} diff">
+    <div class="sd-diff-row sd-diff-column-row" role="row">
+      <div class="sd-diff-column-label" role="columnheader" data-side="old">Before</div>
+      <div class="sd-diff-column-label" role="columnheader" data-side="new">After</div>
+    </div>
     ${body}
   </div>
 </div>`;

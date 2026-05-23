@@ -39,6 +39,11 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
         url: result.url,
         ...(result.section ? { section: result.section } : {})
       }));
+      const history = (input.messages ?? []).map((message) => ({ role: message.role, content: message.content }));
+      const lastIsCurrent = history.length > 0
+        && history[history.length - 1]?.role === 'user'
+        && history[history.length - 1]?.content === input.question;
+      const trailing = history.length > 0 && lastIsCurrent ? history.slice(0, -1) : history;
       const response = await (options.fetch ?? fetch)(createChatCompletionsEndpoint(options.baseUrl), {
         method: 'POST',
         headers: {
@@ -50,14 +55,9 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
           model: options.model,
           ...(typeof options.temperature === 'number' ? { temperature: options.temperature } : {}),
           messages: [
-            {
-              role: 'system',
-              content: systemPrompt
-            },
-            {
-              role: 'user',
-              content: createPrompt(input, ranked)
-            }
+            { role: 'system', content: systemPrompt },
+            ...trailing,
+            { role: 'user', content: createPrompt(input, ranked) }
           ]
         })
       });

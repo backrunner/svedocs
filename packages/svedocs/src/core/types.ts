@@ -30,6 +30,8 @@ export interface SvedocsCodeBlock {
   splitRows: SvedocsDiffSplitRow[];
   addedLines: number;
   removedLines: number;
+  noLineNumbers?: boolean;
+  wrap?: boolean;
 }
 
 export interface SvedocsDiffRow {
@@ -100,6 +102,8 @@ export interface SvedocsPage {
   order?: number;
   hidden?: boolean;
   collapsed?: boolean;
+  section?: boolean;
+  icon?: string;
   html: string;
   plainText: string;
   headings: SvedocsHeading[];
@@ -121,6 +125,8 @@ export interface SvedocsTreeItem {
   children?: SvedocsTreeItem[];
   collapsed?: boolean;
   order?: number;
+  section?: boolean;
+  icon?: string;
 }
 
 export interface SvedocsOgTemplateNode {
@@ -170,6 +176,10 @@ export interface SvedocsResolvedConfig {
     codeTheme: {
       light: string;
       dark: string;
+    };
+    code: {
+      lineNumbers: boolean;
+      wrap: boolean;
     };
     brand: {
       label: string;
@@ -221,6 +231,12 @@ export interface SvedocsResolvedConfig {
     enabled: boolean;
     provider: string;
     scope: 'current' | 'all';
+    label: string;
+    placeholder: string;
+    suggestions: string[];
+    maxResults: number;
+    systemPrompt?: string;
+    welcomeMessage?: string;
   };
   seo: {
     sitemap: boolean;

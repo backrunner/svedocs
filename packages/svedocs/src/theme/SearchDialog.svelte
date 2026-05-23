@@ -3,11 +3,13 @@
   import type { SvedocsSearchRecord } from '../core/types.js';
   import { filterSearchRecords, searchRecords } from '../search/local.js';
   import type { SearchResult, SearchScope } from '../search/types.js';
+  import { portal } from './portal.js';
 
   export let records: SvedocsSearchRecord[] = [];
   export let scope: SearchScope = {};
   export let provider = 'local';
   export let endpoint = '/api/search';
+  export let buildMode = 'edge';
 
   let open = false;
   let query = '';
@@ -22,7 +24,7 @@
   let remoteKey = '';
   let remoteRequestId = 0;
 
-  $: usesRemoteSearch = provider !== 'local' && provider !== 'local-json';
+  $: usesRemoteSearch = buildMode === 'edge' && provider !== 'local' && provider !== 'local-json';
   $: localResults = query.trim()
     ? searchRecords(records, { query, limit: 8, ...scope })
     : createDefaultResults(records, scope);
@@ -165,6 +167,7 @@
 </button>
 
 {#if open}
+  <div class="sd-dialog-portal" use:portal>
   <div class="sd-dialog-backdrop" role="presentation" on:click={hide}></div>
   <div
     bind:this={dialog}
@@ -207,5 +210,6 @@
         <p class="sd-empty-state">No matching docs yet.</p>
       {/if}
     </div>
+  </div>
   </div>
 {/if}
