@@ -6,7 +6,7 @@ order: 7
 
 # Cloudflare
 
-Cloudflare edge SSR is the default deployment path for svedocs. Static output is also first-class. SPA output is supported only for hosts that cannot run SSR or serve prerendered pages.
+Cloudflare edge SSR is the default deployment path for svedocs. Static output is also first-class. SPA output is supported for hosts that need a client-side fallback while still serving prerendered known pages.
 
 ## Build Preset
 
@@ -20,8 +20,8 @@ const preset = createCloudflarePreset(process.env.SVEDOCS_BUILD_MODE ?? 'edge');
 export default {
   kit: {
     adapter: preset.adapter === '@sveltejs/adapter-cloudflare'
-      ? adapterCloudflare()
-      : adapterStatic({ fallback: preset.mode === 'spa' ? 'index.html' : undefined })
+      ? adapterCloudflare({ platformProxy: { remoteBindings: false } })
+      : adapterStatic({ fallback: preset.mode === 'spa' ? '200.html' : undefined })
   }
 };
 ```
@@ -42,7 +42,7 @@ instance_name = "svedocs"
 
 For AI Search namespaces, configure `cloudflare.aiSearch.namespace`; svedocs will emit `[[ai_search_namespaces]]` instead of `[[ai_search]]`.
 
-`remote` defaults to `false` so local builds and prerendering do not require a Cloudflare account. Set it to `true` only when you explicitly want local development to talk to the remote AI Search service.
+`platformProxy.remoteBindings` is disabled in the local adapter config so edge builds and prerendering do not require a Cloudflare account. `cloudflare.aiSearch.remote` also defaults to `false`; set both intentionally only when you want local development to talk to remote Cloudflare resources.
 
 ## Runtime Types
 

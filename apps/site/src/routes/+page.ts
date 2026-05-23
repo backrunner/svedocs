@@ -1,9 +1,8 @@
 import { loadSvedocsRoute } from '$lib/loadPage';
+import { svedocsPagePrerender } from 'svedocs/cloudflare';
 import type { PageLoad } from './$types';
 
-const buildMode = typeof process !== 'undefined' ? process.env.SVEDOCS_BUILD_MODE : undefined;
-
-export const prerender = buildMode === 'static' ? true : buildMode === 'spa' ? false : 'auto';
+export const prerender = svedocsPagePrerender();
 
 export const load: PageLoad = () => {
   return loadSvedocsRoute();

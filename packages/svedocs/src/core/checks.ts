@@ -20,7 +20,7 @@ export async function checkSvedocsContent(
     issues.push({
       code: 'spa-risk',
       severity: 'warning',
-      message: 'SPA mode is supported, but it weakens SEO, edge rendering, and metadata generation.'
+      message: 'SPA mode prerenders known pages, but server-only routes and provider bindings are unavailable on static hosts.'
     });
   }
 

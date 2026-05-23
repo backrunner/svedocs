@@ -1,3 +1,3 @@
-const buildMode = typeof process !== 'undefined' ? process.env.SVEDOCS_BUILD_MODE : undefined;
+import { svedocsSsr } from 'svedocs/cloudflare';
 
-export const ssr = buildMode !== 'spa';
+export const ssr = svedocsSsr();

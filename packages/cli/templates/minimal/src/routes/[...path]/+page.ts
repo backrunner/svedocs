@@ -3,11 +3,10 @@ import config from 'virtual:svedocs/config';
 import pages from 'virtual:svedocs/pages';
 import search from 'virtual:svedocs/search';
 import tree from 'virtual:svedocs/tree';
+import { svedocsPagePrerender } from 'svedocs/cloudflare';
 import type { PageLoad } from './$types';
 
-const buildMode = typeof process !== 'undefined' ? process.env.SVEDOCS_BUILD_MODE : undefined;
-
-export const prerender = buildMode === 'static';
+export const prerender = svedocsPagePrerender();
 
 export function entries() {
   return pages

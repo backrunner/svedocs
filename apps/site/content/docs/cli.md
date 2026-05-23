@@ -37,7 +37,7 @@ svedocs ssg
 svedocs build --mode spa
 ```
 
-`edge` is the default and targets Cloudflare Pages SSR. `static` and `svedocs ssg` prerender the docs site. `spa` disables SSR for constrained hosts, but the CLI prints a warning because it weakens metadata, SEO, and edge-native features.
+`edge` is the default and targets Cloudflare Pages SSR. `static` and `svedocs ssg` prerender the docs site. `spa` prerenders known pages and writes a static fallback for constrained hosts; hosted Search, Ask AI, and other server-only features fall back to local behavior unless an edge runtime is available.
 
 ## Check
 

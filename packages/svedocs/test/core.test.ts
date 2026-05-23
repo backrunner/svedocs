@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createAskResponse, createCloudflareAiSearchAiProvider, createCloudflareKvRateLimiter, createConfiguredAiProvider, createConfiguredAskResponse, createMemoryRateLimiter, createMockAiProvider, createOpenAiCompatibleProvider, createWorkersAiProvider } from '../src/ai';
-import { createCloudflareEnvDts, createWranglerJson } from '../src/cloudflare';
+import { createCloudflareEnvDts, createWranglerJson, readSvedocsBuildMode, svedocsPagePrerender, svedocsSsr } from '../src/cloudflare';
 import { defineConfig } from '../src/config';
 import { checkPackagePublication, createPageTree, createSearchRecords, flattenPageTree, loadSvedocsContent, resolveSvedocsConfig } from '../src/core';
 import { createConfiguredOgImageFormat, createConfiguredOgImageTemplate, createOgPng, createPageAlternates, createPageMetadata, createPageOgImagePath, createPageOgImageResponse, createRobotsTxt, createSatoriOgSvg, createSitemapXml } from '../src/og';
@@ -38,6 +38,19 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(config.versions.items).toEqual([]);
     expect(config.checks.translations).toBe(false);
     expect(config.checks.versionStatus).toBe(true);
+  });
+
+  it('aligns SvelteKit route options across build modes', () => {
+    expect(readSvedocsBuildMode('edge')).toBe('edge');
+    expect(readSvedocsBuildMode('static')).toBe('static');
+    expect(readSvedocsBuildMode('spa')).toBe('spa');
+    expect(readSvedocsBuildMode('unknown')).toBe('edge');
+    expect(svedocsSsr('edge')).toBe(true);
+    expect(svedocsSsr('static')).toBe(true);
+    expect(svedocsSsr('spa')).toBe(true);
+    expect(svedocsPagePrerender('edge')).toBe('auto');
+    expect(svedocsPagePrerender('static')).toBe(true);
+    expect(svedocsPagePrerender('spa')).toBe(true);
   });
 
   it('resolves theme customization and SEO author defaults', () => {

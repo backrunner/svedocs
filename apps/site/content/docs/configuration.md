@@ -40,7 +40,7 @@ export default defineConfig({
 
 - `edge` uses Cloudflare-oriented SSR.
 - `static` prerenders the site.
-- `spa` is supported but not recommended for documentation SEO.
+- `spa` prerenders known pages and adds a static fallback; server-only Search/Ask AI providers use local fallback behavior on static hosts.
 
 ## Search and AI
 

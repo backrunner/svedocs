@@ -7,9 +7,9 @@ import { svedocsPreprocess, svedocsSvelteExtensions } from 'svedocs/svelte';
 const mode = process.env.SVEDOCS_BUILD_MODE ?? 'edge';
 const adapter =
   mode === 'edge'
-    ? adapterCloudflare()
+    ? adapterCloudflare({ platformProxy: { remoteBindings: false } })
     : mode === 'spa'
-      ? adapterStatic({ fallback: 'index.html' })
+      ? adapterStatic({ fallback: '200.html' })
     : mode === 'static'
         ? adapterStatic({ strict: false })
         : adapterAuto();

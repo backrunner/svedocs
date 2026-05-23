@@ -1,6 +1,7 @@
 import type { SvedocsResolvedConfig } from './core.js';
 
 export type SvedocsBuildMode = 'edge' | 'static' | 'spa';
+export type SvedocsPagePrerenderOption = true | false | 'auto';
 
 export interface CloudflareBindingShape {
   AI?: unknown;
@@ -39,8 +40,25 @@ export function createCloudflarePreset(mode: SvedocsBuildMode = 'edge'): Cloudfl
     adapter: '@sveltejs/adapter-static',
     output: 'build',
     recommended: false,
-    warning: 'SPA mode is supported for constrained deployments, but edge SSR or SSG is recommended.'
+    warning: 'SPA mode prerenders known pages and writes a static fallback; edge SSR or full SSG is recommended when available.'
   };
+}
+
+export function readSvedocsBuildMode(value = readSvedocsBuildModeEnv()): SvedocsBuildMode {
+  return value === 'static' || value === 'spa' || value === 'edge' ? value : 'edge';
+}
+
+export function svedocsSsr(mode = readSvedocsBuildMode()): boolean {
+  return mode === 'edge' || mode === 'static' || mode === 'spa';
+}
+
+export function svedocsPagePrerender(mode = readSvedocsBuildMode()): SvedocsPagePrerenderOption {
+  if (mode === 'static' || mode === 'spa') return true;
+  return 'auto';
+}
+
+function readSvedocsBuildModeEnv(): string | undefined {
+  return typeof process !== 'undefined' ? process.env.SVEDOCS_BUILD_MODE : undefined;
 }
 
 export function createWranglerJson(config: SvedocsResolvedConfig): Record<string, unknown> {

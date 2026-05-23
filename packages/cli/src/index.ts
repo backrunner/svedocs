@@ -77,7 +77,9 @@ async function runBuildCommand(args: string[]): Promise<CliResult> {
   if (!mode || !['edge', 'static', 'spa'].includes(mode)) {
     return fail('build', args, 'Invalid build mode. Use edge, static, or spa.');
   }
-  const warning = mode === 'spa' ? 'SPA mode is supported but not recommended for docs SEO or edge-native features.\n' : '';
+  const warning = mode === 'spa'
+    ? 'SPA mode prerenders known docs pages and writes a static fallback; hosted Search, Ask AI, and other server-only features need an edge runtime.\n'
+    : '';
   const result = await spawnCommand('vite', ['build', ...createViteArgs(args)], {
     SVEDOCS_BUILD_MODE: mode,
     ...createConfigEnv(configFile)

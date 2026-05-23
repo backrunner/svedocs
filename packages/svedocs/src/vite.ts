@@ -115,7 +115,20 @@ export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
 }
 
 function createContentOptions(root: string, config: SvedocsConfig | undefined) {
-  return config ? { projectRoot: root, config } : { projectRoot: root };
+  const buildConfig = applyBuildModeOverride(config);
+  return buildConfig ? { projectRoot: root, config: buildConfig } : { projectRoot: root };
+}
+
+function applyBuildModeOverride(config: SvedocsConfig | undefined): SvedocsConfig | undefined {
+  const mode = process.env.SVEDOCS_BUILD_MODE;
+  if (mode !== 'edge' && mode !== 'static' && mode !== 'spa') return config;
+  return {
+    ...(config ?? {}),
+    build: {
+      ...(config?.build ?? {}),
+      mode
+    }
+  };
 }
 
 async function loadPluginConfig(
@@ -211,7 +224,10 @@ async function loadPageComponent(
           source,
           createMdsvexOptionsFromConfig(rawConfig),
           {
-            codeTheme: manifestConfig.theme.codeTheme.dark,
+            codeThemes: {
+              light: manifestConfig.theme.codeTheme.light,
+              dark: manifestConfig.theme.codeTheme.dark
+            },
             ...(rawConfig?.markdown?.shiki?.transformers ? { shikiTransformers: rawConfig.markdown.shiki.transformers } : {})
           }
         )

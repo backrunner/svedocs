@@ -4,9 +4,7 @@ import config from 'virtual:svedocs/config';
 import pages from 'virtual:svedocs/pages';
 import type { RequestHandler } from './$types';
 
-const buildMode = typeof process !== 'undefined' ? process.env.SVEDOCS_BUILD_MODE : undefined;
-
-export const prerender = buildMode === 'static';
+export const prerender = true;
 
 const format = createConfiguredOgImageFormat(config);
 
