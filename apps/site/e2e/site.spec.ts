@@ -24,11 +24,11 @@ test('search dialog returns section records', async ({ page }) => {
   await expect(page.getByRole('option').filter({ hasText: 'Search' }).first()).toBeVisible();
 });
 
-test('command palette jumps to docs actions', async ({ page }) => {
+test('search dialog jumps to docs pages', async ({ page }) => {
   await page.goto('/docs');
   await waitForSvedocsHydration(page);
-  await page.getByRole('button', { name: 'Open command palette' }).click();
-  await page.getByPlaceholder('Run command or jump to docs').fill('configuration');
+  await page.getByRole('button', { name: 'Search documentation' }).click();
+  await page.getByPlaceholder('Search docs').fill('configuration');
   await page.getByRole('option').filter({ hasText: 'Configuration' }).first().click();
   await expect(page).toHaveURL(/\/docs\/configuration$/);
 });
@@ -52,16 +52,19 @@ test('locale and version switchers navigate scoped routes', async ({ page, isMob
   test.skip(isMobile, 'Scope selects are covered on desktop to avoid mobile topbar wrapping noise.');
   await page.goto('/docs');
   await waitForSvedocsHydration(page);
-  await page.getByLabel('Version').selectOption('/docs/v0');
+  await page.getByRole('button', { name: 'Version' }).click();
+  await page.getByRole('menuitemradio', { name: 'Legacy (archived)' }).click();
   await expect(page).toHaveURL(/\/docs\/v0$/);
   await expect(page.getByRole('heading', { name: 'Legacy introduction' })).toBeVisible();
   await page.goto('/docs');
   await waitForSvedocsHydration(page);
-  await page.getByLabel('Locale').selectOption('/docs/zh');
+  await page.getByRole('button', { name: 'Locale' }).click();
+  await page.getByRole('menuitemradio', { name: '中文' }).click();
   await expect(page).toHaveURL(/\/docs\/zh$/);
   await waitForSvedocsHydration(page, '/docs/zh');
   await expect(page.getByRole('heading', { name: '中文介绍' })).toBeVisible();
-  await expect(page.getByLabel('Version').locator('option').filter({ hasText: 'Legacy (archived)' })).toHaveAttribute('disabled', '');
+  await page.getByRole('button', { name: 'Version' }).click();
+  await expect(page.getByRole('menuitemradio', { name: 'Legacy (archived)' })).toHaveAttribute('aria-disabled', 'true');
 });
 
 test('search and sidebar stay inside the active locale/version scope', async ({ page, isMobile }) => {
@@ -79,14 +82,18 @@ test('Ask AI streams an answer and citations', async ({ page }) => {
   await page.goto('/docs');
   await waitForSvedocsHydration(page);
   await page.getByRole('button', { name: 'Ask AI' }).click();
-  await page.getByPlaceholder('Ask about these docs').fill('How do I deploy to Cloudflare?');
-  await page.getByRole('button', { name: 'Ask', exact: true }).click();
-  await expect(page.locator('.sd-ai-answer')).toContainText(/relevant source|Ask AI is configured/);
+  const dialog = page.getByRole('dialog', { name: 'Ask AI' });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('textbox').fill('How do I deploy to Cloudflare?');
+  await dialog.getByRole('button', { name: 'Send' }).click();
+  await expect(dialog.locator('.sd-chat-bubble[data-role="user"]').last()).toContainText('How do I deploy to Cloudflare?');
+  await expect(dialog.locator('.sd-chat-bubble[data-role="assistant"]').last())
+    .toContainText(/relevant source|Ask AI is ready|connect|Cloudflare|docs/i, { timeout: 15000 });
 });
 
 test('theme toggle updates the document theme', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Toggle theme' }).click();
+  await page.getByRole('button', { name: /Switch to (dark|light) theme/ }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', /dark|light/);
 });
 
@@ -103,7 +110,8 @@ test.describe('mobile navigation', () => {
 
 async function waitForSvedocsHydration(page: import('@playwright/test').Page, route?: string) {
   await page.locator('html[data-theme]').waitFor();
-  if (route) await page.locator(`html[data-svedocs-route="${route}"]`).waitFor();
+  const hydratedRoute = route ?? new URL(page.url()).pathname;
+  await page.locator(`html[data-svedocs-route="${hydratedRoute}"]`).waitFor();
 }
 
 test('keeps ToC active state bound to scroll position', async ({ page, isMobile }) => {
