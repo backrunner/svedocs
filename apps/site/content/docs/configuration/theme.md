@@ -1,12 +1,12 @@
 ---
 title: Theme
-description: Customize the Tailwind CSS v4 default theme, color tokens, dark mode, navigation, ToC, and homepage layout.
-order: 6
+description: Customize the Tailwind CSS v4 default theme, color tokens, dark mode, navigation, and homepage layout.
+order: 2
 ---
 
 # Theme
 
-The default theme is part of the `svedocs` package. It uses Tailwind CSS v4 and framework CSS variables; there is no separate theme package to install.
+The default theme ships inside the `svedocs` package. It uses Tailwind CSS v4 and framework CSS variables, so there is no separate theme package to install.
 
 ## Styles
 
@@ -41,8 +41,8 @@ export default defineConfig({
     },
     radius: '2px',
     codeTheme: {
-      light: 'github-light',
-      dark: 'github-dark'
+      light: 'light-plus',
+      dark: 'dark-plus'
     },
     brand: {
       label: 'svedocs',
@@ -51,14 +51,15 @@ export default defineConfig({
     },
     nav: [
       { label: 'Docs', href: '/docs' },
-      { label: 'API', href: '/docs/api' }
+      { label: 'Configuration', href: '/docs/configuration' },
+      { label: 'API', href: '/docs/reference/api' }
     ],
     social: [
       { label: 'GitHub', href: 'https://github.com/svedocs/svedocs', external: true }
     ],
     footer: {
       text: 'MIT licensed.',
-      links: [{ label: 'Cloudflare', href: '/docs/cloudflare' }]
+      links: [{ label: 'Cloudflare', href: '/docs/integrations/cloudflare' }]
     },
     home: {
       kicker: 'Edge-first Svelte docs',
@@ -70,7 +71,7 @@ export default defineConfig({
 });
 ```
 
-`palette.accent` accepts a built-in token such as `emerald`, `sky`, `indigo`, `rose`, or a CSS color value. The default theme keeps the palette restrained and documentation-focused.
+`palette.accent` accepts a built-in token such as `emerald`, `sky`, `indigo`, or a CSS color value. The default theme keeps the palette restrained and documentation-focused.
 
 `home.visual` can stay as the built-in pixel module or point at a project image with `{ type: 'image', src: '/hero.png', alt: 'Preview' }`.
 
@@ -81,14 +82,13 @@ Built-in theme behavior includes:
 - Search dialog with keyboard focus management.
 - Ask AI panel with JSON and event-stream responses.
 - Command palette for docs, search, and Ask AI entry points.
-- Recursive sidebar with collapsed groups and locale/version scoped trees.
-- Version lifecycle banners for deprecated and archived docs.
+- Recursive sidebar with collapsed groups and locale-scoped trees.
 - Mobile menu state with transition.
 - ToC highlighting based on the active heading.
 - Code block toolbar with copy support.
 - `prefers-reduced-motion` compatible transitions.
 
-## Single Pages
+## Single pages
 
 Content under `content/pages` renders through the built-in single-page template by default. Use `layout: home` for the homepage, `layout: page` for the built-in page template, or a registered custom layout name for project-specific pages.
 
@@ -101,7 +101,7 @@ description: Product updates rendered with the single-page template.
 # Changelog
 ```
 
-## Custom Layouts
+## Custom layouts
 
 Register named layouts in the Vite plugin:
 
@@ -123,3 +123,4 @@ layout: feature
 ```
 
 Layouts receive the same page data as default pages, so custom single pages can still use the manifest, search records, SEO metadata, and framework shell.
+

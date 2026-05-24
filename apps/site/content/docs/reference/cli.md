@@ -1,7 +1,7 @@
 ---
 title: CLI
 description: Create, build, check, index, generate OG assets, and prepare Cloudflare deployment with the svedocs CLI.
-order: 5
+order: 2
 ---
 
 # CLI
@@ -48,7 +48,7 @@ svedocs check --package
 svedocs check --config ./svedocs.config.ts
 ```
 
-Checks include duplicate routes, duplicate canonical URLs, missing descriptions, broken internal links, broken anchors, local assets, empty search output, SPA risk, inactive version notices, optional translation gap warnings, and optional package export validation.
+Checks include duplicate routes, duplicate canonical URLs, missing descriptions, broken internal links, broken anchors, local assets, empty search output, SPA risk, optional translation gap warnings, and optional package export validation.
 
 ## Index
 
@@ -89,3 +89,4 @@ svedocs deploy cloudflare --write
 ```
 
 The dry-run prints the generated `wrangler.toml` and platform type declarations. `--write` creates `wrangler.toml` and `src/app.cloudflare.d.ts`. Pass `--format jsonc` when you need `wrangler.jsonc`.
+

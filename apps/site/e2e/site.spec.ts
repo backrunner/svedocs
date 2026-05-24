@@ -6,9 +6,9 @@ test('renders the official home and docs entry', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'svedocs', exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'Read docs' }).click();
   await expect(page).toHaveURL(/\/docs$/);
-  await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Quick Start' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Install' })).toBeVisible();
-  await page.goto('/docs/components');
+  await page.goto('/docs/writing/components');
   await waitForSvedocsHydration(page);
   await expect(page.locator('.sd-callout')).toContainText('Components can be injected');
   await page.getByRole('button', { name: 'Toggle SvelteKit' }).click();
@@ -33,6 +33,11 @@ test('search dialog jumps to docs pages', async ({ page }) => {
   await expect(page).toHaveURL(/\/docs\/configuration$/);
 });
 
+test('docs v0 no longer exists', async ({ page }) => {
+  const response = await page.goto('/docs/v0');
+  expect(response?.status()).toBe(404);
+});
+
 test('renders custom layout pages from the layout registry', async ({ page }) => {
   await page.goto('/layout-demo');
   await waitForSvedocsHydration(page, '/layout-demo');
@@ -48,33 +53,25 @@ test('renders default single pages without the docs sidebar', async ({ page }) =
   await expect(page.locator('.sd-sidebar')).toHaveCount(0);
 });
 
-test('locale and version switchers navigate scoped routes', async ({ page, isMobile }) => {
+test('locale switcher navigates scoped routes', async ({ page, isMobile }) => {
   test.skip(isMobile, 'Scope selects are covered on desktop to avoid mobile topbar wrapping noise.');
-  await page.goto('/docs');
-  await waitForSvedocsHydration(page);
-  await page.getByRole('button', { name: 'Version' }).click();
-  await page.getByRole('menuitemradio', { name: 'Legacy (archived)' }).click();
-  await expect(page).toHaveURL(/\/docs\/v0$/);
-  await expect(page.getByRole('heading', { name: 'Legacy introduction' })).toBeVisible();
   await page.goto('/docs');
   await waitForSvedocsHydration(page);
   await page.getByRole('button', { name: 'Locale' }).click();
   await page.getByRole('menuitemradio', { name: '中文' }).click();
   await expect(page).toHaveURL(/\/docs\/zh$/);
   await waitForSvedocsHydration(page, '/docs/zh');
-  await expect(page.getByRole('heading', { name: '中文介绍' })).toBeVisible();
-  await page.getByRole('button', { name: 'Version' }).click();
-  await expect(page.getByRole('menuitemradio', { name: 'Legacy (archived)' })).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.getByRole('heading', { name: '快速开始' })).toBeVisible();
 });
 
-test('search and sidebar stay inside the active locale/version scope', async ({ page, isMobile }) => {
+test('search and sidebar stay inside the active locale scope', async ({ page, isMobile }) => {
   test.skip(isMobile, 'Scoped sidebar and search are covered on desktop to keep selectors stable.');
   await page.goto('/docs/zh');
   await waitForSvedocsHydration(page, '/docs/zh');
-  await expect(page.locator('.sd-sidebar')).toContainText('中文介绍');
-  await expect(page.locator('.sd-sidebar')).not.toContainText('Legacy introduction');
+  await expect(page.locator('.sd-sidebar')).toContainText('快速开始');
+  await expect(page.locator('.sd-sidebar')).not.toContainText('Quick Start');
   await page.getByRole('button', { name: 'Search documentation' }).click();
-  await page.getByPlaceholder('Search docs').fill('Legacy');
+  await page.getByPlaceholder('Search docs').fill('Quick Start');
   await expect(page.locator('.sd-empty-state')).toContainText('No matching docs yet.');
 });
 
@@ -101,7 +98,7 @@ test.describe('mobile navigation', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
   test('opens the sidebar menu', async ({ page }) => {
-    await page.goto('/docs/content');
+    await page.goto('/docs/writing/content');
     await waitForSvedocsHydration(page);
     await page.getByRole('button', { name: 'Menu' }).click();
     await expect(page.getByRole('complementary', { name: 'Documentation' })).toBeVisible();
@@ -116,8 +113,8 @@ async function waitForSvedocsHydration(page: import('@playwright/test').Page, ro
 
 test('keeps ToC active state bound to scroll position', async ({ page, isMobile }) => {
   test.skip(isMobile, 'ToC is intentionally hidden on mobile.');
-  await page.goto('/docs/content');
+  await page.goto('/docs/writing/content');
   await waitForSvedocsHydration(page);
-  await page.getByRole('link', { name: 'Math' }).click();
-  await expect(page.locator('.sd-toc-link.sd-active')).toContainText('Math');
+  await page.getByRole('link', { name: 'Section extraction' }).click();
+  await expect(page.locator('.sd-toc-link.sd-active')).toContainText('Section extraction');
 });

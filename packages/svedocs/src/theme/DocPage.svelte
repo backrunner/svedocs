@@ -8,7 +8,6 @@
   $: breadcrumbs = createBreadcrumbs(page);
   $: kind = page.kind === 'doc' ? 'Documentation' : 'Page';
   $: eyebrow = breadcrumbs.length > 0 ? breadcrumbs : [{ label: kind, path: page.kind === 'doc' ? '/docs' : '/' }];
-  $: versionNotice = createVersionNotice(page);
 
   const copyIconSvg = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h9v14H9zM6 8v12h10"/></svg>';
   const checkIconSvg = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg>';
@@ -59,24 +58,6 @@
     });
   }
 
-  function createVersionNotice(page: SvedocsPage): { tone: string; title: string; body: string } | undefined {
-    if (!page.version || !page.versionStatus || page.versionStatus === 'current' || page.versionStatus === 'next') return undefined;
-    const label = page.versionLabel ?? page.version;
-    const status = page.versionStatus ?? 'deprecated';
-    return {
-      tone: status,
-      title: `${label} is ${status}`,
-      body: page.versionBanner ?? defaultVersionBanner(label, status)
-    };
-  }
-
-  function defaultVersionBanner(label: string, status: string): string {
-    if (status === 'archived') {
-      return `${label} is kept for historical reference and may no longer match the current API.`;
-    }
-    return `${label} is no longer the recommended documentation version. Use the current version when possible.`;
-  }
-
   function titleFromSegment(segment: string): string {
     return segment
       .replace(/[-_]+/g, ' ')
@@ -100,12 +81,6 @@
       <p class="sd-doc-lede">{page.description}</p>
     {/if}
   </header>
-  {#if versionNotice}
-    <aside class="sd-version-banner" data-tone={versionNotice.tone}>
-      <strong>{versionNotice.title}</strong>
-      <p>{versionNotice.body}</p>
-    </aside>
-  {/if}
   <div class="sd-prose">
     {#if content}
       <svelte:component this={content} />

@@ -80,7 +80,6 @@ export function filterSearchRecords(
 
 export function matchesSearchScope(record: SvedocsSearchRecord, scope: SearchScope = {}): boolean {
   return matchesMetadata(record.metadata.locale, scope.locale)
-    && matchesMetadata(record.metadata.version, scope.version)
     && matchesMetadata(record.metadata.kind, scope.kind);
 }
 
@@ -89,13 +88,11 @@ export async function createSearchResponse(records: SvedocsSearchRecord[], reque
   const query = url.searchParams.get('q') ?? url.searchParams.get('query') ?? '';
   const limit = clampLimit(Number(url.searchParams.get('limit') ?? 10));
   const locale = readScopeParam(url, 'locale');
-  const version = readScopeParam(url, 'version');
   const kind = readScopeParam(url, 'kind');
   const results = searchRecords(records, {
     query,
     limit,
     ...(locale ? { locale } : {}),
-    ...(version ? { version } : {}),
     ...(kind ? { kind } : {})
   });
   return jsonResponse({ query, results });

@@ -21,9 +21,7 @@ export function createPageSearchRecord(page: SvedocsPage): SvedocsSearchRecord {
     metadata: {
       kind: page.kind,
       sourcePath: page.sourcePath,
-      ...(page.locale ? { locale: page.locale } : {}),
-      ...(page.version ? { version: page.version } : {}),
-      ...(page.versionStatus ? { versionStatus: page.versionStatus } : {})
+      ...(page.locale ? { locale: page.locale } : {})
     }
   };
 }
@@ -40,8 +38,6 @@ function createSectionSearchRecords(page: SvedocsPage, markdown: string): Svedoc
       kind: page.kind,
       sourcePath: page.sourcePath,
       ...(page.locale ? { locale: page.locale } : {}),
-      ...(page.version ? { version: page.version } : {}),
-      ...(page.versionStatus ? { versionStatus: page.versionStatus } : {}),
       headingId: section.id,
       headingDepth: section.depth
     }

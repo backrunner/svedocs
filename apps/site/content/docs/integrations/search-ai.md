@@ -1,7 +1,7 @@
 ---
 title: Search and Ask AI
 description: Use local search, Cloudflare AI Search, Ask AI providers, citations, streaming responses, and rate limits.
-order: 8
+order: 2
 ---
 
 # Search and Ask AI
@@ -41,12 +41,12 @@ export const POST = ({ platform, request }) => {
 
 `createConfiguredAskResponse` selects `mock`, `cloudflare-ai-search`, `cloudflare-workers-ai`, or `openai-compatible` from config. Missing credentials fall back to the mock provider with local citations instead of throwing during development.
 
-## Local Search
+## Local search
 
-Local search is deterministic and requires no hosted service. It uses MiniSearch to rank title, section, path, content, and metadata matches, and it accepts `locale`, `version`, and `kind` query parameters for scoped sites.
+Local search is deterministic and requires no hosted service. It uses MiniSearch to rank title, section, path, content, and metadata matches, and it accepts `locale` and `kind` query parameters for scoped sites.
 
 ```txt
-/api/search?q=cloudflare&locale=zh&version=v1
+/api/search?q=cloudflare&locale=zh
 ```
 
 ## Algolia
@@ -59,7 +59,7 @@ Set `search.provider = 'typesense'` and provide `TYPESENSE_HOST`, `TYPESENSE_SEA
 
 ## Cloudflare AI Search
 
-The provider supports the current `ai_search` and `ai_search_namespaces` bindings and keeps legacy `autorag()` compatibility only as a fallback for older Workers setups. It is not enabled by default; local MiniSearch remains the default search provider.
+The provider supports the current `ai_search` and `ai_search_namespaces` bindings. It is not enabled by default; local MiniSearch remains the default search provider.
 
 ## Indexing
 
@@ -68,19 +68,19 @@ svedocs index --provider cloudflare-ai-search --dry-run
 svedocs index --provider cloudflare-ai-search --strategy replace --wait
 ```
 
-Indexing uploads Markdown documents with compact svedocs metadata, supports explicit deletes, and reports per-record failures. The compact metadata uses one `svedocs` JSON field for display data and preserves `locale`, `version`, and `kind` as filterable fields.
+Indexing uploads Markdown documents with compact svedocs metadata, supports explicit deletes, and reports per-record failures. The compact metadata uses one `svedocs` JSON field for display data and preserves `locale` and `kind` as filterable fields.
 
 ## Ask AI
 
-The Ask AI runtime route supports JSON and event-stream responses. Cloudflare AI Search can pass through native token streams when the binding supports `chatCompletions({ stream: true })`; other providers still return structured answer/citation events. Request bodies can include `locale`, `version`, or `kind`; the default theme sends the active scope automatically.
+The Ask AI runtime route supports JSON and event-stream responses. Cloudflare AI Search can pass through native token streams when the binding supports `chatCompletions({ stream: true })`; other providers still return structured answer/citation events. Request bodies can include `locale` or `kind`; the default theme sends the active scope automatically.
 
-## OpenAI-Compatible Ask AI
+## OpenAI-compatible Ask AI
 
 Set `ai.provider = 'openai-compatible'` and provide `OPENAI_COMPATIBLE_API_KEY`, `OPENAI_COMPATIBLE_MODEL`, and optionally `OPENAI_COMPATIBLE_BASE_URL`. This provider builds a small RAG prompt from local svedocs search records, so it can work with OpenAI-compatible Chat Completions providers such as OpenAI, OpenRouter, Groq, Together, or private gateways.
 
 When you need lower-level control, import `createAlgoliaSearchProvider`, `createTypesenseSearchProvider`, `createCloudflareAiSearchProvider`, `createWorkersAiProvider`, or `createOpenAiCompatibleProvider` directly and pass the resulting provider to `createSearchResponse` or `createAskResponse`.
 
-## Rate Limits
+## Rate limits
 
 ```ts
 import { createCloudflareKvRateLimiter } from 'svedocs/ai';

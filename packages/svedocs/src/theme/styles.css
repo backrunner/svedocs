@@ -1473,53 +1473,6 @@ body {
   max-width: 62ch;
 }
 
-.sd-version-banner {
-  position: relative;
-  display: grid;
-  gap: .35rem;
-  margin-top: 1.2rem;
-  border: 1px solid color-mix(in srgb, var(--sd-accent-2) 46%, var(--sd-line));
-  border-left-width: 3px;
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--sd-accent-2) 16%, transparent) 0, transparent 8px),
-    color-mix(in srgb, var(--sd-accent-2) 9%, var(--sd-panel));
-  padding: .85rem 1rem .85rem 1.15rem;
-  color: var(--sd-ink);
-}
-
-.sd-version-banner::before {
-  content: "";
-  position: absolute;
-  top: -1px;
-  left: -1px;
-  width: 6px;
-  height: 6px;
-  background: var(--sd-accent-2);
-  image-rendering: pixelated;
-}
-
-.sd-version-banner strong {
-  font-size: .92rem;
-}
-
-.sd-version-banner p {
-  margin: 0;
-  color: var(--sd-muted);
-  font-size: .9rem;
-  line-height: 1.5;
-}
-
-.sd-version-banner[data-tone="deprecated"] {
-  border-color: color-mix(in srgb, var(--sd-accent) 50%, var(--sd-line));
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--sd-accent) 16%, transparent) 0, transparent 8px),
-    color-mix(in srgb, var(--sd-accent) 8%, var(--sd-panel));
-}
-
-.sd-version-banner[data-tone="deprecated"]::before {
-  background: var(--sd-accent);
-}
-
 .sd-prose {
   padding-top: 2rem;
   color: color-mix(in srgb, var(--sd-ink) 94%, var(--sd-muted));

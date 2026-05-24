@@ -5,7 +5,7 @@ Integrated SvelteKit documentation framework package.
 ## Exports
 
 - `svedocs/config`: config schema and `defineConfig`.
-- `svedocs/core`: content manifest, scoped navigation, version lifecycle metadata, checks, search records, and shared types.
+- `svedocs/core`: content manifest, scoped navigation, checks, search records, and shared types.
 - `svedocs/vite`: virtual modules and content refresh Vite plugin.
 - `svedocs/theme`: default Svelte theme components and Tailwind CSS v4 styles.
 - `svedocs/svelte`: `mdsvex`-based Svelte-compatible authoring helpers.

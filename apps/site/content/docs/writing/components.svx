@@ -1,16 +1,18 @@
 ---
-title: Svelte Components
+title: Components
 description: Author interactive Svelte components inside SVX and MDX-style documentation pages.
-order: 4
+order: 3
 ---
 
 <script>
   let target = 'SvelteKit';
 </script>
 
-## Interactive authoring
+# Components
 
 svedocs can route `.svx` and `.mdx` files through a Svelte-compatible authoring path while keeping the same manifest, search records, SEO metadata, and navigation model.
+
+## Interactive authoring
 
 <Callout tone="edge">
   Components can be injected by the `svedocs()` Vite plugin and used directly in authoring files.
@@ -26,3 +28,10 @@ The component above is compiled as Svelte, not rendered through a React MDX runt
 export const runtime = 'svelte';
 export const framework = 'svedocs';
 ```
+
+## When to use it
+
+- Small interactive examples.
+- Localized demos and callouts.
+- Layout-sensitive snippets that should stay inside the docs theme.
+

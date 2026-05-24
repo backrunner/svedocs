@@ -48,7 +48,6 @@ export function renderSvedocsHelp(): string {
     '  --external-links     Verify http(s) links with HEAD requests',
     '  --no-assets          Skip local asset existence checks',
     '  --translations       Warn when configured locales are missing doc pages',
-    '  --no-version-status  Hide informational deprecated/archived version issues',
     '  --package            Validate package files and exports',
     '',
     'Use --help on a command for more details.'
@@ -116,11 +115,10 @@ async function runCheckCommand(args: string[]): Promise<CliResult> {
 }
 
 function createCheckConfigOverrides(args: string[]) {
-  const checks: { assets?: boolean; externalLinks?: boolean; translations?: boolean; versionStatus?: boolean } = {};
+  const checks: { assets?: boolean; externalLinks?: boolean; translations?: boolean } = {};
   if (args.includes('--external-links')) checks.externalLinks = true;
   if (args.includes('--no-assets')) checks.assets = false;
   if (args.includes('--translations')) checks.translations = true;
-  if (args.includes('--no-version-status')) checks.versionStatus = false;
   return Object.keys(checks).length ? { checks } : undefined;
 }
 

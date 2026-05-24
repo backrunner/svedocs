@@ -64,15 +64,6 @@ export async function checkSvedocsContent(
         sourcePath: page.sourcePath
       });
     }
-    if (manifest.config.checks.versionStatus && isInactiveVersion(page)) {
-      issues.push({
-        code: 'deprecated-version',
-        severity: 'info',
-        message: `${page.routePath} belongs to ${page.versionStatus} version ${page.version}.`,
-        pageId: page.id,
-        sourcePath: page.sourcePath
-      });
-    }
     for (const link of page.links) {
       const issue = checkLink(page, link, linkContext)
         ?? await checkAssetLink(projectRoot, page.sourcePath, link, manifest.config.checks.assets)
@@ -90,7 +81,7 @@ function createMissingTranslationIssues(manifest: SvedocsContentManifest): Svedo
   const groups = new Map<string, SvedocsPage[]>();
   for (const page of manifest.pages) {
     if (page.hidden || page.kind !== 'doc') continue;
-    const key = `${page.version ?? ''}::${page.scopePath}`;
+    const key = page.scopePath;
     const group = groups.get(key) ?? [];
     group.push(page);
     groups.set(key, group);
@@ -105,19 +96,13 @@ function createMissingTranslationIssues(manifest: SvedocsContentManifest): Svedo
       issues.push({
         code: 'missing-translation',
         severity: 'warning',
-        message: `${reference.scopePath} is missing locale ${locale}${reference.version ? ` for version ${reference.version}` : ''}.`,
+        message: `${reference.scopePath} is missing locale ${locale}.`,
         pageId: reference.id,
         sourcePath: reference.sourcePath
       });
     }
   }
   return issues;
-}
-
-function isInactiveVersion(page: SvedocsPage): boolean {
-  return page.kind === 'doc'
-    && Boolean(page.version)
-    && (page.versionStatus === 'deprecated' || page.versionStatus === 'archived');
 }
 
 export async function checkPackagePublication(packageRoot: string): Promise<SvedocsContentIssue[]> {

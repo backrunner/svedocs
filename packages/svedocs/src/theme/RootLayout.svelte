@@ -53,8 +53,7 @@
   function createRuntimeScope(mode: 'current' | 'all', page: SvedocsPage | undefined): SearchScope {
     if (mode === 'all' || !page) return {};
     return {
-      ...(page.locale ? { locale: page.locale } : {}),
-      ...(page.version ? { version: page.version } : {})
+      ...(page.locale ? { locale: page.locale } : {})
     };
   }
 
@@ -149,7 +148,7 @@
     {#if config.search.enabled}
       <SearchDialog records={search} scope={searchScope} provider={config.search.provider} buildMode={config.build.mode} />
     {/if}
-    <ScopeSwitcher {page} {pages} locales={config.i18n.locales} versions={config.versions.items} />
+    <ScopeSwitcher {page} {pages} locales={config.i18n.locales} />
     {#if config.theme.social.length > 0}
       <nav class="sd-socialnav" aria-label="Social links">
         {#each config.theme.social as item}

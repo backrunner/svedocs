@@ -15,7 +15,6 @@ export async function createAskResponse(
       question?: string;
       messages?: ChatMessage[];
       locale?: string;
-      version?: string;
       kind?: string;
     };
     const messages = sanitizeMessages(body.messages);
@@ -73,27 +72,22 @@ function createRequestScope(
   const url = new URL(request.url);
   const base = typeof configured === 'function' ? configured(request) : configured;
   const locale = readScopeParam(url, 'locale');
-  const version = readScopeParam(url, 'version');
   const kind = readScopeParam(url, 'kind');
   return cleanScope({
     ...(base ?? {}),
     ...(locale ? { locale } : {}),
-    ...(version ? { version } : {}),
     ...(kind ? { kind } : {}),
     ...(body.locale ? { locale: body.locale } : {}),
-    ...(body.version ? { version: body.version } : {}),
     ...(body.kind ? { kind: body.kind } : {})
   });
 }
 
 function cleanScope(scope: {
   locale?: string | undefined;
-  version?: string | undefined;
   kind?: string | undefined;
 }): SearchScope {
   return {
     ...(scope.locale?.trim() ? { locale: scope.locale.trim() } : {}),
-    ...(scope.version?.trim() ? { version: scope.version.trim() } : {}),
     ...(scope.kind?.trim() ? { kind: scope.kind.trim() } : {})
   };
 }

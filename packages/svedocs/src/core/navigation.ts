@@ -158,7 +158,7 @@ function comparePagesForNavigation(a: SvedocsPage, b: SvedocsPage): number {
 function groupDocsByScope(docs: SvedocsPage[]): Map<string, SvedocsPage[]> {
   const groups = new Map<string, SvedocsPage[]>();
   for (const page of docs) {
-    const key = `${page.locale ?? ''}::${page.version ?? ''}`;
+    const key = page.locale ?? '';
     const group = groups.get(key) ?? [];
     group.push(page);
     groups.set(key, group);

@@ -25,7 +25,6 @@ interface AlgoliaHit {
   hierarchy?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
   locale?: string;
-  version?: string;
   kind?: string;
   _snippetResult?: Record<string, {
     value?: string;
@@ -81,7 +80,6 @@ function createAlgoliaResult(hit: AlgoliaHit, index: number, query: string): Sea
   const metadata = stringifyMetadata({
     ...(hit.metadata ?? {}),
     locale: hit.locale ?? hit.metadata?.locale,
-    version: hit.version ?? hit.metadata?.version,
     kind: hit.kind ?? hit.metadata?.kind
   });
   const hierarchyTitle = readHierarchy(hit.hierarchy, ['lvl0', 'lvl1', 'lvl2']);

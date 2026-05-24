@@ -78,9 +78,6 @@ async function loadContentFile(
   const compiled = await compileMarkdown(renderMarkdown, markdownOptions);
   const kind = inferKind(file, config);
   const route = createRouteInfo(file, kind, config);
-  const versionInfo = route.version
-    ? config.versions.items.find((item) => item.name === route.version)
-    : undefined;
   const routePath = route.routePath;
   const title = titleFromFrontmatter ?? discoveredTitle ?? compiled.title ?? titleFromRoute(routePath);
   const navTitle = stringFrontmatter(frontmatter.navTitle) ?? stringFrontmatter(frontmatter.nav_title);
@@ -111,10 +108,6 @@ async function loadContentFile(
     scopePath: route.scopePath,
     slug: route.slug,
     ...(route.locale ? { locale: route.locale } : {}),
-    ...(route.version ? { version: route.version } : {}),
-    ...(versionInfo?.label ? { versionLabel: versionInfo.label } : {}),
-    ...(versionInfo?.status ? { versionStatus: versionInfo.status } : {}),
-    ...(versionInfo?.banner ? { versionBanner: versionInfo.banner } : {}),
     kind,
     title,
     ...(navTitle ? { navTitle } : {}),
@@ -186,7 +179,6 @@ interface SvedocsRouteInfo {
   scopePath: string;
   slug: string[];
   locale?: string;
-  version?: string;
 }
 
 function createRouteInfo(file: string, kind: 'doc' | 'page', config: SvedocsResolvedConfig): SvedocsRouteInfo {
@@ -198,14 +190,10 @@ function createRouteInfo(file: string, kind: 'doc' | 'page', config: SvedocsReso
   const parts = rawParts.at(-1) === 'index' ? rawParts.slice(0, -1) : [...rawParts];
   const routeParts = kind === 'doc' ? ['docs'] : [];
   const locale = consumeLocale(parts, config);
-  const version = kind === 'doc' ? consumeVersion(parts, config) : undefined;
   const scopeParts = [...parts];
 
   if (locale && shouldPrefixLocale(locale, config)) {
     routeParts.push(findLocalePath(locale, config) ?? locale);
-  }
-  if (version && shouldPrefixVersion(version, config)) {
-    routeParts.push(findVersionPath(version, config) ?? version);
   }
   routeParts.push(...parts);
 
@@ -215,8 +203,7 @@ function createRouteInfo(file: string, kind: 'doc' | 'page', config: SvedocsReso
     routePath,
     scopePath,
     slug: routePath.split('/').filter(Boolean),
-    ...(locale ? { locale } : {}),
-    ...(version ? { version } : {})
+    ...(locale ? { locale } : {})
   };
 }
 
@@ -230,30 +217,12 @@ function consumeLocale(parts: string[], config: SvedocsResolvedConfig): string |
   return config.i18n.defaultLocale;
 }
 
-function consumeVersion(parts: string[], config: SvedocsResolvedConfig): string | undefined {
-  if (config.versions.items.length === 0) return undefined;
-  const match = config.versions.items.find((version) => version.path === parts[0] || version.name === parts[0]);
-  if (match) {
-    parts.shift();
-    return match.name;
-  }
-  return config.versions.current;
-}
-
 function shouldPrefixLocale(locale: string, config: SvedocsResolvedConfig): boolean {
   return config.i18n.prefixDefaultLocale || locale !== config.i18n.defaultLocale;
 }
 
-function shouldPrefixVersion(version: string, config: SvedocsResolvedConfig): boolean {
-  return config.versions.prefixCurrentVersion || version !== config.versions.current;
-}
-
 function findLocalePath(locale: string, config: SvedocsResolvedConfig): string | undefined {
   return config.i18n.locales.find((item) => item.code === locale)?.path;
-}
-
-function findVersionPath(version: string, config: SvedocsResolvedConfig): string | undefined {
-  return config.versions.items.find((item) => item.name === version)?.path;
 }
 
 function createPageId(file: string): string {

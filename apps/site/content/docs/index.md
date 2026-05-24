@@ -1,11 +1,12 @@
 ---
-title: Introduction
-description: Start building documentation sites with svedocs.
+title: Quick Start
+description: Start a svedocs site in minutes and learn the core pieces of the framework.
+order: 1
 ---
 
-# Introduction
+# Quick Start
 
-svedocs is a SvelteKit-native documentation framework. It gives projects a complete docs foundation without asking users to assemble many optional rendering packages.
+svedocs is a SvelteKit-native documentation framework for docs sites that want a single, integrated stack: content loading, theme, search, Ask AI, SEO, OG images, and Cloudflare deployment helpers.
 
 ## Install
 
@@ -23,24 +24,26 @@ pnpm install
 pnpm dev
 ```
 
-## Built in
+## What you get
 
 | Capability | Default |
 | --- | --- |
-| Content | Markdown, MDX-style authoring, frontmatter |
-| Theme | Tailwind CSS v4 with light and dark modes |
-| Deploy | Cloudflare edge-first |
-| Search | MiniSearch local search, Algolia, Typesense, and Cloudflare AI Search |
+| Content | Markdown, SVX/MDX-style authoring, frontmatter, code metadata, and scoped navigation |
+| Theme | Tailwind CSS v4 theme tokens, light and dark modes, and layout components |
+| Deploy | Cloudflare edge SSR, static output, and SPA fallback |
+| Search | Local MiniSearch, Algolia, Typesense, and Cloudflare AI Search |
 | Ask AI | Mock, Cloudflare AI Search, Workers AI, OpenAI-compatible providers, citations, and rate limits |
 | SEO | Metadata, JSON-LD, sitemap, robots, and OG assets |
 
-## Framework shape
-
-svedocs ships as one integrated framework package plus one CLI package. The content model, theme, Search/Ask AI, SEO, OG, and Cloudflare helpers live inside `svedocs`.
-
 ## Next steps
 
-- Configure the site in [Configuration](/docs/configuration).
-- Author content with [Content](/docs/content).
-- Deploy with [Cloudflare](/docs/cloudflare).
-- Wire production search with [Search and Ask AI](/docs/search-ai).
+- Read [Installation](/docs/installation) if you are wiring svedocs into an existing SvelteKit app.
+- Read [Writing](/docs/writing) to understand the content model and authoring flow.
+- Read [Configuration](/docs/configuration) for site metadata, theme, and build settings.
+- Read [Integrations](/docs/integrations) for search, AI, deployment, and SEO helpers.
+
+## FAQ
+
+- New project? Use `pnpm create svedocs`.
+- Existing project? Start with `pnpm add svedocs` and `pnpm add -D @svedocs/cli`.
+- Need a quick demo? The CLI can scaffold a full docs site with local search and OG routes.

@@ -96,7 +96,6 @@ function mergeSvedocsConfig(
   const search = overrides.search ?? base.search;
   const ai = overrides.ai ?? base.ai;
   const i18n = overrides.i18n ?? base.i18n;
-  const versions = overrides.versions ?? base.versions;
   return {
     ...base,
     ...overrides,
@@ -118,8 +117,7 @@ function mergeSvedocsConfig(
     ...(cloudflare ? { cloudflare: { ...cloudflare, ...(aiSearch ? { aiSearch } : {}) } } : {}),
     ...(search !== undefined ? { search } : {}),
     ...(ai !== undefined ? { ai } : {}),
-    ...(i18n !== undefined ? { i18n } : {}),
-    ...(versions !== undefined ? { versions } : {})
+    ...(i18n !== undefined ? { i18n } : {})
   };
 }
 

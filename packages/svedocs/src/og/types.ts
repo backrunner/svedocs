@@ -63,5 +63,4 @@ export interface SvedocsPageAlternate {
   lang: string;
   href: string;
   locale?: string;
-  version?: string;
 }

@@ -14,7 +14,7 @@ CLI package for `svedocs` and `create-svedocs`.
 - `svedocs ssg`
 - `svedocs preview`
 - `svedocs check`
-- `svedocs check --strict --external-links --no-assets --translations --no-version-status --package`
+- `svedocs check --strict --external-links --no-assets --translations --package`
 - `svedocs check --config ./svedocs.config.ts`
 - `svedocs index --format json|jsonl --out search.json`
 - `svedocs index --provider cloudflare-ai-search --dry-run`

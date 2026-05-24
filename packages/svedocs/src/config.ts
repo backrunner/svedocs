@@ -136,7 +136,6 @@ export interface SvedocsConfig {
     assets?: boolean;
     externalLinks?: boolean;
     translations?: boolean;
-    versionStatus?: boolean;
   };
   cloudflare?: {
     compatibilityDate?: string;
@@ -155,17 +154,6 @@ export interface SvedocsConfig {
       path?: string;
     }>;
     prefixDefaultLocale?: boolean;
-  };
-  versions?: false | {
-    current?: string;
-    items?: Array<string | {
-      name: string;
-      label?: string;
-      path?: string;
-      status?: 'current' | 'next' | 'deprecated' | 'archived';
-      banner?: string;
-    }>;
-    prefixCurrentVersion?: boolean;
   };
 }
 
@@ -359,8 +347,7 @@ export const svedocsConfigSchema = z.object({
     .object({
       assets: z.boolean().optional(),
       externalLinks: z.boolean().optional(),
-      translations: z.boolean().optional(),
-      versionStatus: z.boolean().optional()
+      translations: z.boolean().optional()
     })
     .optional(),
   cloudflare: z
@@ -394,29 +381,6 @@ export const svedocsConfigSchema = z.object({
           )
           .optional(),
         prefixDefaultLocale: z.boolean().optional()
-      })
-    ])
-    .optional(),
-  versions: z
-    .union([
-      z.literal(false),
-      z.object({
-        current: z.string().optional(),
-        items: z
-          .array(
-            z.union([
-              z.string(),
-              z.object({
-                name: z.string(),
-                label: z.string().optional(),
-                path: z.string().optional(),
-                status: z.enum(['current', 'next', 'deprecated', 'archived']).optional(),
-                banner: z.string().optional()
-              })
-            ])
-          )
-          .optional(),
-        prefixCurrentVersion: z.boolean().optional()
       })
     ])
     .optional()

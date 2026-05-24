@@ -26,36 +26,36 @@
 
   const homePillars = [
     {
-      label: 'Svelte',
-      title: 'Native authoring',
-      description: 'Write docs, routes, and interactive examples with the same SvelteKit mental model.',
+      label: 'Start',
+      title: 'Quick Start',
+      description: 'Get a site running, open the docs route, and move straight into the installed docs tree.',
       glyph: '1011\n1101\n0110\n1011',
-      match: /intro|component|content|mdx|svx/i,
+      match: /quick\s*start|getting-started|index/i,
       fallback: '/docs'
     },
     {
-      label: 'Lightweight',
-      title: 'One lean package',
-      description: 'Keep rendering, theme, SEO, search, and adapters integrated without plugin sprawl.',
+      label: 'Install',
+      title: 'Manual Installation',
+      description: 'Add svedocs to an existing SvelteKit app and wire the Vite plugin plus theme styles.',
       glyph: '0110\n1111\n1001\n0110',
-      match: /configuration|api|theme/i,
-      fallback: '/docs/configuration'
+      match: /installation/i,
+      fallback: '/docs/installation'
     },
     {
-      label: 'Integration',
-      title: 'Search and AI ready',
-      description: 'Connect local search, Algolia, Typesense, or Cloudflare AI Search behind one contract.',
+      label: 'Write',
+      title: 'Writing',
+      description: 'Use Markdown, frontmatter, and Svelte components in one content tree.',
       glyph: '1010\n0101\n1010\n0101',
-      match: /search|ai/i,
-      fallback: '/docs/search-ai'
+      match: /writing|content|components/i,
+      fallback: '/docs/writing'
     },
     {
-      label: 'Edge First',
-      title: 'Deploy near readers',
-      description: 'Build for Cloudflare Pages by default, with static output and SPA fallback when needed.',
+      label: 'Integrate',
+      title: 'Integrations',
+      description: 'Add search, Ask AI, Cloudflare deployment, SEO, and OG assets when the content is ready.',
       glyph: '1111\n1001\n1001\n1111',
-      match: /cloudflare|deploy|edge/i,
-      fallback: '/docs/cloudflare'
+      match: /integrations|search|ai|cloudflare|seo|og/i,
+      fallback: '/docs/integrations'
     }
   ] as const;
 

@@ -1,20 +1,20 @@
 ---
-title: SEO and OG
-description: Generate metadata, canonical URLs, JSON-LD, sitemap, robots, and Open Graph images.
-order: 9
+title: SEO 和 OG
+description: 生成元数据、canonical URL、JSON-LD、站点地图、robots 和 Open Graph 图片。
+order: 4
 ---
 
-# SEO and OG
+# SEO 和 OG
 
-SEO data is resolved from global config, frontmatter, route metadata, and generated page data.
+SEO 数据来自全局配置、frontmatter、路由元数据和页面生成结果。
 
 ## Frontmatter
 
 ```md
 ---
-title: Search and Ask AI
-description: Use local search, Cloudflare AI Search, and Ask AI providers.
-canonical: https://svedocs.dev/docs/search-ai
+title: 搜索和 Ask AI
+description: 使用本地搜索、Cloudflare AI Search 和 Ask AI 提供商。
+canonical: https://svedocs.dev/docs/zh/integrations/search-ai
 image: https://svedocs.dev/og/docs-search-ai.svg
 author: svedocs team
 published: 2026-05-18
@@ -26,21 +26,21 @@ keywords:
 ---
 ```
 
-If `site.url` is set, svedocs generates canonical URLs automatically.
+如果设置了 `site.url`，svedocs 会自动生成 canonical URL。
 
-## Metadata
+## 元数据
 
-The default root layout renders:
+默认根布局会渲染：
 
-- `<title>` and description.
-- Canonical URL.
-- Open Graph and Twitter card tags.
-- JSON-LD for docs pages and single pages.
-- Article author, publish time, and update time when frontmatter provides them.
+- `<title>` 和 description。
+- canonical URL。
+- Open Graph 和 Twitter card 标签。
+- 文档页和单页的 JSON-LD。
+- frontmatter 提供时的 author、published time 和 updated time。
 
-Use `createPageMetadata(config, page)` from `svedocs/og` when building custom layouts.
+自定义布局时可以直接用 `createPageMetadata(config, page)`。
 
-## Sitemap and Robots
+## 站点地图和 robots
 
 ```ts title="src/routes/sitemap.xml/+server.ts"
 import { createSitemapXml } from 'svedocs/og';
@@ -54,9 +54,9 @@ export const GET = () => {
 };
 ```
 
-`createRobotsTxt(config)` provides a matching `robots.txt` response.
+`createRobotsTxt(config)` 可以生成对应的 `robots.txt` 响应。
 
-## Dynamic OG Route
+## 动态 OG 路由
 
 ```ts title="src/routes/og/[...path]/+server.ts"
 import { error } from '@sveltejs/kit';
@@ -91,11 +91,11 @@ export const GET = async ({ params }) => {
 };
 ```
 
-SVG OG routes are portable to edge runtimes. PNG generation is available through the CLI for build-time assets.
+SVG OG 路由适合 edge runtime。PNG 可以在构建期通过 CLI 生成。
 
-## Build-time OG Assets
+## 构建期 OG 资源
 
-Configure build-time defaults once:
+先把默认值一次配好：
 
 ```ts title="svedocs.config.ts"
 export default defineConfig({
@@ -110,15 +110,15 @@ export default defineConfig({
 });
 ```
 
-`svedocs build` generates these assets after a successful Vite build. Pass `--no-og` to skip automatic generation for CI jobs that only need the application bundle.
+`svedocs build` 会在 Vite 构建成功后自动生成这些资源。CI 如果只需要应用包，可以加 `--no-og` 跳过。
 
-## PNG and Satori
+## PNG 和 Satori
 
 ```sh
 svedocs og --format png --out static/og
 svedocs og --renderer satori --font ./Inter-Regular.ttf --format png
 ```
 
-Satori rendering requires explicit font files so output stays deterministic across machines and deployment environments.
+Satori 渲染需要显式指定字体文件，这样输出才会在不同机器和部署环境里保持稳定。
 
-Build-time `svedocs og` and automatic `svedocs build` generation preserve function templates from `svedocs.config.ts`. Dynamic routes can use the same template when it is safe for the target runtime; otherwise prefer the default SVG renderer for edge portability.
+构建期 `svedocs og` 和自动生成的 `svedocs build` 会保留 `svedocs.config.ts` 里的函数模板。动态路由在目标运行时安全时可以复用同一套模板，否则优先用默认 SVG renderer。

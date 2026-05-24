@@ -5,7 +5,6 @@ import type { CloudflareAiSearchChatOutput } from '../search.js';
 import type {
   AiProvider,
   AiSearchBinding,
-  AiSearchRuntimeBinding,
   AskCitation,
   AskInput,
   CloudflareAiChatInstance,
@@ -28,7 +27,7 @@ export function createMockAiProvider(): AiProvider {
 }
 
 export function createCloudflareAiSearchAiProvider(input: {
-  binding: AiSearchRuntimeBinding;
+  binding: AiSearchBinding;
   instanceName?: string;
   systemPrompt?: string;
   model?: string;
@@ -39,26 +38,7 @@ export function createCloudflareAiSearchAiProvider(input: {
 
   async function ask(question: AskInput) {
     const conversation = buildChatMessages(systemPrompt, question);
-    if (isLegacyAiSearchBinding(input.binding)) {
-      const result = await input.binding.autorag(input.instanceName ?? 'svedocs').aiSearch({
-        query: composeLegacyQuery(question),
-        system_prompt: systemPrompt,
-        max_num_results: maxResults,
-        reranking: { enabled: true }
-      });
-      return {
-        answer: result.response ?? 'No answer was returned.',
-        citations: (result.data ?? []).map((item, index) => {
-          const section = stringMetadata(item.metadata?.section);
-          return {
-            title: item.title ?? stringMetadata(item.metadata?.title) ?? `Source ${index + 1}`,
-            url: item.url ?? stringMetadata(item.metadata?.url) ?? '#',
-            ...(section ? { section } : {})
-          };
-        })
-      };
-    }
-    const instance = resolveAiChatInstance(input.binding as AiSearchBinding, input.instanceName);
+    const instance = resolveAiChatInstance(input.binding, input.instanceName);
     if (!instance.chatCompletions) {
       const result = await instance.search({
         messages: conversation,
@@ -108,10 +88,7 @@ export function createCloudflareAiSearchAiProvider(input: {
     name: 'cloudflare-ai-search',
     ask,
     async stream(question) {
-      if (isLegacyAiSearchBinding(input.binding)) {
-        return createSvedocsAnswerStream(await ask(question));
-      }
-      const instance = resolveAiChatInstance(input.binding as AiSearchBinding, input.instanceName);
+      const instance = resolveAiChatInstance(input.binding, input.instanceName);
       if (!instance.chatCompletions) {
         return createSvedocsAnswerStream(await ask(question));
       }
@@ -233,14 +210,6 @@ function readWorkersAiAnswer(result: Awaited<ReturnType<CloudflareWorkersAiBindi
   return result.response ?? result.answer ?? result.result ?? 'No answer was returned.';
 }
 
-function stringMetadata(value: unknown): string | undefined {
-  return typeof value === 'string' && value.trim() ? value : undefined;
-}
-
-function isLegacyAiSearchBinding(binding: AiSearchRuntimeBinding): binding is Extract<AiSearchRuntimeBinding, { autorag: unknown }> {
-  return 'autorag' in binding && !('search' in binding) && !('get' in binding);
-}
-
 function buildChatMessages(
   systemPrompt: string,
   input: AskInput
@@ -258,13 +227,4 @@ function buildChatMessages(
     messages.push({ role: 'user', content: input.question });
   }
   return messages;
-}
-
-function composeLegacyQuery(input: AskInput): string {
-  const history = input.messages ?? [];
-  if (history.length === 0) return input.question;
-  const turns = history.map((message) => `${message.role}: ${message.content}`);
-  const lastIsCurrent = history[history.length - 1]?.role === 'user' && history[history.length - 1]?.content === input.question;
-  if (lastIsCurrent) return turns.join('\n');
-  return `${turns.join('\n')}\nuser: ${input.question}`;
 }

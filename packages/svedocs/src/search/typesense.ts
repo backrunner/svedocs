@@ -33,7 +33,6 @@ interface TypesenseDocument {
   section?: string;
   anchor?: string;
   locale?: string;
-  version?: string;
   kind?: string;
   metadata?: Record<string, unknown>;
   svedocs?: string;
@@ -103,7 +102,6 @@ function normalizeTypesenseMetadata(document: TypesenseDocument): Record<string,
   const metadata = stringifyMetadata({
     ...(document.metadata ?? {}),
     locale: document.locale ?? document.metadata?.locale,
-    version: document.version ?? document.metadata?.version,
     kind: document.kind ?? document.metadata?.kind
   });
   const embedded = stringMetadata(document.svedocs) ?? stringMetadata(document.metadata?.svedocs);

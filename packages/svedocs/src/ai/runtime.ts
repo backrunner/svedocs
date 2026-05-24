@@ -1,12 +1,12 @@
 import type { SvedocsResolvedConfig, SvedocsSearchRecord } from '../core.js';
-import type { CloudflareAiSearchBinding, CloudflareAiSearchInstance, CloudflareAiSearchNamespace } from '../search.js';
+import type { CloudflareAiSearchInstance, CloudflareAiSearchNamespace } from '../search.js';
 import { createCloudflareAiSearchAiProvider, createMockAiProvider, createWorkersAiProvider } from './providers.js';
 import { createAskResponse } from './response.js';
 import type { AiProvider, CloudflareWorkersAiBinding, CreateAskResponseOptions } from './types.js';
 import { createOpenAiCompatibleProvider } from './openai-compatible.js';
 
 export interface SvedocsAiRuntimeEnv {
-  SVEDOCS_AI_SEARCH?: CloudflareAiSearchInstance | CloudflareAiSearchNamespace | CloudflareAiSearchBinding | undefined;
+  SVEDOCS_AI_SEARCH?: CloudflareAiSearchInstance | CloudflareAiSearchNamespace | undefined;
   AI?: CloudflareWorkersAiBinding | undefined;
   OPENAI_COMPATIBLE_API_KEY?: string | undefined;
   OPENAI_COMPATIBLE_BASE_URL?: string | undefined;
@@ -102,7 +102,7 @@ export function createConfiguredAskResponse(
 function readCloudflareAiSearchBinding(
   env: SvedocsAiRuntimeEnv | undefined,
   config: Pick<SvedocsResolvedConfig, 'cloudflare'>
-): CloudflareAiSearchInstance | CloudflareAiSearchNamespace | CloudflareAiSearchBinding | undefined {
+): CloudflareAiSearchInstance | CloudflareAiSearchNamespace | undefined {
   const bindingName = config.cloudflare.aiSearch.binding;
   const dynamicBinding = env?.[bindingName];
   if (isCloudflareAiSearchBinding(dynamicBinding)) return dynamicBinding;
@@ -116,11 +116,9 @@ function readWorkersAiBinding(env: SvedocsAiRuntimeEnv | undefined): CloudflareW
 
 function isCloudflareAiSearchBinding(
   value: unknown
-): value is CloudflareAiSearchInstance | CloudflareAiSearchNamespace | CloudflareAiSearchBinding {
+): value is CloudflareAiSearchInstance | CloudflareAiSearchNamespace {
   if (!value || typeof value !== 'object') return false;
-  return (
-    'search' in value || 'get' in value || 'autorag' in value
-  );
+  return 'search' in value || 'get' in value;
 }
 
 function isWorkersAiBinding(value: unknown): value is CloudflareWorkersAiBinding {

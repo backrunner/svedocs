@@ -4,7 +4,6 @@ import { createCloudflareAiSearchProvider } from './cloudflare.js';
 import { createLocalSearchProvider, createSearchResponse } from './local.js';
 import { createTypesenseSearchProvider } from './typesense.js';
 import type {
-  CloudflareAiSearchBinding,
   CloudflareAiSearchInstance,
   CloudflareAiSearchNamespace,
   SearchProvider,
@@ -14,7 +13,7 @@ import type {
 import { jsonResponse } from './utils.js';
 
 export interface SvedocsSearchRuntimeEnv {
-  SVEDOCS_AI_SEARCH?: CloudflareAiSearchInstance | CloudflareAiSearchNamespace | CloudflareAiSearchBinding | undefined;
+  SVEDOCS_AI_SEARCH?: CloudflareAiSearchInstance | CloudflareAiSearchNamespace | undefined;
   ALGOLIA_APP_ID?: string | undefined;
   ALGOLIA_SEARCH_KEY?: string | undefined;
   ALGOLIA_API_KEY?: string | undefined;
@@ -130,13 +129,11 @@ export async function createConfiguredSearchResponse(
 export function readSearchQuery(request: Request): SearchQuery {
   const url = new URL(request.url);
   const locale = readScopeParam(url, 'locale');
-  const version = readScopeParam(url, 'version');
   const kind = readScopeParam(url, 'kind');
   return {
     query: url.searchParams.get('q') ?? url.searchParams.get('query') ?? '',
     limit: clampLimit(Number(url.searchParams.get('limit') ?? 10)),
     ...(locale ? { locale } : {}),
-    ...(version ? { version } : {}),
     ...(kind ? { kind } : {})
   };
 }
@@ -159,7 +156,7 @@ function createDisabledSearchProvider(): SearchProvider {
 function readCloudflareAiSearchBinding(
   env: SvedocsSearchRuntimeEnv | undefined,
   config: Pick<SvedocsResolvedConfig, 'cloudflare'>
-): CloudflareAiSearchInstance | CloudflareAiSearchNamespace | CloudflareAiSearchBinding | undefined {
+): CloudflareAiSearchInstance | CloudflareAiSearchNamespace | undefined {
   const bindingName = config.cloudflare.aiSearch.binding;
   const dynamicBinding = env?.[bindingName];
   if (isCloudflareAiSearchBinding(dynamicBinding)) return dynamicBinding;
@@ -169,11 +166,9 @@ function readCloudflareAiSearchBinding(
 
 function isCloudflareAiSearchBinding(
   value: unknown
-): value is CloudflareAiSearchInstance | CloudflareAiSearchNamespace | CloudflareAiSearchBinding {
+): value is CloudflareAiSearchInstance | CloudflareAiSearchNamespace {
   if (!value || typeof value !== 'object') return false;
-  return (
-    'search' in value || 'get' in value || 'autorag' in value
-  );
+  return 'search' in value || 'get' in value;
 }
 
 function readFirstEnv(env: SvedocsSearchRuntimeEnv | undefined, keys: string[]): string | undefined {
@@ -187,7 +182,6 @@ function readFirstEnv(env: SvedocsSearchRuntimeEnv | undefined, keys: string[]):
 function createAlgoliaScopeFilters(query: SearchScope): string | undefined {
   return [
     query.locale ? `locale:${quoteAlgoliaFilterValue(query.locale)}` : undefined,
-    query.version ? `version:${quoteAlgoliaFilterValue(query.version)}` : undefined,
     query.kind ? `kind:${quoteAlgoliaFilterValue(query.kind)}` : undefined
   ].filter(Boolean).join(' AND ') || undefined;
 }
@@ -199,7 +193,6 @@ function quoteAlgoliaFilterValue(value: string): string {
 function createTypesenseScopeFilters(query: SearchScope): string | undefined {
   return [
     query.locale ? `locale:=${quoteTypesenseFilterValue(query.locale)}` : undefined,
-    query.version ? `version:=${quoteTypesenseFilterValue(query.version)}` : undefined,
     query.kind ? `kind:=${quoteTypesenseFilterValue(query.kind)}` : undefined
   ].filter(Boolean).join(' && ') || undefined;
 }

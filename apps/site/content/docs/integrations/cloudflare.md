@@ -1,14 +1,14 @@
 ---
 title: Cloudflare
 description: Deploy svedocs to Cloudflare Pages with edge SSR, static output, Workers AI, and AI Search bindings.
-order: 7
+order: 3
 ---
 
 # Cloudflare
 
 Cloudflare edge SSR is the default deployment path for svedocs. Static output is also first-class. SPA output is supported for hosts that need a client-side fallback while still serving prerendered known pages.
 
-## Build Preset
+## Build preset
 
 ```ts title="svelte.config.js"
 import adapterCloudflare from '@sveltejs/adapter-cloudflare';
@@ -44,7 +44,7 @@ For AI Search namespaces, configure `cloudflare.aiSearch.namespace`; svedocs wil
 
 `platformProxy.remoteBindings` is disabled in the local adapter config so edge builds and prerendering do not require a Cloudflare account. `cloudflare.aiSearch.remote` also defaults to `false`; set both intentionally only when you want local development to talk to remote Cloudflare resources.
 
-## Runtime Types
+## Runtime types
 
 ```ts title="svedocs.config.ts"
 export default defineConfig({
@@ -63,8 +63,9 @@ The generated platform declaration types the `SVEDOCS_AI_SEARCH` binding. Worker
 
 AI Search is opt-in. A default project keeps MiniSearch local search, and only emits AI Search bindings when `search.provider` or `ai.provider` is set to `cloudflare-ai-search`.
 
-## Local Development
+## Local development
 
 Cloudflare-backed routes should always keep local fallback behavior. The template search route uses `createConfiguredSearchResponse`, so Cloudflare AI Search falls back to local JSON search when no binding is present. The Ask AI route uses `createConfiguredAskResponse`, so missing AI Search, Workers AI, or OpenAI-compatible credentials fall back to the mock provider with local citations.
 
 Use `.dev.vars.example` for environment names and keep real tokens out of the repository.
+

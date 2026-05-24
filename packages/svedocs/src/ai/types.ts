@@ -1,6 +1,5 @@
 import type { SvedocsSearchRecord } from '../core.js';
 import type {
-  CloudflareAiSearchBinding,
   CloudflareAiSearchChatOutput,
   CloudflareAiSearchInput,
   CloudflareAiSearchInstance,
@@ -100,4 +99,3 @@ export interface CloudflareKvNamespace {
 }
 
 export type AiSearchBinding = CloudflareAiChatInstance | CloudflareAiSearchNamespace;
-export type AiSearchRuntimeBinding = CloudflareAiChatInstance | CloudflareAiSearchNamespace | CloudflareAiSearchBinding;

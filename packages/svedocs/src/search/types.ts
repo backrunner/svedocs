@@ -4,13 +4,11 @@ export interface SearchQuery {
   query: string;
   limit?: number;
   locale?: string;
-  version?: string;
   kind?: string;
 }
 
 export interface SearchScope {
   locale?: string;
-  version?: string;
   kind?: string;
 }
 
@@ -124,11 +122,6 @@ export interface CloudflareAiSearchInput {
     };
   };
   max_num_results?: number;
-  /**
-   * @deprecated Use ai_search_options.query_rewrite. This is preserved for
-   * legacy AutoRAG compatibility and mapped to query_rewrite for current AI Search.
-   */
-  rewrite_query?: boolean;
 }
 
 export interface CloudflareAiSearchItem {
@@ -184,40 +177,6 @@ export interface CloudflareAiSearchChatOutput extends CloudflareAiSearchOutput {
     url?: string;
     section?: string;
   }>;
-}
-
-export interface CloudflareAiSearchRagInstance {
-  aiSearch(input: {
-    query: string;
-    system_prompt?: string;
-    model?: string;
-    max_num_results?: number;
-    rewrite_query?: boolean;
-    reranking?: {
-      enabled: boolean;
-      model?: string;
-    };
-    ai_search_options?: {
-      retrieval?: {
-        max_num_results?: number;
-      };
-    };
-  }): Promise<{
-    response?: string;
-    data?: Array<{
-      id?: string;
-      title?: string;
-      url?: string;
-      content?: string;
-      text?: string;
-      score?: number;
-      metadata?: Record<string, unknown>;
-    }>;
-  }>;
-}
-
-export interface CloudflareAiSearchBinding {
-  autorag(instanceName: string): CloudflareAiSearchRagInstance;
 }
 
 export interface CloudflareAiSearchNamespace {

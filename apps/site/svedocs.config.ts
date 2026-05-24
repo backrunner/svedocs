@@ -30,8 +30,8 @@ export default defineConfig({
     },
     nav: [
       { label: 'Docs', href: '/docs' },
-      { label: 'Theme', href: '/docs/theme' },
-      { label: 'API', href: '/docs/api' }
+      { label: 'Configuration', href: '/docs/configuration' },
+      { label: 'API', href: '/docs/reference/api' }
     ],
     brand: {
       label: 'svedocs',
@@ -82,18 +82,6 @@ export default defineConfig({
     locales: [
       { code: 'en', label: 'English' },
       { code: 'zh', label: '中文' }
-    ]
-  },
-  versions: {
-    current: 'v1',
-    items: [
-      { name: 'v1', label: 'Latest' },
-      {
-        name: 'v0',
-        label: 'Legacy',
-        status: 'archived',
-        banner: 'This version is kept as a routing and version switching demo for svedocs. Use Latest for current APIs.'
-      }
     ]
   },
   source: {

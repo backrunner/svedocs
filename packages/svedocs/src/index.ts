@@ -20,8 +20,7 @@ export type {
   SvedocsPage,
   SvedocsSearchRecord,
   SvedocsSeo,
-  SvedocsTreeItem,
-  SvedocsVersion
+  SvedocsTreeItem
 } from './core.js';
 
 export const version = '0.0.0';

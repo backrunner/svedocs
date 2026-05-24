@@ -1,9 +1,5 @@
 import type { SvedocsConfig } from '../config.js';
-import type { SvedocsLocale, SvedocsResolvedConfig, SvedocsVersion } from './types.js';
-
-type NormalizedVersion = Omit<SvedocsVersion, 'status'> & {
-  status?: SvedocsVersion['status'];
-};
+import type { SvedocsLocale, SvedocsResolvedConfig } from './types.js';
 
 export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolvedConfig {
   const contentRoot = config.content?.root ?? 'content';
@@ -133,10 +129,8 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
       assets: config.checks?.assets ?? true,
       externalLinks: config.checks?.externalLinks ?? false,
       translations: config.checks?.translations ?? false,
-      versionStatus: config.checks?.versionStatus ?? true
     },
-    i18n: resolveI18nConfig(config),
-    versions: resolveVersionsConfig(config)
+    i18n: resolveI18nConfig(config)
   };
 }
 
@@ -183,26 +177,6 @@ function resolveI18nConfig(config: SvedocsConfig): SvedocsResolvedConfig['i18n']
   };
 }
 
-function resolveVersionsConfig(config: SvedocsConfig): SvedocsResolvedConfig['versions'] {
-  if (config.versions === false) {
-    return {
-      items: [],
-      prefixCurrentVersion: false
-    };
-  }
-  const items = (config.versions?.items ?? []).map(normalizeVersion);
-  const current = config.versions?.current ?? items[0]?.name;
-  const resolvedItems = items.map((item) => ({
-    ...item,
-    status: item.status ?? (item.name === current ? 'current' as const : 'deprecated' as const)
-  }));
-  return {
-    ...(current ? { current } : {}),
-    items: resolvedItems,
-    prefixCurrentVersion: config.versions?.prefixCurrentVersion ?? false
-  };
-}
-
 function normalizeLocale(locale: string | { code: string; label?: string; path?: string }): SvedocsLocale {
   if (typeof locale === 'string') {
     return {
@@ -215,28 +189,5 @@ function normalizeLocale(locale: string | { code: string; label?: string; path?:
     code: locale.code,
     label: locale.label ?? locale.code,
     path: locale.path ?? locale.code
-  };
-}
-
-function normalizeVersion(version: string | {
-  name: string;
-  label?: string;
-  path?: string;
-  status?: SvedocsVersion['status'];
-  banner?: string;
-}): NormalizedVersion {
-  if (typeof version === 'string') {
-    return {
-      name: version,
-      label: version,
-      path: version
-    };
-  }
-  return {
-    name: version.name,
-    label: version.label ?? version.name,
-    path: version.path ?? version.name,
-    ...(version.status ? { status: version.status } : {}),
-    ...(version.banner ? { banner: version.banner } : {})
   };
 }

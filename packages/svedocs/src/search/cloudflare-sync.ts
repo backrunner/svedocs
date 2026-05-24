@@ -27,7 +27,6 @@ export function createCloudflareAiSearchDocuments(records: SvedocsSearchRecord[]
       url: record.url
       }),
       locale: record.metadata.locale,
-      version: record.metadata.version,
       kind: record.metadata.kind
     })
   }));

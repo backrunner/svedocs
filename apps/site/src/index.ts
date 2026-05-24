@@ -1,7 +1,4 @@
-import { version } from 'svedocs';
-
 export const sitePackage = {
   name: '@svedocs/site',
-  private: true,
-  svedocsVersion: version
+  private: true
 } as const;

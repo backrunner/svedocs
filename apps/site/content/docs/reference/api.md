@@ -1,7 +1,7 @@
 ---
 title: Public API
 description: Stable public imports exposed by the integrated svedocs framework package.
-order: 10
+order: 3
 ---
 
 # Public API
@@ -62,7 +62,7 @@ import {
 } from 'svedocs/core';
 ```
 
-Core APIs expose the manifest, content model, navigation, links, checks, and search records. Page metadata includes locale/version scope and version lifecycle fields for archived or deprecated docs.
+Core APIs expose the manifest, content model, navigation, links, checks, and search records. Page metadata includes locale scope for translated docs and content lifecycle fields for warnings.
 
 ## Theme
 
@@ -88,7 +88,7 @@ import { createConfiguredSearchResponse, createSearchResponse, searchRecords } f
 import { createConfiguredAskResponse, createAskResponse, createMemoryRateLimiter } from 'svedocs/ai';
 ```
 
-Search and Ask AI are built-in framework capabilities with local, Algolia, Typesense, Cloudflare-oriented, and OpenAI-compatible provider paths. Local search accepts locale, version, and kind scope filters.
+Search and Ask AI are built-in framework capabilities with local, Algolia, Typesense, Cloudflare-oriented, and OpenAI-compatible provider paths. Local search accepts locale and kind scope filters.
 
 Use the configured response helpers in generated route handlers. Import lower-level providers such as `createAlgoliaSearchProvider`, `createTypesenseSearchProvider`, `createCloudflareAiSearchProvider`, `createWorkersAiProvider`, or `createOpenAiCompatibleProvider` only for custom routing or custom provider selection.
 
@@ -107,3 +107,4 @@ import {
 ```
 
 Use these APIs for custom route handlers, custom layouts, and build-time OG generation.
+

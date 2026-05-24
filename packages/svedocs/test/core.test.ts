@@ -35,9 +35,7 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(config.ai.enabled).toBe(false);
     expect(config.ai.scope).toBe('current');
     expect(config.i18n.locales).toEqual([]);
-    expect(config.versions.items).toEqual([]);
     expect(config.checks.translations).toBe(false);
-    expect(config.checks.versionStatus).toBe(true);
   });
 
   it('aligns SvelteKit route options across build modes', () => {
@@ -116,25 +114,6 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(config.seo.defaultAuthor).toBe('svedocs team');
     expect(config.seo.ogImage && config.seo.ogImage.format).toBe('png');
     expect(config.seo.ogImage && config.seo.ogImage.outDir).toBe('static/custom-og');
-  });
-
-  it('resolves version lifecycle metadata', () => {
-    const config = resolveSvedocsConfig({
-      versions: {
-        current: 'v1',
-        items: [
-          { name: 'v1', label: 'Latest' },
-          { name: 'v2', label: 'Next', status: 'next' },
-          { name: 'v0', label: 'Legacy', status: 'archived', banner: 'Legacy docs are frozen.' }
-        ]
-      }
-    });
-
-    expect(config.versions.items).toMatchObject([
-      { name: 'v1', status: 'current' },
-      { name: 'v2', status: 'next' },
-      { name: 'v0', status: 'archived', banner: 'Legacy docs are frozen.' }
-    ]);
   });
 
   it('creates Cloudflare Workers AI bindings when configured', () => {
@@ -332,7 +311,7 @@ describe('svedocs Batch 0 skeleton', () => {
     }
   });
 
-  it('loads locale and version scoped docs', async () => {
+  it('loads locale scoped docs', async () => {
     const manifest = await loadSvedocsContent({
       projectRoot: new URL('fixtures/i18n', import.meta.url).pathname,
       config: {
@@ -346,37 +325,19 @@ describe('svedocs Batch 0 skeleton', () => {
             { code: 'zh', label: '中文' }
           ]
         },
-        versions: {
-          current: 'v1',
-          items: [
-            { name: 'v1', label: 'Latest' },
-            { name: 'v0', label: 'Legacy', status: 'archived', banner: 'Legacy docs are frozen.' }
-          ]
-        },
-        checks: {
-          versionStatus: false
-        }
       }
     });
 
-    expect(manifest.pages.map((page) => [page.routePath, page.locale, page.version])).toEqual([
-      ['/docs', 'en', 'v1'],
-      ['/docs/guide', 'en', 'v1'],
-      ['/docs/v0/guide', 'en', 'v0'],
-      ['/docs/zh', 'zh', 'v1']
+    expect(manifest.pages.map((page) => [page.routePath, page.locale])).toEqual([
+      ['/docs', 'en'],
+      ['/docs/zh', 'zh']
     ]);
-    expect(manifest.pages.find((page) => page.routePath === '/docs')?.next?.path).toBe('/docs/guide');
-    expect(manifest.pages.find((page) => page.routePath === '/docs/v0/guide')?.prev).toBeUndefined();
+    expect(manifest.pages.find((page) => page.routePath === '/docs')?.next).toBeUndefined();
     expect(manifest.search.find((record) => record.url === '/docs/zh')?.metadata).toMatchObject({
       locale: 'zh',
-      version: 'v1'
+      kind: 'doc'
     });
-    expect(manifest.pages.find((page) => page.routePath === '/docs/v0/guide')).toMatchObject({
-      versionLabel: 'Legacy',
-      versionStatus: 'archived',
-      versionBanner: 'Legacy docs are frozen.'
-    });
-    expect(createPageTree(manifest.pages.filter((page) => page.locale === 'zh' && page.version === 'v1'))).toEqual([
+    expect(createPageTree(manifest.pages.filter((page) => page.locale === 'zh'))).toEqual([
       {
         id: 'content-docs-zh-index',
         title: '中文文档',
@@ -396,7 +357,7 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(manifest.issues).toEqual([]);
   });
 
-  it('reports missing translations and inactive version pages when enabled', async () => {
+  it('keeps mirrored locale docs free of translation issues', async () => {
     const manifest = await loadSvedocsContent({
       projectRoot: new URL('fixtures/i18n', import.meta.url).pathname,
       config: {
@@ -407,21 +368,13 @@ describe('svedocs Batch 0 skeleton', () => {
             { code: 'zh', label: '中文' }
           ]
         },
-        versions: {
-          current: 'v1',
-          items: [
-            { name: 'v1', label: 'Latest' },
-            { name: 'v0', label: 'Legacy', status: 'archived' }
-          ]
-        },
         checks: {
           translations: true
         }
       }
     });
 
-    expect(manifest.issues.some((issue) => issue.code === 'missing-translation')).toBe(true);
-    expect(manifest.issues.some((issue) => issue.code === 'deprecated-version' && issue.severity === 'info')).toBe(true);
+    expect(manifest.issues).toEqual([]);
   });
 
   it('checks local asset references and package exports', async () => {
@@ -669,7 +622,7 @@ describe('svedocs Batch 0 skeleton', () => {
         url: '/docs/install',
         title: 'Install',
         content: 'Install svedocs with pnpm.',
-        metadata: { locale: 'en', version: 'v1', kind: 'doc' }
+        metadata: { locale: 'en', kind: 'doc' }
       },
       {
         id: 'zh-install',
@@ -678,27 +631,19 @@ describe('svedocs Batch 0 skeleton', () => {
         title: '安装',
         section: 'Cloudflare 部署',
         content: '使用 Cloudflare Pages 部署 svedocs。',
-        metadata: { locale: 'zh', version: 'v1', kind: 'doc' }
-      },
-      {
-        id: 'legacy-install',
-        pageId: 'legacy-install',
-        url: '/docs/v0/install',
-        title: 'Legacy install',
-        content: 'Old installation flow.',
-        metadata: { locale: 'en', version: 'v0', kind: 'doc' }
+        metadata: { locale: 'zh', kind: 'doc' }
       }
     ];
-    const scoped = searchRecords(records, { query: 'cloudflare', locale: 'zh', version: 'v1' });
+    const scoped = searchRecords(records, { query: 'cloudflare', locale: 'zh' });
     const response = await createSearchResponse(
       records,
-      new Request('https://example.test/api/search?q=install&locale=en&version=v0')
+      new Request('https://example.test/api/search?q=install&locale=en')
     );
     const json = await response.json() as { results: Array<{ id: string }> };
 
     expect(scoped.map((result) => result.id)).toEqual(['zh-install']);
     expect(searchRecords(records, { query: 'instal' })[0]?.id).toBe('en-install');
-    expect(json.results.map((result) => result.id)).toEqual(['legacy-install']);
+    expect(json.results.map((result) => result.id)).toEqual(['en-install']);
   });
 
   it('normalizes Cloudflare AI Search chunk results', async () => {
@@ -717,7 +662,6 @@ describe('svedocs Batch 0 skeleton', () => {
                   metadata: {
                     title: 'Install',
                     locale: 'en',
-                    version: 'v1',
                     section: 'Package manager',
                     url: '/docs/install#package-manager'
                   }
@@ -729,12 +673,11 @@ describe('svedocs Batch 0 skeleton', () => {
                 item: {
                   key: 'docs/zh/install.md',
                   metadata: {
-                    svedocs: JSON.stringify({
+                  svedocs: JSON.stringify({
                       title: '安装',
                       url: '/docs/zh/install'
                     }),
-                    locale: 'zh',
-                    version: 'v1'
+                    locale: 'zh'
                   }
                 }
               }
@@ -745,7 +688,7 @@ describe('svedocs Batch 0 skeleton', () => {
     });
 
     const results = await provider.search({ query: 'pnpm', limit: 1 });
-    const scoped = await provider.search({ query: 'pnpm', locale: 'zh', version: 'v1' });
+    const scoped = await provider.search({ query: 'pnpm', locale: 'zh' });
 
     expect(results[0]).toMatchObject({
       title: 'Install',
@@ -787,7 +730,6 @@ describe('svedocs Batch 0 skeleton', () => {
                 }
               },
               locale: 'en',
-              version: 'v1',
               kind: 'doc'
             }
           ]
@@ -818,7 +760,6 @@ describe('svedocs Batch 0 skeleton', () => {
       apiKey: 'typesense-key',
       collection: (query) => query.locale ? `docs_${query.locale}` : 'docs',
       queryBy: ['title', 'section', 'content'],
-      filterBy: (query) => query.version ? `version:=${query.version}` : undefined,
       async fetch(input, init) {
         requestedUrl = new URL(String(input));
         expect(init?.headers).toMatchObject({
@@ -837,7 +778,6 @@ describe('svedocs Batch 0 skeleton', () => {
                   section: 'Cloudflare Pages'
                 }),
                 locale: 'en',
-                version: 'v1',
                 kind: 'doc'
               }
             }
@@ -846,13 +786,13 @@ describe('svedocs Batch 0 skeleton', () => {
       }
     });
 
-    const results = await provider.search({ query: 'cloudflare', limit: 3, locale: 'en', version: 'v1' });
+    const results = await provider.search({ query: 'cloudflare', limit: 3, locale: 'en' });
 
     expect(requestedUrl?.pathname).toBe('/collections/docs_en/documents/search');
     expect(requestedUrl?.searchParams.get('q')).toBe('cloudflare');
     expect(requestedUrl?.searchParams.get('query_by')).toBe('title,section,content');
     expect(requestedUrl?.searchParams.get('per_page')).toBe('3');
-    expect(requestedUrl?.searchParams.get('filter_by')).toBe('version:=v1');
+    expect(requestedUrl?.searchParams.get('filter_by')).toBeNull();
     expect(results[0]).toMatchObject({
       id: 'deploy',
       title: 'Deploy',
@@ -870,7 +810,7 @@ describe('svedocs Batch 0 skeleton', () => {
         url: '/docs/install',
         title: 'Install',
         content: 'Install svedocs with pnpm.',
-        metadata: { locale: 'en', version: 'v1', kind: 'doc' }
+        metadata: { locale: 'en', kind: 'doc' }
       }
     ];
     const algoliaConfig = resolveSvedocsConfig({ search: { provider: 'algolia' } });
@@ -878,7 +818,7 @@ describe('svedocs Batch 0 skeleton', () => {
     const algoliaResponse = await createConfiguredSearchResponse(
       algoliaConfig,
       records,
-      new Request('https://example.test/api/search?q=svedocs&provider=algolia&locale=en&version=v1'),
+      new Request('https://example.test/api/search?q=svedocs&provider=algolia&locale=en'),
       {
         env: {
           ALGOLIA_APP_ID: 'APP',
@@ -895,7 +835,6 @@ describe('svedocs Batch 0 skeleton', () => {
                 url: '/docs/install',
                 content: 'Install svedocs with pnpm.',
                 locale: 'en',
-                version: 'v1',
                 kind: 'doc'
               }
             ]
@@ -910,7 +849,7 @@ describe('svedocs Batch 0 skeleton', () => {
       env: {}
     });
 
-    expect(algoliaBody?.filters).toBe('locale:en AND version:v1');
+    expect(algoliaBody?.filters).toBe('locale:en');
     expect(algoliaJson.provider).toBe('algolia');
     expect(algoliaJson.results[0]?.id).toBe('algolia-install');
     expect(typesenseProvider.name).toBe('local-json');
@@ -1126,7 +1065,7 @@ describe('svedocs Batch 0 skeleton', () => {
             url: '/docs/deploy',
             title: 'Deploy',
             content: 'Deploy to Cloudflare.',
-            metadata: { locale: 'en', version: 'v1' }
+            metadata: { locale: 'en' }
           },
           {
             id: 'zh-deploy',
@@ -1134,7 +1073,7 @@ describe('svedocs Batch 0 skeleton', () => {
             url: '/docs/zh/deploy',
             title: '部署',
             content: 'Deploy svedocs to Cloudflare Pages.',
-            metadata: { locale: 'zh', version: 'v1' }
+            metadata: { locale: 'zh' }
           }
         ]
       }

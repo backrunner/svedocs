@@ -1,0 +1,37 @@
+---
+title: 组件
+description: 在 SVX 和 MDX 风格的文档页面里编写交互式 Svelte 组件。
+order: 3
+---
+
+<script>
+  let target = 'SvelteKit';
+</script>
+
+# 组件
+
+svedocs 可以把 `.svx` 和 `.mdx` 文件路由到一个兼容 Svelte 的作者流程里，同时保留相同的 manifest、搜索记录、SEO 元数据和导航模型。
+
+## 交互式写作
+
+<Callout tone="edge">
+  组件可以通过 `svedocs()` Vite 插件注入，并直接在文档文件里使用。
+</Callout>
+
+<button class="sd-button" type="button" on:click={() => (target = target === 'SvelteKit' ? 'Cloudflare' : 'SvelteKit')}>
+  切换 {target}
+</button>
+
+上面的组件会被编译成 Svelte，而不是通过 React MDX runtime 渲染。
+
+```ts title="component-authoring.ts" {1}
+export const runtime = 'svelte';
+export const framework = 'svedocs';
+```
+
+## 什么时候用它
+
+- 小型交互示例。
+- 本地化 demo 和提示块。
+- 需要保持在文档主题内部的布局敏感片段。
+

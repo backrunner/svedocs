@@ -69,8 +69,7 @@ export function createPageAlternates(
   if (config.i18n.locales.length === 0) return [];
   const candidates = pages
     .filter((candidate) => !candidate.hidden)
-    .filter((candidate) => candidate.scopePath === page.scopePath)
-    .filter((candidate) => candidate.version === page.version);
+    .filter((candidate) => candidate.scopePath === page.scopePath);
   const alternates: SvedocsPageAlternate[] = [];
   for (const candidate of candidates) {
     if (!candidate.locale) continue;
@@ -79,8 +78,7 @@ export function createPageAlternates(
     alternates.push({
       lang: candidate.locale,
       href,
-      locale: candidate.locale,
-      ...(candidate.version ? { version: candidate.version } : {})
+      locale: candidate.locale
     });
   }
   const defaultLocale = config.i18n.defaultLocale;

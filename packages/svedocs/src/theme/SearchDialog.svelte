@@ -134,13 +134,12 @@
     url.searchParams.set('limit', '8');
     url.searchParams.set('provider', provider);
     if (scope.locale) url.searchParams.set('locale', scope.locale);
-    if (scope.version) url.searchParams.set('version', scope.version);
     if (scope.kind) url.searchParams.set('kind', scope.kind);
     return url.toString();
   }
 
   function createRemoteKey(provider: string, endpoint: string, query: string, scope: SearchScope): string {
-    return JSON.stringify([provider, endpoint, query.trim(), scope.locale, scope.version, scope.kind]);
+    return JSON.stringify([provider, endpoint, query.trim(), scope.locale, scope.kind]);
   }
 
   function trapFocus(event: KeyboardEvent, root: HTMLElement | undefined) {

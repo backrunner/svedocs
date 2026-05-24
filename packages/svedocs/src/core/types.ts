@@ -54,14 +54,6 @@ export interface SvedocsLocale {
   path: string;
 }
 
-export interface SvedocsVersion {
-  name: string;
-  label: string;
-  path: string;
-  status: 'current' | 'next' | 'deprecated' | 'archived';
-  banner?: string;
-}
-
 export interface SvedocsLink {
   title: string;
   path: string;
@@ -91,10 +83,6 @@ export interface SvedocsPage {
   scopePath: string;
   slug: string[];
   locale?: string;
-  version?: string;
-  versionLabel?: string;
-  versionStatus?: SvedocsVersion['status'];
-  versionBanner?: string;
   kind: 'doc' | 'page';
   title: string;
   navTitle?: string;
@@ -265,17 +253,11 @@ export interface SvedocsResolvedConfig {
     assets: boolean;
     externalLinks: boolean;
     translations: boolean;
-    versionStatus: boolean;
   };
   i18n: {
     defaultLocale?: string;
     locales: SvedocsLocale[];
     prefixDefaultLocale: boolean;
-  };
-  versions: {
-    current?: string;
-    items: SvedocsVersion[];
-    prefixCurrentVersion: boolean;
   };
 }
 
@@ -289,7 +271,6 @@ export interface SvedocsContentIssue {
     | 'broken-asset'
     | 'external-link-unchecked'
     | 'missing-translation'
-    | 'deprecated-version'
     | 'spa-risk'
     | 'empty-search'
     | 'package-bin-missing'

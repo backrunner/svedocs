@@ -84,8 +84,7 @@
 
   function filterPagesForCurrentScope(pages: SvedocsPage[], current: SvedocsPage): SvedocsPage[] {
     return pages.filter((candidate) => candidate.kind === 'doc'
-      && candidate.locale === current.locale
-      && candidate.version === current.version);
+      && candidate.locale === current.locale);
   }
 
 </script>
