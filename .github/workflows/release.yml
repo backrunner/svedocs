@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: npm dist-tag
+        required: false
+        default: latest
+        type: choice
+        options:
+          - latest
+          - next
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.2
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm release:check
+      - run: mkdir -p artifacts
+      - run: pnpm pack --out ../../artifacts/svedocs.tgz
+        working-directory: packages/svedocs
+      - run: pnpm pack --out ../../artifacts/svedocs-cli.tgz
+        working-directory: packages/cli
+      - run: pnpm pack --out ../../artifacts/create-svedocs.tgz
+        working-directory: packages/create-svedocs
+      - run: npm publish artifacts/svedocs.tgz --access public --tag ${{ inputs.tag }}
+      - run: npm publish artifacts/svedocs-cli.tgz --access public --tag ${{ inputs.tag }}
+      - run: npm publish artifacts/create-svedocs.tgz --access public --tag ${{ inputs.tag }}
