@@ -78,6 +78,7 @@ async function main(): Promise<void> {
       'public',
       '--tag',
       npmTag,
+      '--provenance=false',
       ...(args.dryRun ? ['--dry-run'] : []),
       ...(args.otp ? ['--otp', args.otp] : [])
     ];
