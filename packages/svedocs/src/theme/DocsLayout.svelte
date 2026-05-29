@@ -14,7 +14,6 @@
   export let config: SvedocsResolvedConfig;
   export let content: Component | undefined = undefined;
 
-  let menuOpen = false;
   let activeHeading = page.headings[0]?.id ?? '';
   let tocEl: HTMLElement | null = null;
   let indicatorTop = 0;
@@ -22,8 +21,8 @@
   let indicatorReady = false;
   let observer: IntersectionObserver | undefined;
   let mounted = false;
-  const sidebarId = `sd-sidebar-${page.id}`;
   $: scopedTree = createCorePageTree(filterPagesForCurrentScope(pages, page));
+  $: navigationTree = scopedTree.length ? scopedTree : tree;
 
   onMount(() => {
     mounted = true;
@@ -76,12 +75,6 @@
     return value.replace(/([^a-zA-Z0-9_-])/g, '\\$1');
   }
 
-  function handleShellKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape' && menuOpen) {
-      menuOpen = false;
-    }
-  }
-
   function filterPagesForCurrentScope(pages: SvedocsPage[], current: SvedocsPage): SvedocsPage[] {
     return pages.filter((candidate) => candidate.kind === 'doc'
       && candidate.locale === current.locale);
@@ -89,16 +82,11 @@
 
 </script>
 
-<svelte:window on:keydown={handleShellKeydown} />
-
-<RootLayout {config} {page} {pages} {search}>
-  <button class="sd-menu-button" type="button" aria-expanded={menuOpen} aria-controls={sidebarId} on:click={() => (menuOpen = !menuOpen)}>
-    Menu
-  </button>
-  <div class:sd-menu-open={menuOpen} class="sd-doc-shell">
-    <aside id={sidebarId} class="sd-sidebar" aria-label="Documentation">
+<RootLayout {config} {page} {pages} {search} mobileTree={navigationTree} mobileCurrentPath={page.routePath}>
+  <div class="sd-doc-shell">
+    <aside class="sd-sidebar" aria-label="Documentation">
       <nav>
-        <SidebarTree items={scopedTree.length ? scopedTree : tree} currentPath={page.routePath} />
+        <SidebarTree items={navigationTree} currentPath={page.routePath} />
       </nav>
     </aside>
     <main id="content" class="sd-content">

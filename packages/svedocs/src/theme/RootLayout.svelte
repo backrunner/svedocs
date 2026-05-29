@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord } from '../core/types.js';
+  import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
   import { createPageAlternates, createPageMetadata } from '../og/metadata.js';
   import type { SearchScope } from '../search/types.js';
   import AskAiPanel from './AskAiPanel.svelte';
   import FloatingToolbar from './FloatingToolbar.svelte';
   import SearchDialog from './SearchDialog.svelte';
+  import SidebarTree from './SidebarTree.svelte';
   import ScopeSwitcher from './ScopeSwitcher.svelte';
   import ThemeToggle from './ThemeToggle.svelte';
 
@@ -13,6 +14,8 @@
   export let page: SvedocsPage | undefined = undefined;
   export let pages: SvedocsPage[] = [];
   export let search: SvedocsSearchRecord[] = [];
+  export let mobileTree: SvedocsTreeItem[] = [];
+  export let mobileCurrentPath = '';
 
   const accentPalette: Record<string, string> = {
     emerald: '#007f68',
@@ -31,8 +34,11 @@
   $: aiScope = createRuntimeScope(config.ai.scope, page);
   $: surface = page?.frontmatter.layout === 'home' || page?.routePath === '/' ? 'home' : 'reading';
   $: isDocsPage = page?.kind === 'doc';
+  $: mobileMenuId = `sd-mobile-menu-${createDomId(page?.id ?? page?.routePath ?? 'site')}`;
+  $: mobileTreePath = mobileCurrentPath || page?.routePath || '';
 
   let mounted = false;
+  let mobileMenuOpen = false;
 
   onMount(() => {
     mounted = true;
@@ -43,11 +49,24 @@
     page?.routePath;
     page?.locale;
     markHydratedRoute();
+    closeMobileMenu();
   }
 
   function markHydratedRoute() {
     document.documentElement.dataset.svedocsRoute = page?.routePath ?? '';
     document.documentElement.lang = page?.locale ?? config.i18n.defaultLocale ?? 'en';
+  }
+
+  function toggleMobileMenu() {
+    mobileMenuOpen = !mobileMenuOpen;
+  }
+
+  function closeMobileMenu() {
+    mobileMenuOpen = false;
+  }
+
+  function handleWindowKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape') closeMobileMenu();
   }
 
   function createRuntimeScope(mode: 'current' | 'all', page: SvedocsPage | undefined): SearchScope {
@@ -84,7 +103,13 @@
     if (/^(#|rgb|hsl|oklch|color-mix)/.test(value)) return value;
     return accentPalette[value] ?? fallback;
   }
+
+  function createDomId(value: string): string {
+    return value.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-|-$/g, '') || 'site';
+  }
 </script>
+
+<svelte:window on:keydown={handleWindowKeydown} />
 
 <svelte:head>
   {@html createThemeInitScript(config.theme.defaultMode)}
@@ -128,7 +153,7 @@
 
 <div class="sd-root" data-surface={surface} style={themeStyle}>
   <a class="sd-skip" href="#content">Skip to content</a>
-  <header class="sd-topbar">
+  <header class:sd-mobile-menu-open={mobileMenuOpen} class="sd-topbar">
     <a class="sd-brand" href={config.theme.brand.href}>
       {#if config.theme.brand.logo}
         <img class="sd-brand-logo" src={config.theme.brand.logo} alt="" />
@@ -137,28 +162,53 @@
       {/if}
       <span>{config.theme.brand.label}</span>
     </a>
-    <nav class="sd-topnav" aria-label="Primary">
-      {#each config.theme.nav as item}
-        <a href={item.href} rel={linkRel(item)} target={item.external ? '_blank' : undefined}>
-          {item.label}
-        </a>
-    {/each}
-    </nav>
-    <div class="sd-topbar-spacer" aria-hidden="true"></div>
-    {#if config.search.enabled}
-      <SearchDialog records={search} scope={searchScope} provider={config.search.provider} buildMode={config.build.mode} />
-    {/if}
-    <ScopeSwitcher {page} {pages} locales={config.i18n.locales} />
-    {#if config.theme.social.length > 0}
-      <nav class="sd-socialnav" aria-label="Social links">
-        {#each config.theme.social as item}
+    <div id={mobileMenuId} class="sd-topbar-menu" class:sd-open={mobileMenuOpen}>
+      <nav class="sd-topnav" aria-label="Primary">
+        {#each config.theme.nav as item}
           <a href={item.href} rel={linkRel(item)} target={item.external ? '_blank' : undefined}>
             {item.label}
           </a>
         {/each}
       </nav>
-    {/if}
-    <ThemeToggle defaultMode={config.theme.defaultMode} />
+      <div class="sd-topbar-spacer" aria-hidden="true"></div>
+      <div class="sd-topbar-tools">
+        {#if config.search.enabled}
+          <SearchDialog records={search} scope={searchScope} provider={config.search.provider} buildMode={config.build.mode} />
+        {/if}
+        <ScopeSwitcher {page} {pages} locales={config.i18n.locales} />
+      </div>
+      {#if config.theme.social.length > 0}
+        <nav class="sd-socialnav" aria-label="Social links">
+          {#each config.theme.social as item}
+            <a href={item.href} rel={linkRel(item)} target={item.external ? '_blank' : undefined}>
+              {item.label}
+            </a>
+          {/each}
+        </nav>
+      {/if}
+      <ThemeToggle defaultMode={config.theme.defaultMode} />
+      {#if mobileTree.length > 0}
+        <nav class="sd-mobile-docnav" aria-label="Documentation">
+          <SidebarTree items={mobileTree} currentPath={mobileTreePath} />
+        </nav>
+      {/if}
+    </div>
+    <button
+      class="sd-menu-button"
+      type="button"
+      aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+      aria-expanded={mobileMenuOpen}
+      aria-controls={mobileMenuId}
+      on:click={toggleMobileMenu}
+    >
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        {#if mobileMenuOpen}
+          <path d="M6 6l12 12M18 6 6 18" />
+        {:else}
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        {/if}
+      </svg>
+    </button>
   </header>
   <slot />
   {#if isDocsPage}
