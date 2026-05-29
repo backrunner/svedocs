@@ -143,10 +143,9 @@ export async function createSatoriOgSvg(input: OgImageInput, options: OgRenderOp
   if (!options.fonts?.length) {
     throw new Error('Satori OG rendering requires at least one font.');
   }
-  const satoriPackage = 'satori';
-  const { default: satori } = await import(/* @vite-ignore */ satoriPackage) as {
+  const { default: satori } = await importOptionalOgModule<{
     default: (element: unknown, options: unknown) => Promise<string>;
-  };
+  }>('satori');
   return satori((options.template ?? createDefaultOgTemplateNode)(input), {
     width: 1200,
     height: 630,
@@ -159,8 +158,7 @@ export async function createOgImage(input: OgImageInput, options: OgImageOptions
 }
 
 export async function createOgPng(input: OgImageInput, options: OgRenderOptions = {}): Promise<Uint8Array> {
-  const resvgPackage = '@resvg/resvg-js';
-  const { Resvg } = await import(/* @vite-ignore */ resvgPackage) as typeof import('@resvg/resvg-js');
+  const { Resvg } = await importOptionalOgModule<typeof import('@resvg/resvg-js')>('@resvg/resvg-js');
   const renderer = new Resvg(await renderOgSvg(input, options), {
     fitTo: {
       mode: 'width',
@@ -238,4 +236,13 @@ function escapeHtml(value: string): string {
 
 function toArrayBuffer(value: Uint8Array): ArrayBuffer {
   return value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as ArrayBuffer;
+}
+
+function importOptionalOgModule<T>(specifier: string): Promise<T> {
+  if (typeof process !== 'undefined' && process.versions?.node) {
+    return import(specifier) as Promise<T>;
+  }
+  // Keep optional Node-only OG renderers out of edge bundles unless the caller actually uses them.
+  const dynamicImport = new Function('specifier', 'return import(specifier)') as (value: string) => Promise<T>;
+  return dynamicImport(specifier);
 }
