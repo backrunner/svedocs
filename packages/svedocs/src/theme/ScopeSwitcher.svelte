@@ -16,6 +16,11 @@
     (locale) => locale.label,
     (locale) => findScopedPage({ locale: locale.code })?.routePath
   );
+  $: activeLocaleOption = localeOptions.find((option) => option.current);
+  $: activeLocaleLabel = activeLocaleOption?.label ?? 'Locale';
+  $: activeLocaleShortLabel = activeLocaleOption
+    ? createShortLocaleLabel(activeLocaleOption.value, activeLocaleOption.label)
+    : 'Lang';
 
   function findScopedPage(scope: { locale?: string }): SvedocsPage | undefined {
     if (!page) return undefined;
@@ -38,6 +43,14 @@
       path: getPath(item),
       current: getValue(item) === current
     }));
+  }
+
+  function createShortLocaleLabel(value: string, label: string) {
+    const trimmedLabel = label.trim();
+    if ([...trimmedLabel].length <= 3) return trimmedLabel;
+
+    const trimmedValue = value.trim();
+    return trimmedValue ? trimmedValue.slice(0, 3).toUpperCase() : trimmedLabel.slice(0, 3);
   }
 
   function closeMenu() {
@@ -71,7 +84,8 @@
   <div bind:this={root} class="sd-scope-switcher" role="group" aria-label="Documentation scope">
     <div class:sd-open={openMenu === 'locale'} class="sd-scope-menu">
       <button type="button" class="sd-scope-trigger" aria-label="Locale" aria-haspopup="menu" aria-expanded={openMenu === 'locale'} on:click={() => toggleMenu('locale')}>
-        <span>{localeOptions.find((option) => option.current)?.label ?? 'Locale'}</span>
+        <span class="sd-scope-label-full">{activeLocaleLabel}</span>
+        <span aria-hidden="true" class="sd-scope-label-short">{activeLocaleShortLabel}</span>
       </button>
       {#if openMenu === 'locale'}
         <div class="sd-scope-options" role="menu" aria-label="Locale options">

@@ -917,6 +917,10 @@ body {
   white-space: nowrap;
 }
 
+.sd-scope-label-short {
+  display: none;
+}
+
 .sd-scope-trigger::after {
   content: "";
   width: .42rem;
@@ -3018,31 +3022,58 @@ body {
   }
 
   .sd-topbar-tools .sd-scope-switcher {
-    flex: 0 1 42%;
-    min-width: 5.4rem;
-    max-width: 9rem;
+    flex: 0 0 auto;
+    min-width: 0;
   }
 
   .sd-topbar-tools .sd-scope-menu,
   .sd-topbar-tools .sd-scope-trigger {
-    flex: 1;
     min-width: 0;
-    width: 100%;
+  }
+
+  .sd-topbar-tools .sd-scope-trigger {
+    min-width: 3.45rem;
+    width: auto;
+    gap: .38rem;
+    padding: 0 .55rem;
+  }
+
+  .sd-topbar-tools .sd-scope-label-full {
+    display: none;
+  }
+
+  .sd-topbar-tools .sd-scope-label-short {
+    display: inline;
   }
 
   .sd-scope-options {
     left: 0;
     right: auto;
-    min-width: 100%;
+    min-width: 7rem;
   }
 
   .sd-topnav {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: .35rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: .15rem 0;
+    border-top: 1px solid color-mix(in srgb, var(--sd-line) 72%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--sd-line) 72%, transparent);
   }
 
-  .sd-topnav a,
+  .sd-topnav a {
+    padding: .68rem .2rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--sd-line) 58%, transparent);
+    color: var(--sd-ink);
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .sd-topnav a:last-child {
+    border-bottom: 0;
+  }
+
   .sd-socialnav a {
     min-width: 0;
     border: 1px solid color-mix(in srgb, var(--sd-line) 80%, transparent);
@@ -3112,5 +3143,28 @@ body {
 
   .sd-floating-tool-ai .sd-floating-tool-glyph {
     margin: 0;
+  }
+
+  .sd-root[data-surface="home"] > .sd-footer {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: .85rem;
+    padding: 1.25rem .95rem;
+  }
+
+  .sd-root[data-surface="home"] > .sd-footer > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sd-root[data-surface="home"] > .sd-footer nav {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  .sd-root[data-surface="home"] > .sd-footer nav a:not(.sd-footer-icon) {
+    display: none;
   }
 }
