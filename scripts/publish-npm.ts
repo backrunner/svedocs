@@ -26,7 +26,6 @@ type PackageManifest = {
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const artifactsDir = path.resolve(repoRoot, 'artifacts/npm-local');
 const packages: PublishPackage[] = [
-  { directory: 'packages/svedocs', tarball: 'svedocs.tgz' },
   { directory: 'packages/cli', tarball: 'svedocs-cli.tgz' },
   { directory: 'packages/create-svedocs', tarball: 'create-svedocs.tgz' }
 ];

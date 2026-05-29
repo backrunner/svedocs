@@ -25,6 +25,7 @@
     "lint": "turbo lint",
     "pack:dry-run": "turbo pack:dry-run",
     "publish:site": "node --experimental-strip-types scripts/publish-site.ts",
+    "publish:site:local": "node --experimental-strip-types scripts/publish-site-local.ts",
     "publish:cli": "node --experimental-strip-types scripts/publish-cli.ts",
     "publish:npm": "node --experimental-strip-types scripts/publish-npm.ts",
     "test:templates": "SVEDOCS_TEMPLATE_E2E=1 pnpm --filter svedocs-cli test",

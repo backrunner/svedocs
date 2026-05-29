@@ -1,4 +1,4 @@
-name: Release npm
+name: Release npm CLI
 
 on:
   workflow_dispatch:
@@ -17,7 +17,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: release-npm
+  group: release-npm-cli
   cancel-in-progress: false
 
 jobs:
@@ -59,7 +59,6 @@ jobs:
           const { readFileSync } = require('node:fs');
 
           const packageFiles = [
-            'packages/svedocs/package.json',
             'packages/cli/package.json',
             'packages/create-svedocs/package.json'
           ];
@@ -94,12 +93,9 @@ jobs:
           NODE
       - run: pnpm release:check
       - run: mkdir -p artifacts
-      - run: pnpm pack --out ../../artifacts/svedocs.tgz
-        working-directory: packages/svedocs
       - run: pnpm pack --out ../../artifacts/svedocs-cli.tgz
         working-directory: packages/cli
       - run: pnpm pack --out ../../artifacts/create-svedocs.tgz
         working-directory: packages/create-svedocs
-      - run: npm publish ./artifacts/svedocs.tgz --access public --provenance --tag ${{ steps.release-channel.outputs.npm_tag }}
       - run: npm publish ./artifacts/svedocs-cli.tgz --access public --provenance --tag ${{ steps.release-channel.outputs.npm_tag }}
       - run: npm publish ./artifacts/create-svedocs.tgz --access public --provenance --tag ${{ steps.release-channel.outputs.npm_tag }}
