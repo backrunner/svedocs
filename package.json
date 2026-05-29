@@ -26,6 +26,7 @@
     "pack:dry-run": "turbo pack:dry-run",
     "publish:site": "node --experimental-strip-types scripts/publish-site.ts",
     "publish:cli": "node --experimental-strip-types scripts/publish-cli.ts",
+    "publish:npm": "node --experimental-strip-types scripts/publish-npm.ts",
     "test:templates": "SVEDOCS_TEMPLATE_E2E=1 pnpm --filter svedocs-cli test",
     "test:e2e": "pnpm --filter @svedocs/site test:e2e",
     "release:check": "pnpm build && pnpm check && pnpm test && pnpm lint && pnpm pack:dry-run",

@@ -16,3 +16,4 @@ test-results/
 !.dev.vars.example
 *.tsbuildinfo
 output/
+artifacts/
