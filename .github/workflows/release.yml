@@ -100,6 +100,6 @@ jobs:
         working-directory: packages/cli
       - run: pnpm pack --out ../../artifacts/create-svedocs.tgz
         working-directory: packages/create-svedocs
-      - run: npm publish artifacts/svedocs.tgz --access public --provenance --tag ${{ steps.release-channel.outputs.npm_tag }}
-      - run: npm publish artifacts/svedocs-cli.tgz --access public --provenance --tag ${{ steps.release-channel.outputs.npm_tag }}
-      - run: npm publish artifacts/create-svedocs.tgz --access public --provenance --tag ${{ steps.release-channel.outputs.npm_tag }}
+      - run: npm publish ./artifacts/svedocs.tgz --access public --provenance --tag ${{ steps.release-channel.outputs.npm_tag }}
+      - run: npm publish ./artifacts/svedocs-cli.tgz --access public --provenance --tag ${{ steps.release-channel.outputs.npm_tag }}
+      - run: npm publish ./artifacts/create-svedocs.tgz --access public --provenance --tag ${{ steps.release-channel.outputs.npm_tag }}
