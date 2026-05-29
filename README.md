@@ -159,9 +159,9 @@ pnpm --filter svedocs build
 Focused CLI validation:
 
 ```sh
-pnpm --filter @svedocs/cli check
-pnpm --filter @svedocs/cli test
-pnpm --filter @svedocs/cli build
+pnpm --filter svedocs-cli check
+pnpm --filter svedocs-cli test
+pnpm --filter svedocs-cli build
 ```
 
 Official site validation:
@@ -200,7 +200,7 @@ Public imports are intentionally small and stable:
 - `svedocs/og`: SEO metadata, sitemap/robots, and OG image rendering.
 - `svedocs/svelte`: Svelte-compatible content preprocessing helpers.
 
-The `create-svedocs` package is only a package-manager compatibility shim and must continue to delegate to `@svedocs/cli`.
+The `create-svedocs` package is only a package-manager compatibility shim and must continue to delegate to `svedocs-cli`.
 
 ## Publishing
 

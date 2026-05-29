@@ -4,6 +4,14 @@
   "private": true,
   "description": "SvelteKit-native documentation framework.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/backrunner/svedocs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/backrunner/svedocs/issues"
+  },
+  "homepage": "https://github.com/backrunner/svedocs#readme",
   "type": "module",
   "packageManager": "pnpm@11.1.2",
   "engines": {
@@ -18,7 +26,7 @@
     "pack:dry-run": "turbo pack:dry-run",
     "publish:site": "node --experimental-strip-types scripts/publish-site.ts",
     "publish:cli": "node --experimental-strip-types scripts/publish-cli.ts",
-    "test:templates": "SVEDOCS_TEMPLATE_E2E=1 pnpm --filter @svedocs/cli test",
+    "test:templates": "SVEDOCS_TEMPLATE_E2E=1 pnpm --filter svedocs-cli test",
     "test:e2e": "pnpm --filter @svedocs/site test:e2e",
     "release:check": "pnpm build && pnpm check && pnpm test && pnpm lint && pnpm pack:dry-run",
     "changeset": "changeset",

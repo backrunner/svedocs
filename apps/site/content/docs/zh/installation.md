@@ -21,7 +21,7 @@ pnpm dev
 
 ```sh
 pnpm add svedocs
-pnpm add -D @svedocs/cli
+pnpm add -D svedocs-cli
 ```
 
 然后把它接到 `vite.config.ts`、`svelte.config.js` 和根布局里：
@@ -51,4 +51,3 @@ export default {
 2. 把内容放到 `content/docs` 下。
 3. 启动开发服务器并打开 `/docs`。
 4. 等内容树稳定后，再接搜索和 Ask AI。
-

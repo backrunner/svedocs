@@ -12,7 +12,7 @@ svedocs 是一个面向 SvelteKit 的文档框架，把内容加载、主题、�
 
 ```sh
 pnpm add svedocs
-pnpm add -D @svedocs/cli
+pnpm add -D svedocs-cli
 ```
 
 ## 创建站点
@@ -45,5 +45,5 @@ pnpm dev
 ## 常见问题
 
 - 新项目直接用 `pnpm create svedocs`。
-- 现有项目先执行 `pnpm add svedocs` 和 `pnpm add -D @svedocs/cli`。
+- 现有项目先执行 `pnpm add svedocs` 和 `pnpm add -D svedocs-cli`。
 - 想快速体验，就先把文档树跑起来，再补搜索和 OG。

@@ -6,7 +6,7 @@ svedocs is a compact monorepo:
 
 - `packages/svedocs`: the integrated framework package. Rendering, content, theme, Cloudflare, search, AI, SEO, and OG live here.
 - `packages/cli`: the only CLI package. It ships both `svedocs` and `create-svedocs`.
-- `packages/create-svedocs`: a thin npm/pnpm create compatibility shim. It must delegate to `@svedocs/cli` and must not grow independent CLI behavior.
+- `packages/create-svedocs`: a thin npm/pnpm create compatibility shim. It must delegate to `svedocs-cli` and must not grow independent CLI behavior.
 - `apps/site`: the private official site and live demo. It must always use the workspace version of `svedocs`.
 
 Do not split renderer capabilities into separate publishable packages unless the product direction changes. Prefer subdirectories inside `packages/svedocs/src`.
@@ -88,9 +88,9 @@ pnpm --filter svedocs build
 For CLI changes, also run:
 
 ```sh
-pnpm --filter @svedocs/cli check
-pnpm --filter @svedocs/cli test
-pnpm --filter @svedocs/cli build
+pnpm --filter svedocs-cli check
+pnpm --filter svedocs-cli test
+pnpm --filter svedocs-cli build
 ```
 
 For theme, routing, or official site changes, also run:

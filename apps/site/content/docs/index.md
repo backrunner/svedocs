@@ -12,7 +12,7 @@ svedocs is a SvelteKit-native documentation framework for docs sites that want a
 
 ```sh
 pnpm add svedocs
-pnpm add -D @svedocs/cli
+pnpm add -D svedocs-cli
 ```
 
 ## Create a site
@@ -45,5 +45,5 @@ pnpm dev
 ## FAQ
 
 - New project? Use `pnpm create svedocs`.
-- Existing project? Start with `pnpm add svedocs` and `pnpm add -D @svedocs/cli`.
+- Existing project? Start with `pnpm add svedocs` and `pnpm add -D svedocs-cli`.
 - Need a quick demo? The CLI can scaffold a full docs site with local search and OG routes.

@@ -6,14 +6,14 @@ order: 2
 
 # CLI
 
-`@svedocs/cli` 提供两个项目二进制：`create-svedocs` 和 `svedocs`。未加 scope 的 `create-svedocs` 包只是给 package manager create 命令用的 shim，会转发到 `@svedocs/cli`。
+`svedocs-cli` 提供两个项目二进制：`create-svedocs` 和 `svedocs`。未加 scope 的 `create-svedocs` 包只是给 package manager create 命令用的 shim，会转发到 `svedocs-cli`。
 
 ## 创建
 
 ```sh
 pnpm create svedocs my-docs --template docs
 npm create svedocs@latest my-docs -- --template docs
-pnpm dlx --package @svedocs/cli create-svedocs my-docs --template docs
+pnpm dlx --package svedocs-cli create-svedocs my-docs --template docs
 svedocs create my-docs --template cloudflare
 ```
 

@@ -21,7 +21,7 @@ This path scaffolds the app, the docs theme, the CLI entry points, and the defau
 
 ```sh
 pnpm add svedocs
-pnpm add -D @svedocs/cli
+pnpm add -D svedocs-cli
 ```
 
 Then wire the package into `vite.config.ts`, `svelte.config.js`, and your root layout:
@@ -51,4 +51,3 @@ export default {
 2. Add your content under `content/docs`.
 3. Start the dev server and open `/docs`.
 4. Add search and Ask AI once the content tree is in place.
-

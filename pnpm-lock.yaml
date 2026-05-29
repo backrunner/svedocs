@@ -159,7 +159,7 @@ importers:
 
   packages/create-svedocs:
     dependencies:
-      '@svedocs/cli':
+      svedocs-cli:
         specifier: workspace:*
         version: link:../cli
 

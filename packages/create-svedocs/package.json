@@ -1,8 +1,17 @@
 {
   "name": "create-svedocs",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Compatibility package for npm create svedocs and pnpm create svedocs.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/backrunner/svedocs.git",
+    "directory": "packages/create-svedocs"
+  },
+  "bugs": {
+    "url": "https://github.com/backrunner/svedocs/issues"
+  },
+  "homepage": "https://github.com/backrunner/svedocs/tree/main/packages/create-svedocs#readme",
   "type": "module",
   "publishConfig": {
     "access": "public",
@@ -29,6 +38,6 @@
     "pack:dry-run": "pnpm pack --dry-run"
   },
   "dependencies": {
-    "@svedocs/cli": "workspace:*"
+    "svedocs-cli": "workspace:*"
   }
 }

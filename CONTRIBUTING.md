@@ -35,9 +35,9 @@ pnpm --filter svedocs build
 For CLI changes:
 
 ```sh
-pnpm --filter @svedocs/cli check
-pnpm --filter @svedocs/cli test
-pnpm --filter @svedocs/cli build
+pnpm --filter svedocs-cli check
+pnpm --filter svedocs-cli test
+pnpm --filter svedocs-cli build
 ```
 
 For theme, routing, or official site changes:

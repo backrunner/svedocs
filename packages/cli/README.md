@@ -1,4 +1,4 @@
-# @svedocs/cli
+# svedocs-cli
 
 CLI package for `svedocs` and `create-svedocs`.
 

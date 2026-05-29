@@ -1,8 +1,17 @@
 {
   "name": "svedocs",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "SvelteKit-native documentation framework.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/backrunner/svedocs.git",
+    "directory": "packages/svedocs"
+  },
+  "bugs": {
+    "url": "https://github.com/backrunner/svedocs/issues"
+  },
+  "homepage": "https://github.com/backrunner/svedocs/tree/main/packages/svedocs#readme",
   "type": "module",
   "publishConfig": {
     "access": "public",

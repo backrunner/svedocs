@@ -6,15 +6,15 @@ order: 2
 
 # CLI
 
-`@svedocs/cli` ships the two project binaries: `create-svedocs` and `svedocs`.
-The unscoped `create-svedocs` package is a compatibility shim for package-manager create commands and delegates to `@svedocs/cli`.
+`svedocs-cli` ships the two project binaries: `create-svedocs` and `svedocs`.
+The unscoped `create-svedocs` package is a compatibility shim for package-manager create commands and delegates to `svedocs-cli`.
 
 ## Create
 
 ```sh
 pnpm create svedocs my-docs --template docs
 npm create svedocs@latest my-docs -- --template docs
-pnpm dlx --package @svedocs/cli create-svedocs my-docs --template docs
+pnpm dlx --package svedocs-cli create-svedocs my-docs --template docs
 svedocs create my-docs --template cloudflare
 ```
 
@@ -89,4 +89,3 @@ svedocs deploy cloudflare --write
 ```
 
 The dry-run prints the generated `wrangler.toml` and platform type declarations. `--write` creates `wrangler.toml` and `src/app.cloudflare.d.ts`. Pass `--format jsonc` when you need `wrangler.jsonc`.
-

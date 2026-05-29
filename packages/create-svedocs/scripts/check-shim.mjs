@@ -14,6 +14,6 @@ const binPath = path.join(root, bin);
 await access(binPath);
 
 const source = await readFile(binPath, 'utf8');
-if (!source.includes('@svedocs/cli')) {
-  throw new Error('create-svedocs shim must delegate to @svedocs/cli');
+if (!source.includes('svedocs-cli')) {
+  throw new Error('create-svedocs shim must delegate to svedocs-cli');
 }

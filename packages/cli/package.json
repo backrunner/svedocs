@@ -1,8 +1,17 @@
 {
-  "name": "@svedocs/cli",
-  "version": "0.0.0",
+  "name": "svedocs-cli",
+  "version": "0.1.0",
   "description": "CLI for the svedocs documentation framework.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/backrunner/svedocs.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/backrunner/svedocs/issues"
+  },
+  "homepage": "https://github.com/backrunner/svedocs/tree/main/packages/cli#readme",
   "type": "module",
   "publishConfig": {
     "access": "public",

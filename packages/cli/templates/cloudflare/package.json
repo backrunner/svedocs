@@ -28,7 +28,7 @@
     "wrangler": "^4.92.0"
   },
   "devDependencies": {
-    "@svedocs/cli": "latest",
+    "svedocs-cli": "latest",
     "@types/node": "^25.8.0",
     "typescript": "^6.0.3"
   }

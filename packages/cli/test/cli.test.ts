@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { detectPackageManagerFromEnv } from '../src/package-manager';
 import { runCreateSvedocsCli, runSvedocsCli } from '../src/index';
 
-describe('@svedocs/cli Batch 0 shell', () => {
+describe('svedocs-cli Batch 0 shell', () => {
   it('renders svedocs help', async () => {
     const result = await runSvedocsCli(['--help']);
 
@@ -51,7 +51,7 @@ describe('@svedocs/cli Batch 0 shell', () => {
       expect(minimalPackage).toContain('"name": "minimal-app"');
       expect(minimalPackage).toContain('"packageManager": "pnpm@11.1.2"');
       expect(minimalPackage).toContain('"build:ssg": "svedocs ssg"');
-      expect(minimalPackage).toContain('"@svedocs/cli": "latest"');
+      expect(minimalPackage).toContain('"svedocs-cli": "latest"');
       expect(minimalSvelteConfig).toContain('remoteBindings: false');
       expect(minimalSvelteConfig).toContain("fallback: '200.html'");
       expect(minimalPageRoute).toContain('svedocsPagePrerender');
@@ -139,7 +139,7 @@ describe('@svedocs/cli Batch 0 shell', () => {
   it('resolves templates from the bundled dist CLI layout', async () => {
     const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-bundled-create-'));
     try {
-      await runCommand('pnpm', ['--filter', '@svedocs/cli', 'build'], repoRoot());
+      await runCommand('pnpm', ['--filter', 'svedocs-cli', 'build'], repoRoot());
       await runCommand(
         'node',
         [fileURLToPath(new URL('fixtures/bundled-create.mjs', import.meta.url)), path.join(tmp, 'app')],
@@ -405,7 +405,7 @@ describe('@svedocs/cli Batch 0 shell', () => {
       await mkdir(packDir, { recursive: true });
       const svedocsTarball = await packWorkspacePackage('svedocs', packDir);
       const cliTarball = await patchCliTarballForLocalE2e(
-        await packWorkspacePackage('@svedocs/cli', packDir),
+        await packWorkspacePackage('svedocs-cli', packDir),
         svedocsTarball,
         packDir
       );
@@ -477,7 +477,7 @@ async function rewriteTemplateDependencies(packageJsonPath: string, svedocsTarba
   };
   packageJson.devDependencies = {
     ...packageJson.devDependencies,
-    '@svedocs/cli': `file:${cliTarball}`
+    'svedocs-cli': `file:${cliTarball}`
   };
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, 'utf8');
 }
