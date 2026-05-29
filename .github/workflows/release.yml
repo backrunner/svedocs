@@ -1,23 +1,23 @@
-name: Release
+name: Release npm
 
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: npm dist-tag
-        required: false
-        default: latest
+      channel:
+        description: Release channel
+        required: true
+        default: stable
         type: choice
         options:
-          - latest
-          - next
+          - stable
+          - beta
 
 permissions:
   contents: read
   id-token: write
 
 concurrency:
-  group: release
+  group: release-npm
   cancel-in-progress: false
 
 jobs:
@@ -32,9 +32,66 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org
           package-manager-cache: false
       - run: pnpm install --frozen-lockfile
+      - name: Resolve release channel
+        id: release-channel
+        env:
+          RELEASE_CHANNEL: ${{ inputs.channel }}
+        run: |
+          case "$RELEASE_CHANNEL" in
+            stable)
+              echo "npm_tag=latest" >> "$GITHUB_OUTPUT"
+              ;;
+            beta)
+              echo "npm_tag=beta" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Unsupported release channel: $RELEASE_CHANNEL" >&2
+              exit 1
+              ;;
+          esac
+      - name: Validate package versions
+        env:
+          RELEASE_CHANNEL: ${{ inputs.channel }}
+        run: |
+          node <<'NODE'
+          const { readFileSync } = require('node:fs');
+
+          const packageFiles = [
+            'packages/svedocs/package.json',
+            'packages/cli/package.json',
+            'packages/create-svedocs/package.json'
+          ];
+          const packages = packageFiles.map((file) => {
+            const manifest = JSON.parse(readFileSync(file, 'utf8'));
+            return { file, name: manifest.name, version: manifest.version };
+          });
+          const versions = new Set(packages.map((pkg) => pkg.version));
+          if (versions.size !== 1) {
+            console.error('Release packages must share the same version.');
+            for (const pkg of packages) {
+              console.error(`- ${pkg.name}@${pkg.version} (${pkg.file})`);
+            }
+            process.exit(1);
+          }
+
+          const version = packages[0].version;
+          const prerelease = version.match(/^\d+\.\d+\.\d+-(.+)$/)?.[1];
+          const prereleaseParts = prerelease?.split(/[.-]/) ?? [];
+          const channel = process.env.RELEASE_CHANNEL;
+
+          if (channel === 'stable' && prerelease) {
+            console.error(`Stable releases must use a final semver version, got ${version}.`);
+            process.exit(1);
+          }
+          if (channel === 'beta' && !prereleaseParts.includes('beta')) {
+            console.error(`Beta releases must use a beta prerelease version such as 0.1.0-beta.1, got ${version}.`);
+            process.exit(1);
+          }
+
+          console.log(`Publishing ${packages.map((pkg) => pkg.name).join(', ')} at ${version} on ${channel}.`);
+          NODE
       - run: pnpm release:check
       - run: mkdir -p artifacts
       - run: pnpm pack --out ../../artifacts/svedocs.tgz
@@ -43,6 +100,6 @@ jobs:
         working-directory: packages/cli
       - run: pnpm pack --out ../../artifacts/create-svedocs.tgz
         working-directory: packages/create-svedocs
-      - run: npm publish artifacts/svedocs.tgz --access public --tag ${{ inputs.tag }}
-      - run: npm publish artifacts/svedocs-cli.tgz --access public --tag ${{ inputs.tag }}
-      - run: npm publish artifacts/create-svedocs.tgz --access public --tag ${{ inputs.tag }}
+      - run: npm publish artifacts/svedocs.tgz --access public --provenance --tag ${{ steps.release-channel.outputs.npm_tag }}
+      - run: npm publish artifacts/svedocs-cli.tgz --access public --provenance --tag ${{ steps.release-channel.outputs.npm_tag }}
+      - run: npm publish artifacts/create-svedocs.tgz --access public --provenance --tag ${{ steps.release-channel.outputs.npm_tag }}

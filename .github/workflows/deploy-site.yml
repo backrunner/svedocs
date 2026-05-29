@@ -2,18 +2,6 @@ name: Deploy site
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - apps/site/**
-      - packages/svedocs/**
-      - packages/cli/templates/**
-      - package.json
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - turbo.json
-      - scripts/publish-site.ts
-      - .github/workflows/deploy-site.yml
 
 permissions:
   contents: read
