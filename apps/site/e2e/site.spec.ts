@@ -118,3 +118,36 @@ test('keeps ToC active state bound to scroll position', async ({ page, isMobile 
   await page.getByRole('link', { name: 'Section extraction' }).click();
   await expect(page.locator('.sd-toc-link.sd-active')).toContainText('Section extraction');
 });
+
+test('uses the lowest visible heading for the ToC marker', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'ToC is intentionally hidden on mobile.');
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/docs/writing/content');
+  await waitForSvedocsHydration(page);
+  await page.waitForFunction(() => {
+    const visible = Array.from(document.querySelectorAll<HTMLElement>('.sd-prose h2[id], .sd-prose h3[id], .sd-prose h4[id]'))
+      .filter((heading) => {
+        const top = heading.getBoundingClientRect().top;
+        return top >= 80 && top <= window.innerHeight;
+      });
+    return visible.length > 1;
+  });
+  const lowestVisibleId = await page.evaluate(() => {
+    const visible = Array.from(document.querySelectorAll<HTMLElement>('.sd-prose h2[id], .sd-prose h3[id], .sd-prose h4[id]'))
+      .map((heading) => ({ id: heading.id, top: heading.getBoundingClientRect().top }))
+      .filter((heading) => heading.top >= 80 && heading.top <= window.innerHeight);
+    return visible.reduce((lowest, heading) => heading.top > lowest.top ? heading : lowest).id;
+  });
+  await expect(page.locator('.sd-toc-link.sd-active')).toHaveAttribute('href', `#${lowestVisibleId}`);
+  const marker = await page.locator('.sd-toc').evaluate((toc) => {
+    const style = getComputedStyle(toc, '::before');
+    return {
+      height: Number.parseFloat(style.height),
+      opacity: style.opacity,
+      width: Number.parseFloat(style.width)
+    };
+  });
+  expect(Number.parseFloat(marker.opacity)).toBeGreaterThan(0);
+  expect(marker.height).toBeGreaterThan(0);
+  expect(marker.width).toBeGreaterThan(0);
+});

@@ -19,37 +19,54 @@
   let indicatorTop = 0;
   let indicatorHeight = 0;
   let indicatorReady = false;
-  let observer: IntersectionObserver | undefined;
+  let headingFrame: number | undefined;
+  let stopHeadingTracking: (() => void) | undefined;
+  let headingTrackingVersion = 0;
   let mounted = false;
   $: scopedTree = createCorePageTree(filterPagesForCurrentScope(pages, page));
   $: navigationTree = scopedTree.length ? scopedTree : tree;
 
   onMount(() => {
     mounted = true;
-    return () => observer?.disconnect();
+    return () => {
+      headingTrackingVersion += 1;
+      stopHeadingTracking?.();
+      cancelHeadingFrame();
+    };
   });
 
-  $: if (mounted) void attachHeadingObserver(page);
+  $: if (mounted) void attachHeadingTracker(page);
 
-  async function attachHeadingObserver(currentPage: SvedocsPage) {
-    observer?.disconnect();
+  async function attachHeadingTracker(currentPage: SvedocsPage) {
+    const version = headingTrackingVersion + 1;
+    headingTrackingVersion = version;
+    stopHeadingTracking?.();
+    stopHeadingTracking = undefined;
+    cancelHeadingFrame();
     indicatorReady = false;
     activeHeading = currentPage.headings[0]?.id ?? '';
     await tick();
+    if (version !== headingTrackingVersion) return;
     const headings = currentPage.headings
       .map((heading) => document.getElementById(heading.id))
       .filter((element): element is HTMLElement => Boolean(element));
     if (headings.length === 0) return;
-    observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        if (visible?.target.id) activeHeading = visible.target.id;
-      },
-      { rootMargin: '-20% 0px -65% 0px', threshold: [0, 1] }
-    );
-    headings.forEach((heading) => observer!.observe(heading));
+    const syncActiveHeading = () => {
+      headingFrame = undefined;
+      const nextHeading = getActiveHeading(headings);
+      if (nextHeading) activeHeading = nextHeading.id;
+    };
+    const scheduleActiveHeadingSync = () => {
+      if (headingFrame !== undefined) return;
+      headingFrame = requestAnimationFrame(syncActiveHeading);
+    };
+    window.addEventListener('scroll', scheduleActiveHeadingSync, { passive: true });
+    window.addEventListener('resize', scheduleActiveHeadingSync);
+    stopHeadingTracking = () => {
+      window.removeEventListener('scroll', scheduleActiveHeadingSync);
+      window.removeEventListener('resize', scheduleActiveHeadingSync);
+    };
+    scheduleActiveHeadingSync();
   }
 
   $: if (typeof document !== 'undefined' && tocEl && activeHeading) {
@@ -61,8 +78,9 @@
     if (!tocEl) return;
     const link = tocEl.querySelector<HTMLElement>(`a.sd-toc-link[href="#${cssEscape(id)}"]`);
     if (!link) return;
-    indicatorTop = link.offsetTop;
-    indicatorHeight = link.offsetHeight;
+    const markerHeight = Math.min(24, Math.max(16, link.offsetHeight - 12));
+    indicatorTop = link.offsetTop + (link.offsetHeight - markerHeight) / 2;
+    indicatorHeight = markerHeight;
     indicatorReady = true;
   }
 
@@ -73,6 +91,26 @@
   function cssEscape(value: string): string {
     if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') return CSS.escape(value);
     return value.replace(/([^a-zA-Z0-9_-])/g, '\\$1');
+  }
+
+  function cancelHeadingFrame() {
+    if (headingFrame === undefined) return;
+    cancelAnimationFrame(headingFrame);
+    headingFrame = undefined;
+  }
+
+  function getActiveHeading(headings: HTMLElement[]): HTMLElement | undefined {
+    const viewportTop = 80;
+    const viewportBottom = window.innerHeight || document.documentElement.clientHeight;
+    const snapshots = headings.map((heading) => ({
+      element: heading,
+      top: heading.getBoundingClientRect().top
+    }));
+    const visible = snapshots.filter((heading) => heading.top >= viewportTop && heading.top <= viewportBottom);
+    if (visible.length > 0) {
+      return visible.reduce((lowest, heading) => heading.top > lowest.top ? heading : lowest).element;
+    }
+    return snapshots.filter((heading) => heading.top < viewportTop).at(-1)?.element ?? snapshots[0]?.element;
   }
 
   function filterPagesForCurrentScope(pages: SvedocsPage[], current: SvedocsPage): SvedocsPage[] {

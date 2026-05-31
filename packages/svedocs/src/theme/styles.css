@@ -1079,17 +1079,26 @@ body {
 
 .sd-toc {
   padding: .25rem 0 .25rem 1rem;
-  border-left: 2px solid color-mix(in srgb, var(--sd-line) 55%, transparent);
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--sd-line) 55%, transparent),
+      color-mix(in srgb, var(--sd-line) 55%, transparent)
+    );
+  background-position: 0 0;
+  background-repeat: no-repeat;
+  background-size: 1px 100%;
 }
 
 .sd-toc::before {
   content: "";
   position: absolute;
-  left: -2px;
+  left: 0;
   top: var(--toc-indicator-top, 0);
   width: 2px;
   height: var(--toc-indicator-height, 0);
-  background: var(--sd-accent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sd-accent) 88%, var(--sd-ink));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--sd-accent) 18%, transparent);
   opacity: 0;
   transition: top .22s cubic-bezier(.4, 0, .2, 1), height .22s cubic-bezier(.4, 0, .2, 1), opacity .16s ease;
   pointer-events: none;
