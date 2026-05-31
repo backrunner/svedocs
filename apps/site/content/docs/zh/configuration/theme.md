@@ -24,6 +24,20 @@ order: 2
 
 ## 调色板
 
+只想快速换品牌主题色时，只配置 `theme.palette.accent` 即可：
+
+```ts title="svedocs.config.ts"
+import { defineConfig } from 'svedocs/config';
+
+export default defineConfig({
+  theme: {
+    palette: {
+      accent: 'sky'
+    }
+  }
+});
+```
+
 ```ts title="svedocs.config.ts"
 import { defineConfig } from 'svedocs/config';
 
@@ -71,7 +85,7 @@ export default defineConfig({
 });
 ```
 
-`palette.accent` 可以是内置 token，例如 `emerald`、`sky`、`indigo`，也可以是 CSS 颜色值。默认主题会保持克制、适合阅读的视觉基调。
+`palette.accent` 可以是内置 token，例如 `emerald`、`teal`、`sky`、`indigo`、`rose` 或 `amber`。它也可以是任意 CSS 颜色值，例如 `#0ea5e9`、`hsl(221 83% 53%)` 或 `oklch(62% 0.18 250)`。默认主题会保持克制、适合阅读的视觉基调。
 
 `home.visual` 可以继续使用内置 pixel 模块，也可以指向项目图片：`{ type: 'image', src: '/hero.png', alt: 'Preview' }`。
 

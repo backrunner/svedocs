@@ -6,6 +6,12 @@ export default defineConfig({
     title: 'svedocs cloudflare',
     description: 'Edge-first documentation powered by svedocs and Cloudflare Pages.'
   },
+  theme: {
+    palette: {
+      // Try "sky", "indigo", "rose", "amber", or any CSS color.
+      accent: 'emerald'
+    }
+  },
   search: {
     enabled: true,
     provider: 'cloudflare-ai-search'

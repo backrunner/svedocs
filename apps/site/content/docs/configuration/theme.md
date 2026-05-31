@@ -24,6 +24,20 @@ The stylesheet defines `--sd-*` tokens and uses `data-theme` for light and dark 
 
 ## Palette
 
+For a quick brand color swap, set only `theme.palette.accent`:
+
+```ts title="svedocs.config.ts"
+import { defineConfig } from 'svedocs/config';
+
+export default defineConfig({
+  theme: {
+    palette: {
+      accent: 'sky'
+    }
+  }
+});
+```
+
 ```ts title="svedocs.config.ts"
 import { defineConfig } from 'svedocs/config';
 
@@ -71,7 +85,7 @@ export default defineConfig({
 });
 ```
 
-`palette.accent` accepts a built-in token such as `emerald`, `sky`, `indigo`, or a CSS color value. The default theme keeps the palette restrained and documentation-focused.
+`palette.accent` accepts a built-in token such as `emerald`, `teal`, `sky`, `indigo`, `rose`, or `amber`. It also accepts any CSS color value, such as `#0ea5e9`, `hsl(221 83% 53%)`, or `oklch(62% 0.18 250)`. The default theme keeps the palette restrained and documentation-focused.
 
 `home.visual` can stay as the built-in pixel module or point at a project image with `{ type: 'image', src: '/hero.png', alt: 'Preview' }`.
 
@@ -123,4 +137,3 @@ layout: feature
 ```
 
 Layouts receive the same page data as default pages, so custom single pages can still use the manifest, search records, SEO metadata, and framework shell.
-
