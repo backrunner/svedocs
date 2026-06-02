@@ -1,5 +1,5 @@
 import { loadSvedocsRoute } from '$lib/loadPage';
-import pages from 'virtual:svedocs/pages';
+import pages from 'virtual:svedocs/page-index';
 import { svedocsPagePrerender } from 'svedocs/cloudflare';
 import type { PageLoad } from './$types';
 

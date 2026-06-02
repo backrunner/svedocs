@@ -7,10 +7,11 @@
     export let pages: SvedocsPage[] = [];
     export let search: SvedocsSearchRecord[] = [];
     export let config: SvedocsResolvedConfig;
+    export let loadSearch: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
     export let content: Component | undefined = undefined;
 </script>
 
-<RootLayout {config} {page} {pages} {search}>
+<RootLayout {config} {page} {pages} {search} {loadSearch}>
   <main id="content" class="sd-page">
     <section class="sd-page-hero">
       <p class="sd-kicker">{config.site.name}</p>

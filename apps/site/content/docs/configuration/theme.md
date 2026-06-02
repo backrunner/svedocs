@@ -22,6 +22,42 @@ Import the theme stylesheet from the SvelteKit root layout:
 
 The stylesheet defines `--sd-*` tokens and uses `data-theme` for light and dark mode.
 
+## Form controls
+
+The theme also exports basic form components for custom layouts, embedded tools, and interactive docs pages. They keep native Svelte ergonomics such as `bind:value`, forwarded DOM events, and standard form attributes.
+
+```svelte
+<script lang="ts">
+  import { Button, Checkbox, FormField, Input, Select, Textarea } from 'svedocs/theme';
+
+  let email = '';
+  let role = 'reader';
+  let note = '';
+  let updates = true;
+</script>
+
+<FormField label="Email" for="email" description="Used only for workspace notifications.">
+  <Input id="email" type="email" bind:value={email} placeholder="you@example.com" />
+</FormField>
+
+<FormField label="Role" for="role">
+  <Select id="role" bind:value={role}>
+    <option value="reader">Reader</option>
+    <option value="editor">Editor</option>
+  </Select>
+</FormField>
+
+<FormField label="Notes" for="note">
+  <Textarea id="note" bind:value={note} rows="4" />
+</FormField>
+
+<Checkbox bind:checked={updates} label="Send release updates" />
+
+<Button variant="primary" type="submit">Save preferences</Button>
+```
+
+Available controls are `FormField`, `Input`, `Textarea`, `Select`, `Checkbox`, and `Button`. `Input`, `Textarea`, `Select`, `Checkbox`, and `Button` accept `density="sm" | "md" | "lg"`. `Button` accepts `variant="default" | "primary" | "ghost" | "danger"`.
+
 ## Palette
 
 For a quick brand color swap, set only `theme.palette.accent`:

@@ -18,6 +18,7 @@
 
   export let config: SvedocsResolvedConfig;
   export let records: SvedocsSearchRecord[] = [];
+  export let loadRecords: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
   export let scope: SearchScope = {};
   export let buildMode: SvedocsResolvedConfig['build']['mode'] = 'edge';
 
@@ -30,7 +31,12 @@
   let scrollEl: HTMLDivElement | undefined;
   let previousFocus: HTMLElement | undefined;
   let messageId = 0;
+  let loadedRecords: SvedocsSearchRecord[] = records;
+  let recordsRequest: Promise<SvedocsSearchRecord[]> | undefined;
 
+  $: if (records.length > 0 && loadedRecords !== records) {
+    loadedRecords = records;
+  }
   $: enabled = config.ai.enabled;
   $: label = config.ai.label ?? 'Ask AI';
   $: placeholder = config.ai.placeholder ?? 'Ask about the docs';
@@ -91,7 +97,8 @@
       .map((m) => ({ role: m.role, content: m.content }));
 
     if (buildMode !== 'edge') {
-      updateAssistant(assistantMsg.id, createLocalAskDraft(value));
+      const sourceRecords = await ensureRecords();
+      updateAssistant(assistantMsg.id, createLocalAskDraft(value, sourceRecords));
       loading = false;
       await tick();
       scrollToBottom();
@@ -132,7 +139,8 @@
         citations: result.citations ?? []
       });
     } catch (requestError) {
-      const fallbackCitations = rankRecords(records, value.toLowerCase(), scope).slice(0, 3).map((result) => ({
+      const sourceRecords = await ensureRecords();
+      const fallbackCitations = rankRecords(sourceRecords, value.toLowerCase(), scope).slice(0, 3).map((result) => ({
         title: result.title,
         url: result.url,
         ...(result.section ? { section: result.section } : {})
@@ -152,7 +160,27 @@
     }
   }
 
-  function createLocalAskDraft(question: string): Partial<ChatMessage> {
+  async function ensureRecords(): Promise<SvedocsSearchRecord[]> {
+    if (loadedRecords.length > 0 || !loadRecords) return loadedRecords;
+    if (!recordsRequest) {
+      recordsRequest = loadRecords()
+        .then((nextRecords) => {
+          loadedRecords = nextRecords;
+          return nextRecords;
+        })
+        .catch((error) => {
+          recordsRequest = undefined;
+          throw error;
+        });
+    }
+    try {
+      return await recordsRequest;
+    } catch {
+      return loadedRecords;
+    }
+  }
+
+  function createLocalAskDraft(question: string, records: SvedocsSearchRecord[]): Partial<ChatMessage> {
     const citations = rankRecords(records, question.toLowerCase(), scope).slice(0, 3).map((result) => ({
       title: result.title,
       url: result.url,

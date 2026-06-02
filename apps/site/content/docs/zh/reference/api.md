@@ -46,8 +46,11 @@ export default defineConfig({
 | --- | --- |
 | `virtual:svedocs/config` | 解析后的配置 |
 | `virtual:svedocs/pages` | 页面 manifest |
+| `virtual:svedocs/page-index` | 用于客户端路由匹配的轻量页面索引 |
+| `virtual:svedocs/page-loaders` | 完整单页数据的动态加载器 |
 | `virtual:svedocs/tree` | 侧栏树 |
 | `virtual:svedocs/search` | 搜索记录 |
+| `virtual:svedocs/search-loader` | 客户端搜索记录的动态加载器 |
 | `virtual:svedocs/components` | 编译后的 `.svx/.mdx` 组件 |
 | `virtual:svedocs/layouts` | 注册的自定义布局 |
 
@@ -67,11 +70,24 @@ Core API 暴露的是 manifest、内容模型、导航、链接、检查和搜�
 ## Theme
 
 ```ts
-import { DocsApp, RootLayout, DocsLayout, DocPage, HomePage } from 'svedocs/theme';
+import {
+  DocsApp,
+  RootLayout,
+  DocsLayout,
+  DocPage,
+  HomePage,
+  FormField,
+  Input,
+  Select,
+  Textarea,
+  Checkbox,
+  Button
+} from 'svedocs/theme';
 import 'svedocs/theme/styles.css';
 ```
 
 完整路由壳层可以直接用 `DocsApp`，也可以组合更底层的组件做自定义站点。
+自定义页面和布局里的表单 UI 可以使用这些基础控件，以继承默认 svedocs 主题风格。
 
 ## Cloudflare
 

@@ -46,8 +46,11 @@ Virtual modules:
 | --- | --- |
 | `virtual:svedocs/config` | Resolved config |
 | `virtual:svedocs/pages` | Page manifest |
+| `virtual:svedocs/page-index` | Lightweight page index for client route matching |
+| `virtual:svedocs/page-loaders` | Dynamic loaders for full per-page data |
 | `virtual:svedocs/tree` | Sidebar tree |
 | `virtual:svedocs/search` | Search records |
+| `virtual:svedocs/search-loader` | Dynamic loader for client-side search records |
 | `virtual:svedocs/components` | Compiled `.svx/.mdx` components |
 | `virtual:svedocs/layouts` | Registered custom layouts |
 
@@ -67,11 +70,24 @@ Core APIs expose the manifest, content model, navigation, links, checks, and sea
 ## Theme
 
 ```ts
-import { DocsApp, RootLayout, DocsLayout, DocPage, HomePage } from 'svedocs/theme';
+import {
+  DocsApp,
+  RootLayout,
+  DocsLayout,
+  DocPage,
+  HomePage,
+  FormField,
+  Input,
+  Select,
+  Textarea,
+  Checkbox,
+  Button
+} from 'svedocs/theme';
 import 'svedocs/theme/styles.css';
 ```
 
 Use `DocsApp` for the complete route shell or compose lower-level components for custom apps.
+Use the form controls in custom pages and layouts when you want project UI to inherit the default svedocs theme.
 
 ## Cloudflare
 
@@ -107,4 +123,3 @@ import {
 ```
 
 Use these APIs for custom route handlers, custom layouts, and build-time OG generation.
-

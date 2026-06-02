@@ -10,6 +10,18 @@ declare module 'virtual:svedocs/pages' {
   export default pages;
 }
 
+declare module 'virtual:svedocs/page-index' {
+  import type { SvedocsPage } from 'svedocs/core';
+  const pages: SvedocsPage[];
+  export default pages;
+}
+
+declare module 'virtual:svedocs/page-loaders' {
+  import type { SvedocsPage } from 'svedocs/core';
+  const loaders: Record<string, () => Promise<{ default: SvedocsPage | undefined }>>;
+  export default loaders;
+}
+
 declare module 'virtual:svedocs/tree' {
   import type { SvedocsTreeItem } from 'svedocs/core';
   const tree: SvedocsTreeItem[];
@@ -20,6 +32,12 @@ declare module 'virtual:svedocs/search' {
   import type { SvedocsSearchRecord } from 'svedocs/core';
   const records: SvedocsSearchRecord[];
   export default records;
+}
+
+declare module 'virtual:svedocs/search-loader' {
+  import type { SvedocsSearchRecord } from 'svedocs/core';
+  const loadSearch: () => Promise<SvedocsSearchRecord[]>;
+  export default loadSearch;
 }
 
 declare module 'virtual:svedocs/components' {

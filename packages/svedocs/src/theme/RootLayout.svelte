@@ -14,6 +14,7 @@
   export let page: SvedocsPage | undefined = undefined;
   export let pages: SvedocsPage[] = [];
   export let search: SvedocsSearchRecord[] = [];
+  export let loadSearch: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
   export let mobileTree: SvedocsTreeItem[] = [];
   export let mobileCurrentPath = '';
 
@@ -173,7 +174,7 @@
       <div class="sd-topbar-spacer" aria-hidden="true"></div>
       <div class="sd-topbar-tools">
         {#if config.search.enabled}
-          <SearchDialog records={search} scope={searchScope} provider={config.search.provider} buildMode={config.build.mode} />
+          <SearchDialog records={search} loadRecords={loadSearch} scope={searchScope} provider={config.search.provider} buildMode={config.build.mode} />
         {/if}
         <ScopeSwitcher {page} {pages} locales={config.i18n.locales} />
       </div>
@@ -213,7 +214,7 @@
   <slot />
   {#if isDocsPage}
     {#if config.ai.enabled}
-      <AskAiPanel {config} records={search} scope={aiScope} buildMode={config.build.mode} />
+      <AskAiPanel {config} records={search} loadRecords={loadSearch} scope={aiScope} buildMode={config.build.mode} />
     {/if}
     <FloatingToolbar {config} />
   {/if}

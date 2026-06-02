@@ -7,6 +7,7 @@
   export let pages: SvedocsPage[] = [];
   export let search: SvedocsSearchRecord[] = [];
   export let config: SvedocsResolvedConfig;
+  export let loadSearch: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
   export let content: Component | undefined = undefined;
 
   interface PixelCell {
@@ -128,7 +129,7 @@
   }
 </script>
 
-  <RootLayout {config} {page} {pages} {search}>
+  <RootLayout {config} {page} {pages} {search} {loadSearch}>
   <main id="content" class="sd-home">
     <section class="sd-home-hero">
       <span class="sd-home-hero-tape" aria-hidden="true"></span>

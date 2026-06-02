@@ -19,14 +19,18 @@ export interface SvedocsVitePluginOptions {
 const virtualModules = new Set([
   'virtual:svedocs/config',
   'virtual:svedocs/pages',
+  'virtual:svedocs/page-index',
+  'virtual:svedocs/page-loaders',
   'virtual:svedocs/tree',
   'virtual:svedocs/search',
+  'virtual:svedocs/search-loader',
   'virtual:svedocs/components',
   'virtual:svedocs/layouts',
   'virtual:svedocs/manifest'
 ]);
 
 const componentVirtualPrefix = 'virtual:svedocs/component/';
+const pageVirtualPrefix = 'virtual:svedocs/page/';
 const defaultConfigFiles = [
   'svedocs.config.ts',
   'svedocs.config.mts',
@@ -69,10 +73,26 @@ export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
     },
     resolveId(id) {
       if (id.startsWith(componentVirtualPrefix)) return `\0${id}`;
+      if (id.startsWith(pageVirtualPrefix)) return `\0${id}`;
       if (virtualModules.has(id)) return `\0${id}`;
       return undefined;
     },
     async load(id) {
+      if (id.startsWith(`\0${pageVirtualPrefix}`)) {
+        if (!manifest) await refresh();
+        const data = manifest ?? (await loadSvedocsContent(createContentOptions(root, options.config)));
+        const code = loadPageDataModule(id, data.pages);
+        return {
+          code,
+          map: {
+            version: 3,
+            sources: [id],
+            sourcesContent: [code],
+            names: [],
+            mappings: ''
+          }
+        };
+      }
       if (id.startsWith(`\0${componentVirtualPrefix}`)) {
         if (!manifest) await refresh();
           const data = manifest ?? (await loadSvedocsContent(createContentOptions(root, options.config)));
@@ -94,8 +114,11 @@ export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
       const key = id.replace('\0virtual:svedocs/', '');
       if (key === 'config') return `export default ${JSON.stringify(data.config)};`;
       if (key === 'pages') return `export default ${JSON.stringify(data.pages)};`;
+      if (key === 'page-index') return `export default ${JSON.stringify(createPageIndex(data.pages))};`;
+      if (key === 'page-loaders') return createPageLoadersModule(data.pages);
       if (key === 'tree') return `export default ${JSON.stringify(data.tree)};`;
       if (key === 'search') return `export default ${JSON.stringify(data.search)};`;
+      if (key === 'search-loader') return `export default () => import('virtual:svedocs/search').then((module) => module.default);`;
       if (key === 'components') return createComponentsModule(data.pages);
       if (key === 'layouts') return createNamedImportModule(options.layouts ?? {});
       if (key === 'manifest') return `export default ${JSON.stringify(data)};`;
@@ -191,6 +214,31 @@ function createComponentsModule(pages: SvedocsPage[]): string {
     .map((page, index) => `${JSON.stringify(page.id)}: C${index}`)
     .join(',\n  ');
   return `${imports}\nexport default {\n  ${entries}\n};`;
+}
+
+function createPageIndex(pages: SvedocsPage[]): SvedocsPage[] {
+  return pages.map((page) => ({
+    ...page,
+    html: '',
+    plainText: '',
+    headings: [],
+    links: [],
+    codeBlocks: [],
+    search: []
+  }));
+}
+
+function createPageLoadersModule(pages: SvedocsPage[]): string {
+  const entries = pages
+    .map((page) => `${JSON.stringify(page.id)}: () => import('${pageVirtualPrefix}${encodeURIComponent(page.id)}.js')`)
+    .join(',\n  ');
+  return `export default {\n  ${entries}\n};`;
+}
+
+function loadPageDataModule(id: string, pages: SvedocsPage[]): string {
+  const pageId = decodeURIComponent(id.slice(`\0${pageVirtualPrefix}`.length).replace(/\.js$/, ''));
+  const page = pages.find((item) => item.id === pageId);
+  return `export default ${JSON.stringify(page)};`;
 }
 
 function createNamedImportModule(entries: Record<string, string>): string {

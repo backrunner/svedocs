@@ -12,6 +12,7 @@
   export let tree: SvedocsTreeItem[] = [];
   export let search: SvedocsSearchRecord[] = [];
   export let config: SvedocsResolvedConfig;
+  export let loadSearch: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
   export let content: Component | undefined = undefined;
 
   let activeHeading = page.headings[0]?.id ?? '';
@@ -120,7 +121,7 @@
 
 </script>
 
-<RootLayout {config} {page} {pages} {search} mobileTree={navigationTree} mobileCurrentPath={page.routePath}>
+<RootLayout {config} {page} {pages} {search} {loadSearch} mobileTree={navigationTree} mobileCurrentPath={page.routePath}>
   <div class="sd-doc-shell">
     <aside class="sd-sidebar" aria-label="Documentation">
       <nav>

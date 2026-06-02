@@ -22,6 +22,42 @@ order: 2
 
 这份样式定义了 `--sd-*` 变量，并通过 `data-theme` 切换明暗模式。
 
+## 表单控件
+
+主题也导出了一组基础表单组件，适合自定义布局、嵌入式工具和交互式文档页使用。它们保留 Svelte 的原生使用习惯，例如 `bind:value`、DOM 事件转发和标准表单属性。
+
+```svelte
+<script lang="ts">
+  import { Button, Checkbox, FormField, Input, Select, Textarea } from 'svedocs/theme';
+
+  let email = '';
+  let role = 'reader';
+  let note = '';
+  let updates = true;
+</script>
+
+<FormField label="邮箱" for="email" description="仅用于工作区通知。">
+  <Input id="email" type="email" bind:value={email} placeholder="you@example.com" />
+</FormField>
+
+<FormField label="角色" for="role">
+  <Select id="role" bind:value={role}>
+    <option value="reader">读者</option>
+    <option value="editor">编辑者</option>
+  </Select>
+</FormField>
+
+<FormField label="备注" for="note">
+  <Textarea id="note" bind:value={note} rows="4" />
+</FormField>
+
+<Checkbox bind:checked={updates} label="接收版本更新" />
+
+<Button variant="primary" type="submit">保存偏好</Button>
+```
+
+可用控件包括 `FormField`、`Input`、`Textarea`、`Select`、`Checkbox` 和 `Button`。`Input`、`Textarea`、`Select`、`Checkbox`、`Button` 支持 `density="sm" | "md" | "lg"`；`Button` 支持 `variant="default" | "primary" | "ghost" | "danger"`。
+
 ## 调色板
 
 只想快速换品牌主题色时，只配置 `theme.palette.accent` 即可：

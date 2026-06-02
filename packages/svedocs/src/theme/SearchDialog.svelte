@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { onMount, tick } from 'svelte';
   import type { SvedocsSearchRecord } from '../core/types.js';
   import { filterSearchRecords, searchRecords } from '../search/local.js';
@@ -6,6 +7,7 @@
   import { portal } from './portal.js';
 
   export let records: SvedocsSearchRecord[] = [];
+  export let loadRecords: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
   export let scope: SearchScope = {};
   export let provider = 'local';
   export let endpoint = '/api/search';
@@ -23,11 +25,18 @@
   let remoteError = '';
   let remoteKey = '';
   let remoteRequestId = 0;
+  let loadedRecords: SvedocsSearchRecord[] = records;
+  let recordsStatus: 'idle' | 'loading' | 'ready' | 'error' = records.length > 0 ? 'ready' : 'idle';
+  let recordsRequest: Promise<SvedocsSearchRecord[]> | undefined;
 
+  $: if (records.length > 0 && loadedRecords !== records) {
+    loadedRecords = records;
+    recordsStatus = 'ready';
+  }
   $: usesRemoteSearch = buildMode === 'edge' && provider !== 'local' && provider !== 'local-json';
   $: localResults = query.trim()
-    ? searchRecords(records, { query, limit: 8, ...scope })
-    : createDefaultResults(records, scope);
+    ? searchRecords(loadedRecords, { query, limit: 8, ...scope })
+    : createDefaultResults(loadedRecords, scope);
   $: results = usesRemoteSearch && query.trim()
     ? remoteStatus === 'error' ? localResults : remoteResults
     : localResults;
@@ -49,6 +58,7 @@
   function show() {
     previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
     open = true;
+    void ensureRecords();
     tick().then(() => input?.focus());
   }
 
@@ -83,7 +93,7 @@
       activeIndex = Math.max(activeIndex - 1, 0);
     }
     if (event.key === 'Enter' && results[activeIndex]) {
-      window.location.href = results[activeIndex].url;
+      void goto(results[activeIndex].url, { keepFocus: false });
       hide();
     }
   }
@@ -96,6 +106,29 @@
       window.removeEventListener('svedocs:open-search', show);
     };
   });
+
+  async function ensureRecords(): Promise<SvedocsSearchRecord[]> {
+    if (loadedRecords.length > 0 || !loadRecords) return loadedRecords;
+    if (!recordsRequest) {
+      recordsStatus = 'loading';
+      recordsRequest = loadRecords()
+        .then((nextRecords) => {
+          loadedRecords = nextRecords;
+          recordsStatus = 'ready';
+          return nextRecords;
+        })
+        .catch((error) => {
+          recordsStatus = 'error';
+          recordsRequest = undefined;
+          throw error;
+        });
+    }
+    try {
+      return await recordsRequest;
+    } catch {
+      return loadedRecords;
+    }
+  }
 
   async function loadRemoteResults(query: string, scope: SearchScope, requestId: number) {
     remoteResults = [];
@@ -185,6 +218,12 @@
       {#if remoteStatus === 'loading'}
         <p class="sd-empty-state">Searching...</p>
       {/if}
+      {#if recordsStatus === 'loading' && !usesRemoteSearch}
+        <p class="sd-empty-state">Loading search index...</p>
+      {/if}
+      {#if recordsStatus === 'error' && !usesRemoteSearch}
+        <p class="sd-empty-state">Search index could not be loaded.</p>
+      {/if}
       {#if remoteError}
         <p class="sd-empty-state">{remoteError} Showing local results.</p>
       {/if}
@@ -205,7 +244,7 @@
             <p>{result.excerpt}</p>
           </a>
         {/each}
-      {:else if remoteStatus !== 'loading'}
+      {:else if remoteStatus !== 'loading' && recordsStatus !== 'loading'}
         <p class="sd-empty-state">No matching docs yet.</p>
       {/if}
     </div>
