@@ -19,6 +19,8 @@ svedocs create my-docs --template cloudflare
 
 创建命令会先从 `npm_config_user_agent` 识别包管理器，再看当前项目，最后回退到 `pnpm`、`npm`、`yarn` 和 `bun`。可以用 `--package-manager` 或 `--pm` 覆盖。默认只脚手架，不会安装依赖；加 `--install` 就会立刻运行选中的包管理器。
 
+生成出来的项目会从模板 `package.json` 里获得 `svedocs` 和 `svedocs-cli` 依赖。这些是普通的 npm 包依赖声明，所以 `--install` 会通过选中的包管理器从 registry 安装，而不是从 create 包里复制框架代码。
+
 模板会优先从 GitHub 拉取（默认 `backrunner/svedocs@main`），这样模板修复不需要重新发布 CLI。GitHub 不可用时会回退到 CLI 内置模板。设置 `SVEDOCS_TEMPLATE_SOURCE=bundled` 可以强制使用内置模板，设置 `SVEDOCS_TEMPLATE_SOURCE=github` 可以禁用回退，设置 `SVEDOCS_TEMPLATE_REF=<branch|tag|sha>` 可以固定远程模板版本。
 
 模板：
@@ -28,6 +30,19 @@ svedocs create my-docs --template cloudflare
 | `minimal` | 轻量 SvelteKit 文档项目，带本地渲染。 |
 | `docs` | 带本地 MiniSearch、站点地图、robots 和 OG 路由的文档站。 |
 | `cloudflare` | 面向 edge 的项目，包含 Cloudflare Pages 配置和 AI Search binding 形状。 |
+
+## 升级
+
+```sh
+svedocs upgrade
+svedocs upgrade 0.2.0
+svedocs upgrade 0.2.0 --no-install
+svedocs upgrade --check-only
+```
+
+升级命令会同时升级 `svedocs` 和 `svedocs-cli`，先检查当前版本到目标版本的跨度，再默认运行检测到的包管理器。使用 `--no-install` 可以只改写 `package.json`，使用 `--dry-run` 可以只预览依赖计划，使用 `--check-only` 可以只跑兼容性检查。
+
+现在还没有登记 breaking 规则，所以检查会明确通过。未来发布 breaking 版本时，可以把规则挂到引入 breaking 的版本上；升级跨度跨过该版本时，CLI 就能告警或阻断，必要时再用 `--force` 继续。
 
 ## 构建
 

@@ -1,32 +1,86 @@
 ---
 title: 内容
-description: 使用 frontmatter、GFM、KaTeX、代码块和目录提取来写文档。
+description: 使用 frontmatter、GFM、KaTeX、代码块、diff、链接、资源和小节提取来编写页面。
 order: 2
 ---
 
 # 内容
 
-svedocs 会扫描配置的内容目录中的 `.md`、`.mdx` 和 `.svx` 文件，并把它们转成页面、标题、搜索记录和元数据。
+svedocs 会从配置的内容根目录扫描 `.md`、`.mdx` 和 `.svx` 文件，并把它们转换成类型化页面 manifest。这个 manifest 会驱动路由、导航、搜索记录、检查、SEO 和默认主题。
+
+## 路由映射
+
+默认内容根目录是：
+
+```txt
+content/docs -> /docs
+content/pages -> /
+```
+
+示例：
+
+| 文件 | 路由 |
+| --- | --- |
+| `content/docs/index.md` | `/docs` |
+| `content/docs/writing/content.md` | `/docs/writing/content` |
+| `content/docs/configuration/index.md` | `/docs/configuration` |
+| `content/pages/changelog.md` | `/changelog` |
+
+用 `index.md` 表示一个分组首页。需要侧栏分组时，用嵌套目录组织。
 
 ## Frontmatter
 
+重要页面至少应该包含 `title` 和 `description`：
+
 ```md
 ---
-title: 内容
-description: 解释内容管线。
+title: Content
+description: Explain the content pipeline and authoring features.
+order: 2
 ---
 ```
 
-常见字段包括 `title`、`description`、`order`、`hidden`、`collapsed`、`icon`、`canonical`、`image`、`published` 和 `updated`。
+常见字段：
 
-## Markdown
+| 字段 | 类型 | 作用 |
+| --- | --- | --- |
+| `title` | string | 页面标题、搜索标题、OG 标题和默认侧栏标题。 |
+| `navTitle` | string | 更短的侧栏标题，不改变页面标题。 |
+| `description` | string | SEO 描述、搜索摘要 fallback 和页面简介。 |
+| `order` | number | 导航和上一页/下一页排序权重。 |
+| `hidden` | boolean | 从生成的导航和公开列表中移除。 |
+| `collapsed` | boolean | 让导航分组默认折叠。 |
+| `section` | boolean | 标记目录页为分组页。 |
+| `icon` | string | 默认主题的图标提示。 |
+| `canonical` | string | 覆盖生成的 canonical URL。 |
+| `image` | string | Open Graph 图片 URL。 |
+| `keywords` | string[] | SEO 和搜索元数据。 |
+| `author` | string | 文章作者；默认回退到 `seo.defaultAuthor`。 |
+| `published`、`date`、`publishedTime` | date | 发布时间。 |
+| `updated`、`updatedTime` | date | 最近一次有意义的内容更新时间。 |
+| `type`、`ogType` | string | Open Graph 内容类型。 |
 
-- 表格、任务列表和自动链接。
-- KaTeX 行内和块级公式。
-- 标题锚点和自动目录提取。
+如果第一个 Markdown 标题和 `title` 一样，svedocs 会从渲染内容中移除重复标题，但保留页面标题。
+
+## Markdown 特性
+
+svedocs 支持 GitHub-flavored Markdown，例如表格、任务列表和自动链接。它也会提取标题，用于锚点和页面目录。
+
+```md
+## Configure search
+
+- [x] Create the runtime route.
+- [x] Choose a provider.
+- [ ] Add production credentials.
+```
+
+需要公式时，可以使用 KaTeX 行内或块级数学公式。
 
 ## 代码块
 
+使用代码元数据可以让示例更容易扫描：
+
+````md
 ```ts title="svedocs.config.ts" {1} focus=3
 import { defineConfig } from 'svedocs/config';
 
@@ -34,15 +88,27 @@ export default defineConfig({
   site: { name: 'svedocs' }
 });
 ```
+````
 
-代码块支持语法高亮、元数据、行高亮、聚焦提示、 diff 标记、折行和复制按钮。
+默认主题支持：
 
-## Diff
+- 语法高亮。
+- 使用 `title="..."` 或 `filename="..."` 显示文件标题。
+- 使用 `{1,3-5}` 高亮行。
+- 使用 `focus=3` 标记重点行。
+- 通过主题配置控制行号和折行。
+- 复制按钮。
+
+## Diff 块
+
+小修改可以使用标准 diff fence：
 
 ```diff
 - const docs = fragmented();
 + const docs = svedocs();
 ```
+
+需要表达左右对比时，可以使用 split diff：
 
 ```diff split title="packages/svedocs/src/core.ts"
 @@ -1,3 +1,4 @@
@@ -52,7 +118,43 @@ export default defineConfig({
  export * from './config.js';
 ```
 
-## 小节提取
+split diff 的左右两侧都支持横向滚动，所以窄屏下长代码也能检查。
 
-标题会自动变成搜索目标和页面目录，所以长文档也能保持易扫读。
+## 链接和资源
 
+内部链接会根据生成的路由和标题锚点进行检查：
+
+```md
+Read [Configuration](/docs/configuration) and jump to
+[Build modes](/docs/configuration#build-modes).
+```
+
+启用 `checks.assets` 时，本地资源也会被检查：
+
+```md
+![Dashboard screenshot](/images/dashboard.png)
+```
+
+公共资源建议使用绝对站点路径，内部链接使用稳定的文档路由。这样搜索、Ask AI 引用和静态构建会保持一致。
+
+## 搜索记录
+
+svedocs 会创建两类搜索记录：
+
+| 记录 | 来源 | 适合 |
+| --- | --- | --- |
+| 页面记录 | 页面标题、描述、路由和正文。 | 命中整篇页面的宽泛查询。 |
+| 小节记录 | 标题和附近正文。 | 跳转到长文档中的具体小节。 |
+
+清晰标题比堆关键词更能提升搜索质量。优先使用描述用户任务或概念的标题。
+
+## 发布前检查
+
+发布页面前确认：
+
+- 页面是否有唯一的 `title` 和有用的 `description`？
+- 路由应该属于 `docs`，还是应该作为独立 `page`？
+- 标题是否具体到可以成为搜索目标？
+- 代码示例在需要上下文时是否带了文件名？
+- 内部链接是否指向真实路由和锚点？
+- 页面是否需要 `canonical`、`image`、`published` 或 `updated` 元数据？

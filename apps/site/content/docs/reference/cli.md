@@ -20,6 +20,8 @@ svedocs create my-docs --template cloudflare
 
 The create command detects the invoking package manager from `npm_config_user_agent`, then the current project, then falls back to `pnpm`, `npm`, `yarn`, and `bun`. Use `--package-manager` or `--pm` to override it. By default it scaffolds without installing dependencies; add `--install` to run the selected package manager immediately.
 
+Generated projects receive `svedocs` and `svedocs-cli` through the template `package.json`. The template dependency specs are normal npm package specs, so `--install` installs them through the selected package manager rather than copying framework code from the create package.
+
 Templates are fetched from GitHub first (`backrunner/svedocs@main`) so template fixes can ship without republishing the CLI. If GitHub is unavailable, create falls back to the bundled templates. Set `SVEDOCS_TEMPLATE_SOURCE=bundled` to force bundled templates, `SVEDOCS_TEMPLATE_SOURCE=github` to fail instead of falling back, or `SVEDOCS_TEMPLATE_REF=<branch|tag|sha>` to pin a remote template version.
 
 Templates:
@@ -29,6 +31,19 @@ Templates:
 | `minimal` | Small SvelteKit docs project with local rendering. |
 | `docs` | Documentation site with local MiniSearch-powered search, sitemap, robots, and OG routes. |
 | `cloudflare` | Edge-first project with Cloudflare Pages config and AI Search binding shape. |
+
+## Upgrade
+
+```sh
+svedocs upgrade
+svedocs upgrade 0.2.0
+svedocs upgrade 0.2.0 --no-install
+svedocs upgrade --check-only
+```
+
+The upgrade command updates both `svedocs` and `svedocs-cli`, checks the current-to-target version span, and runs the detected package manager by default. Use `--no-install` to only rewrite `package.json`, `--dry-run` to preview the dependency plan, or `--check-only` to run compatibility checks without changing files.
+
+The compatibility layer has no breaking rules registered yet. Future breaking releases can add rules keyed to the version where the break is introduced, so upgrades that cross that version can warn or block unless `--force` is used.
 
 ## Build
 
