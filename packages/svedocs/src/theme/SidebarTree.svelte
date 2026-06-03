@@ -51,7 +51,7 @@
   <div class="sd-sidebar-root">
     {#each sections as section, sectionIndex}
       {#if section.heading}
-        <div class="sd-sidebar-section-heading" class:sd-first={sectionIndex === 0}>
+        <div class="sd-sidebar-section-heading" class:sd-first={sectionIndex === 0} class:sd-active={section.items.some((item) => isActiveBranch(item))}>
           {#if section.heading.icon}
             <span class="sd-sidebar-section-icon" aria-hidden="true">{section.heading.icon}</span>
           {/if}

@@ -96,23 +96,16 @@ export function createDiffSplitRows(rows: SvedocsDiffRow[]): SvedocsDiffSplitRow
 export function renderSplitDiffHtml(block: SvedocsCodeBlock): string {
   const title = block.title ?? 'Diff';
   const rows = block.splitRows.length > 0 ? block.splitRows : createDiffSplitRows(block.diffRows);
-  const body = rows.map(renderSplitRow).join('');
   const counts = [
     block.addedLines > 0 ? `+${block.addedLines}` : '',
     block.removedLines > 0 ? `-${block.removedLines}` : ''
   ].filter(Boolean).join(' ');
 
   return `<div class="sd-diff sd-diff-split sd-code" data-language="${escapeAttribute(block.language)}"${block.title ? ` data-title="${escapeAttribute(block.title)}"` : ''} data-diff="true" data-diff-mode="split"${block.addedLines > 0 ? ` data-added-lines="${block.addedLines}"` : ''}${block.removedLines > 0 ? ` data-removed-lines="${block.removedLines}"` : ''} data-copy="${escapeAttribute(block.raw)}">
-  <div class="sd-diff-header">
-    <span>${escapeHtml(title)}</span>
-    <small>${escapeHtml(counts || block.language)}</small>
-  </div>
-  <div class="sd-diff-grid" role="table" aria-label="${escapeAttribute(title)} diff">
-    <div class="sd-diff-row sd-diff-column-row" role="row">
-      <div class="sd-diff-column-label" role="columnheader" data-side="old">Before</div>
-      <div class="sd-diff-column-label" role="columnheader" data-side="new">After</div>
-    </div>
-    ${body}
+  ${renderDiffHeader(title, counts)}
+  <div class="sd-diff-panes" role="table" aria-label="${escapeAttribute(title)} diff">
+    ${renderPane(rows, 'old', 'Before')}
+    ${renderPane(rows, 'new', 'After')}
   </div>
 </div>`;
 }
@@ -132,16 +125,46 @@ function pushPairedChangeRows(
   }
 }
 
-function renderSplitRow(row: SvedocsDiffSplitRow): string {
+function renderDiffHeader(title: string, counts: string): string {
+  const stats = counts
+    ? `<span class="sd-code-stats">${counts.split(' ').map(renderDiffStat).join('')}</span>`
+    : '';
+  return `<div class="sd-code-header">
+    <span class="sd-code-language" data-language="diff">Diff</span>
+    <span class="sd-code-title">${escapeHtml(title)}</span>
+    ${stats}
+    <button type="button" class="sd-code-copy" data-sd-copy="" aria-label="Copy diff" title="Copy diff"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h9v14H9zM6 8v12h10"/></svg></button>
+  </div>`;
+}
+
+function renderDiffStat(count: string): string {
+  const className = count.startsWith('+') ? 'sd-code-stat-add' : 'sd-code-stat-remove';
+  return `<span class="${className}">${escapeHtml(count)}</span>`;
+}
+
+function renderPane(rows: SvedocsDiffSplitRow[], side: 'old' | 'new', label: string): string {
+  return `<section class="sd-diff-pane" data-side="${side}" role="rowgroup" aria-label="${label}">
+    <div class="sd-diff-column-label" role="columnheader" data-side="${side}">${label}</div>
+    <div class="sd-diff-scroll" role="presentation" tabindex="0">
+      <div class="sd-diff-lines">
+        ${rows.map((row) => renderPaneRow(row, side)).join('')}
+      </div>
+    </div>
+  </section>`;
+}
+
+function renderPaneRow(row: SvedocsDiffSplitRow, side: 'old' | 'new'): string {
   if (row.kind === 'meta') {
     return `<div class="sd-diff-row sd-diff-meta" role="row">
-      <div class="sd-diff-cell sd-diff-meta-cell" role="cell">${escapeHtml(row.content ?? '')}</div>
+      <div class="sd-diff-cell sd-diff-meta-cell" role="cell" data-side="${side}">
+        <span class="sd-diff-line-no" aria-hidden="true"></span>
+        <span class="sd-diff-code">${escapeHtml(row.content ?? '')}</span>
+      </div>
     </div>`;
   }
 
   return `<div class="sd-diff-row ${row.kind === 'change' ? 'sd-diff-change' : 'sd-diff-context'}" role="row">
-    ${renderSideCell(row.old, 'old')}
-    ${renderSideCell(row.new, 'new')}
+    ${renderSideCell(side === 'old' ? row.old : row.new, side)}
   </div>`;
 }
 
@@ -153,6 +176,6 @@ function renderSideCell(row: SvedocsDiffRow | undefined, side: 'old' | 'new'): s
   const kind = row.kind === 'remove' ? 'remove' : row.kind === 'add' ? 'add' : 'context';
   return `<div class="sd-diff-cell sd-diff-${kind}" role="cell" data-side="${side}" data-line="${line ?? ''}">
     <span class="sd-diff-line-no">${line ?? ''}</span>
-    <code>${escapeHtml(row.content)}</code>
+    <span class="sd-diff-code">${escapeHtml(row.content)}</span>
   </div>`;
 }

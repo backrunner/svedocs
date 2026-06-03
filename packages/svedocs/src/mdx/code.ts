@@ -180,37 +180,9 @@ function decorateHighlightedCode(html: string, block: SvedocsCodeBlock, options:
   const showLineNumbers = options.showLineNumbers;
   const wrap = options.wrap;
   const trimmed = stripTrailingEmptyLine(html);
-  let line = 0;
-  const highlighted = new Set(block.highlightLines);
-  const focused = new Set(block.focusLines);
-  const withLineOpens = trimmed.replace(/<span class="line">/g, () => {
-    line += 1;
-    const classes = ['line'];
-    if (highlighted.has(line)) classes.push('sd-line-highlight');
-    if (focused.has(line)) classes.push('sd-line-focus');
-    if (block.diff) {
-      const diffRow = block.diffRows[line - 1];
-      if (diffRow?.kind === 'add') classes.push('sd-line-add');
-      if (diffRow?.kind === 'remove') classes.push('sd-line-remove');
-      if (diffRow?.kind === 'meta') classes.push('sd-line-meta');
-    }
-    const diffRow = block.diffRows[line - 1];
-    let lineNoText: string = String(line);
-    if (block.diff && diffRow) {
-      if (diffRow.kind === 'add') lineNoText = '+';
-      else if (diffRow.kind === 'remove') lineNoText = '-';
-      else if (diffRow.kind === 'meta') lineNoText = '·';
-    }
-    const lineNo = showLineNumbers
-      ? `<span class="sd-line-no" aria-hidden="true">${lineNoText}</span>`
-      : '';
-    return `<span class="${classes.join(' ')}" data-line="${line}"${diffRow ? ` data-diff-kind="${diffRow.kind}"` : ''}>${lineNo}<span class="sd-line-content">`;
-  });
-  const withLineCloses = withLineOpens
-    .replace(/<\/span>(\s*)<span class="line"/g, '</span></span>$1<span class="line"')
-    .replace(/<\/span>(\s*<\/code>)/, '</span></span>$1');
+  const withDecoratedLines = decorateCodeLines(trimmed, block, showLineNumbers);
   const header = renderCodeHeader(block);
-  return withLineCloses.replace(
+  return withDecoratedLines.replace(
     /<pre([^>]*)>/,
     (_match, attrs: string) => {
       const cleanAttrs = attrs.replace(/\sclass="[^"]*"/, '').replace(/\stabindex="[^"]*"/, '');
@@ -220,6 +192,71 @@ function decorateHighlightedCode(html: string, block: SvedocsCodeBlock, options:
     /<code([^>]*)>/,
     (_match, attrs: string) => `<code${attrs} data-copy="${escapeAttribute(block.raw)}">`
   );
+}
+
+function decorateCodeLines(html: string, block: SvedocsCodeBlock, showLineNumbers: boolean): string {
+  return html.replace(/<code([^>]*)>([\s\S]*?)<\/code>/, (_match, attrs: string, code: string) => {
+    const lines = readShikiLines(code);
+    if (lines.length === 0) return `<code${attrs}>${code}</code>`;
+    const highlighted = new Set(block.highlightLines);
+    const focused = new Set(block.focusLines);
+    const decorated = lines.map((content, index) => {
+      const line = index + 1;
+      const diffRow = block.diffRows[line - 1];
+      const classes = ['line'];
+      if (highlighted.has(line)) classes.push('sd-line-highlight');
+      if (focused.has(line)) classes.push('sd-line-focus');
+      if (block.diff) {
+        if (diffRow?.kind === 'add') classes.push('sd-line-add');
+        if (diffRow?.kind === 'remove') classes.push('sd-line-remove');
+        if (diffRow?.kind === 'meta') classes.push('sd-line-meta');
+      }
+      let lineNoText: string = String(line);
+      if (block.diff && diffRow) {
+        if (diffRow.kind === 'add') lineNoText = '+';
+        else if (diffRow.kind === 'remove') lineNoText = '-';
+        else if (diffRow.kind === 'meta') lineNoText = '·';
+      }
+      const lineNo = showLineNumbers
+        ? `<span class="sd-line-no" aria-hidden="true">${lineNoText}</span>`
+        : '';
+      const contentAttrs = content.length === 0 ? ' data-empty="true"' : '';
+      return `<span class="${classes.join(' ')}" data-line="${line}"${diffRow ? ` data-diff-kind="${diffRow.kind}"` : ''}>${lineNo}<span class="sd-line-content"${contentAttrs}>${content}</span></span>`;
+    }).join('');
+    return `<code${attrs}>${decorated}</code>`;
+  });
+}
+
+function readShikiLines(code: string): string[] {
+  const lines: string[] = [];
+  const open = '<span class="line">';
+  let offset = 0;
+  while (offset < code.length) {
+    const start = code.indexOf(open, offset);
+    if (start < 0) break;
+    const contentStart = start + open.length;
+    const end = findClosingSpan(code, contentStart);
+    if (end < 0) break;
+    lines.push(code.slice(contentStart, end));
+    offset = end + '</span>'.length;
+  }
+  return lines;
+}
+
+function findClosingSpan(source: string, offset: number): number {
+  const spanTagPattern = /<\/?span\b[^>]*>/g;
+  spanTagPattern.lastIndex = offset;
+  let depth = 1;
+  let match: RegExpExecArray | null;
+  while ((match = spanTagPattern.exec(source))) {
+    if (match[0].startsWith('</')) {
+      depth -= 1;
+      if (depth === 0) return match.index;
+    } else {
+      depth += 1;
+    }
+  }
+  return -1;
 }
 
 function renderCodeHeader(block: SvedocsCodeBlock): string {

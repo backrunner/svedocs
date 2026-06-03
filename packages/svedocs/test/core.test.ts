@@ -996,8 +996,26 @@ describe('svedocs Batch 0 skeleton', () => {
     });
     expect(compiled.codeBlocks[0]?.splitRows.map((row) => row.kind)).toEqual(['meta', 'change']);
     expect(compiled.html).toContain('sd-diff-split');
+    expect(compiled.html).toContain('sd-diff-panes');
+    expect(compiled.html).toContain('sd-diff-scroll');
     expect(compiled.html).toContain('data-side="old"');
     expect(compiled.html).toContain('data-side="new"');
+  });
+
+  it('preserves blank lines in highlighted code blocks', async () => {
+    const compiled = await compileMarkdown('```ts\nconst one = 1;\n\nconst two = 2;\n```');
+
+    expect(compiled.html).toContain('data-line="2"');
+    expect(compiled.html).toContain('data-empty="true"');
+    expect(compiled.html).toContain('<span class="sd-line-content" data-empty="true"></span></span><span class="line" data-line="3"');
+    expect(compiled.html).toContain('data-line="3"');
+  });
+
+  it('keeps unified diff lines as siblings', async () => {
+    const compiled = await compileMarkdown('```diff\n-old\n+new\n```');
+
+    expect(compiled.html).toContain('data-line="1" data-diff-kind="remove"');
+    expect(compiled.html).toContain('</span></span><span class="line sd-line-add" data-line="2" data-diff-kind="add"');
   });
 
   it('renders Ask AI event streams and applies rate limits', async () => {
