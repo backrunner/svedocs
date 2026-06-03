@@ -24,3 +24,5 @@ CLI package for `svedocs` and `create-svedocs`.
 - `svedocs deploy cloudflare --write`
 
 The CLI loads `svedocs.config.ts`, `svedocs.config.mts`, `svedocs.config.js`, or `svedocs.config.mjs` before running content-aware commands.
+
+Create templates are fetched from GitHub first (`backrunner/svedocs@main`) and fall back to the bundled templates when GitHub is unavailable. Set `SVEDOCS_TEMPLATE_SOURCE=bundled` to force the bundled copy, or `SVEDOCS_TEMPLATE_REF=<branch|tag|sha>` to pin a remote template version.

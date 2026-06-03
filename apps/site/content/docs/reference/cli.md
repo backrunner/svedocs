@@ -20,6 +20,8 @@ svedocs create my-docs --template cloudflare
 
 The create command detects the invoking package manager from `npm_config_user_agent`, then the current project, then falls back to `pnpm`, `npm`, `yarn`, and `bun`. Use `--package-manager` or `--pm` to override it. By default it scaffolds without installing dependencies; add `--install` to run the selected package manager immediately.
 
+Templates are fetched from GitHub first (`backrunner/svedocs@main`) so template fixes can ship without republishing the CLI. If GitHub is unavailable, create falls back to the bundled templates. Set `SVEDOCS_TEMPLATE_SOURCE=bundled` to force bundled templates, `SVEDOCS_TEMPLATE_SOURCE=github` to fail instead of falling back, or `SVEDOCS_TEMPLATE_REF=<branch|tag|sha>` to pin a remote template version.
+
 Templates:
 
 | Template | Purpose |

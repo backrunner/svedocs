@@ -7,6 +7,8 @@ import { describe, expect, it } from 'vitest';
 import { detectPackageManagerFromEnv } from '../src/package-manager';
 import { runCreateSvedocsCli, runSvedocsCli } from '../src/index';
 
+process.env.SVEDOCS_TEMPLATE_SOURCE = 'bundled';
+
 describe('svedocs-cli Batch 0 shell', () => {
   it('renders svedocs help', async () => {
     const result = await runSvedocsCli(['--help']);
@@ -130,6 +132,60 @@ describe('svedocs-cli Batch 0 shell', () => {
       expect(blocked.ok).toBe(false);
       expect(blocked.message).toContain('already exists');
       expect(forced.ok).toBe(true);
+    } finally {
+      process.chdir(previous);
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('can fetch create templates from GitHub when requested', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-github-template-'));
+    const previous = process.cwd();
+    const fetched: string[] = [];
+    process.chdir(tmp);
+    try {
+      const fetchTemplate: typeof fetch = async (input) => {
+        const url = String(input);
+        fetched.push(url);
+        if (url.includes('/git/trees/')) {
+          return Response.json({
+            tree: [
+              { path: 'packages/cli/templates/minimal/package.json', type: 'blob' },
+              { path: 'packages/cli/templates/minimal/README.md', type: 'blob' },
+              { path: 'packages/cli/templates/docs/package.json', type: 'blob' }
+            ]
+          });
+        }
+        if (url.endsWith('/packages/cli/templates/minimal/package.json')) {
+          return Response.json({
+            name: 'template-name',
+            scripts: { dev: 'vite', build: 'svedocs build', 'build:ssg': 'svedocs ssg' },
+            dependencies: { svedocs: 'latest', 'svedocs-cli': 'latest' }
+          });
+        }
+        if (url.endsWith('/packages/cli/templates/minimal/README.md')) {
+          return new Response('Remote template readme');
+        }
+        return new Response('Not found', { status: 404, statusText: 'Not Found' });
+      };
+
+      const created = await runCreateSvedocsCli(['remote-app', '--template', 'minimal'], {
+        env: {
+          SVEDOCS_TEMPLATE_SOURCE: 'github',
+          SVEDOCS_TEMPLATE_REPOSITORY: 'example/docs',
+          SVEDOCS_TEMPLATE_REF: 'template-ref'
+        },
+        fetch: fetchTemplate,
+        ...fakePackageManagers({ pnpm: '11.1.2' })
+      });
+      const packageJson = await readFile(path.join(tmp, 'remote-app', 'package.json'), 'utf8');
+      const readme = await readFile(path.join(tmp, 'remote-app', 'README.md'), 'utf8');
+
+      expect(created.ok).toBe(true);
+      expect(created.message).toContain('Template source: GitHub example/docs@template-ref.');
+      expect(packageJson).toContain('"name": "remote-app"');
+      expect(readme).toBe('Remote template readme');
+      expect(fetched.some((url) => url.includes('api.github.com/repos/example/docs/git/trees/template-ref'))).toBe(true);
     } finally {
       process.chdir(previous);
       await rm(tmp, { recursive: true, force: true });

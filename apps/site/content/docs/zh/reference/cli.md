@@ -19,6 +19,8 @@ svedocs create my-docs --template cloudflare
 
 创建命令会先从 `npm_config_user_agent` 识别包管理器，再看当前项目，最后回退到 `pnpm`、`npm`、`yarn` 和 `bun`。可以用 `--package-manager` 或 `--pm` 覆盖。默认只脚手架，不会安装依赖；加 `--install` 就会立刻运行选中的包管理器。
 
+模板会优先从 GitHub 拉取（默认 `backrunner/svedocs@main`），这样模板修复不需要重新发布 CLI。GitHub 不可用时会回退到 CLI 内置模板。设置 `SVEDOCS_TEMPLATE_SOURCE=bundled` 可以强制使用内置模板，设置 `SVEDOCS_TEMPLATE_SOURCE=github` 可以禁用回退，设置 `SVEDOCS_TEMPLATE_REF=<branch|tag|sha>` 可以固定远程模板版本。
+
 模板：
 
 | 模板 | 用途 |

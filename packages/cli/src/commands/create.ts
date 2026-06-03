@@ -1,4 +1,5 @@
-import { access, cp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { access, cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
@@ -17,8 +18,30 @@ import { spawnCommand } from '../utils.js';
 
 export interface CreateSvedocsRuntime {
   env?: NodeJS.ProcessEnv;
+  fetch?: typeof fetch;
   readPackageManagerVersion?: (name: PackageManagerName) => Promise<string | undefined>;
 }
+
+type TemplateSourceMode = 'auto' | 'github' | 'bundled';
+
+type ResolvedTemplateSource = {
+  directory: string;
+  description: string;
+  cleanup?: () => Promise<void>;
+};
+
+type GitHubTreeResponse = {
+  tree?: Array<{
+    path?: string;
+    type?: string;
+  }>;
+  truncated?: boolean;
+  message?: string;
+};
+
+const templateNames = ['minimal', 'docs', 'cloudflare'] as const;
+const defaultTemplateRepository = 'backrunner/svedocs';
+const defaultTemplateRef = 'main';
 
 export function renderCreateSvedocsHelp(): string {
   return [
@@ -55,10 +78,15 @@ export async function runCreateSvedocsCli(args: string[], runtime: CreateSvedocs
   const target = program.args[0] ?? 'svedocs-app';
   const options = program.opts<{ template: string; packageManager: string; pm?: string; install?: boolean; force?: boolean }>();
   const template = options.template;
-  if (!['minimal', 'docs', 'cloudflare'].includes(template)) {
+  if (!templateNames.includes(template as typeof templateNames[number])) {
     return fail('create', args, `Unknown template "${template}". Use minimal, docs, or cloudflare.`);
   }
-  const source = await resolveTemplateSource(template);
+  let source: ResolvedTemplateSource;
+  try {
+    source = await resolveTemplateSource(template, runtime);
+  } catch (error) {
+    return fail('create', args, error instanceof Error ? error.message : String(error));
+  }
   const destination = path.resolve(process.cwd(), target);
   let packageManager: PackageManagerChoice;
   try {
@@ -74,23 +102,28 @@ export async function runCreateSvedocsCli(args: string[], runtime: CreateSvedocs
   if (!options.force && !await isEmptyOrMissingDirectory(destination)) {
     return fail('create', args, `${destination} already exists and is not empty. Re-run with --force to merge template files.`);
   }
-  await mkdir(destination, { recursive: true });
-  await cp(source, destination, { recursive: true, force: Boolean(options.force), errorOnExist: false });
-  await rewriteTemplatePackageJson(destination, target, packageManager);
-  let installMessage: string | undefined;
-  if (options.install) {
-    const installCommand = createInstallCommand(packageManager.name);
-    const result = await spawnCommand(installCommand[0]!, installCommand.slice(1), {}, { cwd: destination });
-    if (!result.ok) return fail('create', args, result.message);
-    installMessage = `Installed dependencies with ${packageManager.name}.`;
+  try {
+    await mkdir(destination, { recursive: true });
+    await cp(source.directory, destination, { recursive: true, force: Boolean(options.force), errorOnExist: false });
+    await rewriteTemplatePackageJson(destination, target, packageManager);
+    let installMessage: string | undefined;
+    if (options.install) {
+      const installCommand = createInstallCommand(packageManager.name);
+      const result = await spawnCommand(installCommand[0]!, installCommand.slice(1), {}, { cwd: destination });
+      if (!result.ok) return fail('create', args, result.message);
+      installMessage = `Installed dependencies with ${packageManager.name}.`;
+    }
+    return ok('create', args, renderCreateSuccess({
+      destination,
+      packageManager,
+      template,
+      templateSource: source.description,
+      installed: Boolean(options.install),
+      ...(installMessage ? { installMessage } : {})
+    }));
+  } finally {
+    await source.cleanup?.();
   }
-  return ok('create', args, renderCreateSuccess({
-    destination,
-    packageManager,
-    template,
-    installed: Boolean(options.install),
-    ...(installMessage ? { installMessage } : {})
-  }));
 }
 
 async function isEmptyOrMissingDirectory(directory: string): Promise<boolean> {
@@ -122,7 +155,25 @@ function createPackageName(target: string): string {
   return name || 'svedocs-app';
 }
 
-async function resolveTemplateSource(template: string): Promise<string> {
+async function resolveTemplateSource(template: string, runtime: CreateSvedocsRuntime): Promise<ResolvedTemplateSource> {
+  const env = { ...process.env, ...runtime.env };
+  const mode = readTemplateSourceMode(env);
+  if (mode !== 'bundled') {
+    try {
+      return await downloadGitHubTemplate(template, env, runtime.fetch ?? fetch);
+    } catch (error) {
+      if (mode === 'github') throw error;
+      const bundled = await resolveBundledTemplateSource(template);
+      return {
+        ...bundled,
+        description: `${bundled.description} fallback (${formatErrorMessage(error)})`
+      };
+    }
+  }
+  return resolveBundledTemplateSource(template);
+}
+
+async function resolveBundledTemplateSource(template: string): Promise<ResolvedTemplateSource> {
   const candidates = [
     new URL(`../../templates/${template}`, import.meta.url),
     new URL(`../templates/${template}`, import.meta.url)
@@ -130,7 +181,7 @@ async function resolveTemplateSource(template: string): Promise<string> {
   for (const candidate of candidates) {
     try {
       await access(candidate);
-      return candidate;
+      return { directory: candidate, description: 'bundled' };
     } catch {
       // Try the next layout. Source builds and bundled CLI builds land in different directories.
     }
@@ -138,10 +189,90 @@ async function resolveTemplateSource(template: string): Promise<string> {
   throw new Error(`Template "${template}" was not found. Checked: ${candidates.join(', ')}`);
 }
 
+function readTemplateSourceMode(env: NodeJS.ProcessEnv): TemplateSourceMode {
+  const value = env.SVEDOCS_TEMPLATE_SOURCE ?? 'auto';
+  if (value === 'auto' || value === 'github' || value === 'bundled') return value;
+  throw new Error('Invalid SVEDOCS_TEMPLATE_SOURCE. Use auto, github, or bundled.');
+}
+
+async function downloadGitHubTemplate(
+  template: string,
+  env: NodeJS.ProcessEnv,
+  fetchTemplate: typeof fetch
+): Promise<ResolvedTemplateSource> {
+  const repository = env.SVEDOCS_TEMPLATE_REPOSITORY ?? defaultTemplateRepository;
+  const ref = env.SVEDOCS_TEMPLATE_REF ?? defaultTemplateRef;
+  const prefix = `packages/cli/templates/${template}/`;
+  const treeUrl = `https://api.github.com/repos/${repository}/git/trees/${encodeURIComponent(ref)}?recursive=1`;
+  const tree = await fetchJson<GitHubTreeResponse>(fetchTemplate, treeUrl);
+  if (tree.truncated) throw new Error(`GitHub template tree for ${repository}@${ref} is truncated.`);
+  const files = (tree.tree ?? [])
+    .filter((entry): entry is { path: string; type: string } => entry.type === 'blob' && typeof entry.path === 'string')
+    .filter((entry) => entry.path.startsWith(prefix));
+  if (files.length === 0) throw new Error(`GitHub template "${template}" was not found in ${repository}@${ref}.`);
+
+  const tempRoot = await mkdtemp(path.join(tmpdir(), 'svedocs-template-'));
+  const cleanup = async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  };
+
+  try {
+    for (const file of files) {
+      const relativePath = file.path.slice(prefix.length);
+      const outputPath = resolveInside(tempRoot, relativePath);
+      await mkdir(path.dirname(outputPath), { recursive: true });
+      const response = await fetchTemplate(createRawGitHubUrl(repository, ref, file.path), {
+        headers: { 'User-Agent': 'create-svedocs' }
+      });
+      if (!response.ok) {
+        throw new Error(`GitHub raw request failed for ${file.path}: ${response.status} ${response.statusText}`);
+      }
+      await writeFile(outputPath, Buffer.from(await response.arrayBuffer()));
+    }
+    return {
+      directory: tempRoot,
+      description: `GitHub ${repository}@${ref}`,
+      cleanup
+    };
+  } catch (error) {
+    await cleanup();
+    throw error;
+  }
+}
+
+async function fetchJson<T>(fetchTemplate: typeof fetch, url: string): Promise<T> {
+  const response = await fetchTemplate(url, {
+    headers: {
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'create-svedocs'
+    }
+  });
+  if (!response.ok) throw new Error(`GitHub request failed: ${response.status} ${response.statusText}`);
+  return await response.json() as T;
+}
+
+function createRawGitHubUrl(repository: string, ref: string, filePath: string): string {
+  const pathSegments = filePath.split('/').map(encodeURIComponent).join('/');
+  return `https://raw.githubusercontent.com/${repository}/${encodeURIComponent(ref)}/${pathSegments}`;
+}
+
+function resolveInside(root: string, relativePath: string): string {
+  const resolved = path.resolve(root, relativePath);
+  if (resolved !== root && !resolved.startsWith(`${root}${path.sep}`)) {
+    throw new Error(`Template path escapes destination: ${relativePath}`);
+  }
+  return resolved;
+}
+
+function formatErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 function renderCreateSuccess(input: {
   destination: string;
   packageManager: PackageManagerChoice;
   template: string;
+  templateSource: string;
   installed: boolean;
   installMessage?: string;
 }): string {
@@ -153,6 +284,7 @@ function renderCreateSuccess(input: {
   const ssgCommand = createRunCommand(input.packageManager.name, 'build:ssg');
   return [
     `Created ${input.template} svedocs project at ${input.destination}`,
+    `Template source: ${input.templateSource}.`,
     `Package manager: ${describePackageManagerSource(input.packageManager)}.`,
     ...(input.installMessage ? [input.installMessage] : []),
     '',
