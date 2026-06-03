@@ -15,6 +15,7 @@ describe('svedocs-cli Batch 0 shell', () => {
 
     expect(result.ok).toBe(true);
     expect(result.message).toContain('svedocs');
+    expect(result.message).toContain('upgrade');
     expect(result.message).toContain('ssg');
   });
 
@@ -23,6 +24,85 @@ describe('svedocs-cli Batch 0 shell', () => {
 
     expect(result.ok).toBe(true);
     expect(result.message).toContain('create-svedocs');
+  });
+
+  it('renders upgrade help', async () => {
+    const result = await runSvedocsCli(['upgrade', '--help']);
+
+    expect(result.ok).toBe(true);
+    expect(result.message).toContain('svedocs upgrade');
+    expect(result.message).toContain('--check-only');
+  });
+
+  it('dry-runs svedocs upgrades without editing package.json', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-upgrade-dry-run-'));
+    try {
+      const packageJsonPath = path.join(tmp, 'package.json');
+      await writeFile(packageJsonPath, JSON.stringify({
+        name: 'upgrade-app',
+        dependencies: { svedocs: '^0.1.0' }
+      }, null, 2), 'utf8');
+
+      const result = await withCwd(tmp, () => runSvedocsCli(['upgrade', '0.2.0', '--dry-run']));
+      const packageJson = await readFile(packageJsonPath, 'utf8');
+
+      expect(result.ok).toBe(true);
+      expect(result.message).toContain('svedocs upgrade dry-run');
+      expect(result.message).toContain('dependencies.svedocs: ^0.1.0 -> ^0.2.0');
+      expect(result.message).toContain('devDependencies.svedocs-cli: (missing) -> 0.2.0');
+      expect(packageJson).toContain('"svedocs": "^0.1.0"');
+      expect(packageJson).not.toContain('svedocs-cli');
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('rewrites svedocs dependencies when install is skipped', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-upgrade-no-install-'));
+    try {
+      const packageJsonPath = path.join(tmp, 'package.json');
+      await writeFile(packageJsonPath, JSON.stringify({
+        name: 'upgrade-app',
+        dependencies: { svedocs: '^0.1.0' },
+        devDependencies: { 'svedocs-cli': '^0.1.0' }
+      }, null, 2), 'utf8');
+
+      const result = await withCwd(tmp, () => runSvedocsCli(['upgrade', '0.2.0', '--no-install']));
+      const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8')) as {
+        dependencies?: Record<string, string>;
+        devDependencies?: Record<string, string>;
+      };
+
+      expect(result.ok).toBe(true);
+      expect(result.message).toContain('Updated');
+      expect(result.message).toContain('No breaking upgrade rules are registered yet');
+      expect(packageJson.dependencies?.svedocs).toBe('^0.2.0');
+      expect(packageJson.devDependencies?.['svedocs-cli']).toBe('^0.2.0');
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('checks upgrade compatibility without changing dependencies', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-upgrade-check-'));
+    try {
+      const packageJsonPath = path.join(tmp, 'package.json');
+      await writeFile(packageJsonPath, JSON.stringify({
+        name: 'upgrade-app',
+        dependencies: { svedocs: 'latest' },
+        devDependencies: { 'svedocs-cli': 'latest' }
+      }, null, 2), 'utf8');
+
+      const result = await withCwd(tmp, () => runSvedocsCli(['upgrade', '--check-only']));
+      const packageJson = await readFile(packageJsonPath, 'utf8');
+
+      expect(result.ok).toBe(true);
+      expect(result.message).toContain('svedocs upgrade check');
+      expect(result.message).toContain('Target "latest" is not a concrete version');
+      expect(packageJson).toContain('"svedocs": "latest"');
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
   });
 
   it('creates complete minimal and cloudflare templates', async () => {

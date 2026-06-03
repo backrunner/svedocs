@@ -9,6 +9,9 @@ CLI package for `svedocs` and `create-svedocs`.
 - `create-svedocs [dir] --template minimal|docs|cloudflare`
 - `create-svedocs [dir] --package-manager auto|pnpm|npm|yarn|bun --install`
 - `svedocs create [dir] --template minimal|docs|cloudflare`
+- `svedocs upgrade [latest|version|tag]`
+- `svedocs upgrade 0.2.0 --no-install`
+- `svedocs upgrade --check-only`
 - `svedocs dev`
 - `svedocs build --mode edge|static|spa`
 - `svedocs ssg`
@@ -26,3 +29,7 @@ CLI package for `svedocs` and `create-svedocs`.
 The CLI loads `svedocs.config.ts`, `svedocs.config.mts`, `svedocs.config.js`, or `svedocs.config.mjs` before running content-aware commands.
 
 Create templates are fetched from GitHub first (`backrunner/svedocs@main`) and fall back to the bundled templates when GitHub is unavailable. Set `SVEDOCS_TEMPLATE_SOURCE=bundled` to force the bundled copy, or `SVEDOCS_TEMPLATE_REF=<branch|tag|sha>` to pin a remote template version.
+
+Generated projects get `svedocs` and `svedocs-cli` from the template `package.json` dependency entries. They are installed from the package registry by the selected package manager only when create is run with `--install`.
+
+`svedocs upgrade` checks the project dependency span, upgrades both `svedocs` and `svedocs-cli`, and runs the detected package manager by default. Use `--no-install` to only rewrite `package.json`, `--dry-run` to preview the plan, or `--check-only` to run compatibility checks without changing dependencies.
