@@ -171,7 +171,7 @@
         {#if showHomeHeroVisualSlot}
           <slot name="home-hero-visual" {page} {pages} {config} />
         {:else if config.theme.home.visual.type === 'image' && config.theme.home.visual.src}
-          <img class="sd-home-visual" src={config.theme.home.visual.src} alt={config.theme.home.visual.alt} />
+          <img class="sd-home-visual" src={config.theme.home.visual.src} alt={config.theme.home.visual.alt} draggable="false" />
         {:else}
           <div class="sd-pixel-stage" aria-hidden="true">
             <span class="sd-pixel-frame" data-corner="tl"></span>

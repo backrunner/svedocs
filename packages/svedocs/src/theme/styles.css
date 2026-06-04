@@ -247,6 +247,91 @@ body {
   text-decoration: none;
 }
 
+.sd-brand,
+.sd-brand *,
+.sd-topnav a,
+.sd-socialnav a,
+.sd-theme-toggle,
+.sd-menu-button,
+.sd-search-trigger,
+.sd-search-trigger kbd,
+.sd-search-results a,
+.sd-scope-trigger,
+.sd-scope-options a,
+.sd-checkbox,
+.sd-checkbox *,
+.sd-control-button,
+.sd-floating-toolbar,
+.sd-floating-tool,
+.sd-floating-tool-label,
+.sd-sidebar-section-heading,
+.sd-sidebar-section-heading *,
+.sd-sidebar-section-label,
+.sd-sidebar-summary,
+.sd-sidebar-summary *,
+.sd-sidebar-link,
+.sd-sidebar-link *,
+.sd-toc-title,
+.sd-toc-link,
+.sd-doc-eyebrow,
+.sd-doc-eyebrow *,
+.sd-kicker,
+.sd-kicker *,
+.sd-heading-anchor,
+.sd-code-header,
+.sd-code-header *,
+.sd-code-copy,
+.sd-diff-column-label,
+.sd-diff-line-no,
+.sd-prev-next,
+.sd-prev-next *,
+.sd-button,
+.sd-button *,
+.sd-pixel-stage,
+.sd-pixel-stage *,
+.sd-home-grid a,
+.sd-home-grid a *,
+.sd-qa-num,
+.sd-qa-chips li,
+.sd-chat-header,
+.sd-chat-header *,
+.sd-chat-icon-button,
+.sd-chat-suggestions,
+.sd-chat-suggestions button,
+.sd-chat-send,
+.sd-footer a,
+.sd-footer a * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.sd-brand,
+.sd-brand *,
+.sd-brand-logo,
+.sd-topnav a,
+.sd-socialnav a,
+.sd-search-results a,
+.sd-scope-options a,
+.sd-sidebar a,
+.sd-sidebar-link,
+.sd-sidebar-summary-link,
+.sd-toc-link,
+.sd-button,
+.sd-button *,
+.sd-prev-next,
+.sd-prev-next *,
+.sd-code-copy,
+.sd-home-visual,
+.sd-home-grid a,
+.sd-home-grid a *,
+.sd-chat-citations a,
+.sd-chat-suggestions button,
+.sd-footer a,
+.sd-footer a * {
+  -webkit-user-drag: none;
+}
+
 .sd-brand {
   display: inline-flex;
   align-items: center;
@@ -310,6 +395,10 @@ body {
 .sd-sidebar-summary-link:hover,
 .sd-toc-link:hover,
 .sd-footer a:hover {
+  color: var(--sd-accent);
+}
+
+.sd-topnav a.sd-active {
   color: var(--sd-accent);
 }
 
@@ -3502,6 +3591,10 @@ body {
     color: var(--sd-ink);
     overflow: visible;
     text-overflow: clip;
+  }
+
+  .sd-topnav a.sd-active {
+    color: var(--sd-accent);
   }
 
   .sd-topnav a:last-child {

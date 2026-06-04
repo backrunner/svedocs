@@ -39,6 +39,7 @@
   $: mobileMenuId = `sd-mobile-menu-${createDomId(page?.id ?? page?.routePath ?? 'site')}`;
   $: mobileTreePath = mobileCurrentPath || page?.routePath || '';
   $: showBackgroundSlot = hasBackgroundSlot ?? Boolean($$slots.background);
+  $: activeNavHref = resolveActiveNavHref(config.theme.nav, page?.routePath ?? '/');
 
   let mounted = false;
   let mobileMenuOpen = false;
@@ -98,6 +99,23 @@
     return item.external ? 'noreferrer' : item.rel;
   }
 
+  function isActiveNavItem(item: { href: string; external?: boolean }): boolean {
+    return !item.external && normalizePath(item.href) === activeNavHref;
+  }
+
+  function handleNavClick(event: MouseEvent, href: string, external?: boolean) {
+    if (external) return;
+    if (event.button !== 0) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (typeof window === 'undefined') return;
+
+    const target = createComparableUrl(href, window.location.href);
+    if (!target) return;
+
+    const current = createComparableUrl(window.location.href, window.location.href);
+    if (target === current) event.preventDefault();
+  }
+
   function isGithubFooterLink(item: { label: string; href: string }): boolean {
     return item.label.trim().toLowerCase().includes('github');
   }
@@ -109,6 +127,55 @@
 
   function createDomId(value: string): string {
     return value.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-|-$/g, '') || 'site';
+  }
+
+  function resolveActiveNavHref(nav: Array<{ href: string; external?: boolean }>, currentPath: string): string {
+    const normalizedCurrentPath = normalizePath(currentPath);
+    let activeHref = '';
+
+    for (const item of nav) {
+      if (item.external) continue;
+
+      const normalizedHref = normalizePath(item.href);
+      if (!isPathMatch(normalizedCurrentPath, normalizedHref)) continue;
+
+      if (normalizedHref.length > activeHref.length) activeHref = normalizedHref;
+    }
+
+    return activeHref;
+  }
+
+  function isPathMatch(currentPath: string, hrefPath: string): boolean {
+    if (hrefPath === '/') return currentPath === '/';
+    return currentPath === hrefPath || currentPath.startsWith(`${hrefPath}/`);
+  }
+
+  function normalizePath(path: string): string {
+    const pathname = getPathname(path);
+    const withoutTrailingSlash = pathname.replace(/\/+$/, '');
+    return withoutTrailingSlash ? withoutTrailingSlash : '/';
+  }
+
+  function getPathname(path: string): string {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      try {
+        return new URL(path).pathname;
+      } catch {
+        return path;
+      }
+    }
+
+    return path.split(/[?#]/, 1)[0] || '/';
+  }
+
+  function createComparableUrl(value: string, base: string): string | undefined {
+    try {
+      const url = new URL(value, base);
+      url.pathname = normalizePath(url.pathname);
+      return url.href;
+    } catch {
+      return undefined;
+    }
   }
 </script>
 
@@ -164,7 +231,7 @@
   <header class:sd-mobile-menu-open={mobileMenuOpen} class="sd-topbar">
     <a class="sd-brand" href={config.theme.brand.href}>
       {#if config.theme.brand.logo}
-        <img class="sd-brand-logo" src={config.theme.brand.logo} alt="" />
+        <img class="sd-brand-logo" src={config.theme.brand.logo} alt="" draggable="false" />
       {:else if config.theme.brand.mark !== false}
         <span class="sd-brand-mark" aria-hidden="true"></span>
       {/if}
@@ -173,7 +240,15 @@
     <div id={mobileMenuId} class="sd-topbar-menu" class:sd-open={mobileMenuOpen}>
       <nav class="sd-topnav" aria-label="Primary">
         {#each config.theme.nav as item}
-          <a href={item.href} rel={linkRel(item)} target={item.external ? '_blank' : undefined}>
+          {@const active = isActiveNavItem(item)}
+          <a
+            class:sd-active={active}
+            href={item.href}
+            rel={linkRel(item)}
+            target={item.external ? '_blank' : undefined}
+            aria-current={active ? 'page' : undefined}
+            on:click={(event) => handleNavClick(event, item.href, item.external)}
+          >
             {item.label}
           </a>
         {/each}
