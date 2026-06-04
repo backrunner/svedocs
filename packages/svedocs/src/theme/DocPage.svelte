@@ -5,9 +5,11 @@
 
   export let page: SvedocsPage;
   export let content: Component | undefined = undefined;
+  export let hasDocHeaderSlot: boolean | undefined = undefined;
   $: breadcrumbs = createBreadcrumbs(page);
   $: kind = page.kind === 'doc' ? 'Documentation' : 'Page';
   $: eyebrow = breadcrumbs.length > 0 ? breadcrumbs : [{ label: kind, path: page.kind === 'doc' ? '/docs' : '/' }];
+  $: showDocHeaderSlot = hasDocHeaderSlot ?? Boolean($$slots['doc-header']);
 
   const copyIconSvg = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h9v14H9zM6 8v12h10"/></svg>';
   const checkIconSvg = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg>';
@@ -68,19 +70,23 @@
 <article class="sd-doc">
   <span class="sd-doc-corner" data-corner="tl" aria-hidden="true"></span>
   <span class="sd-doc-corner" data-corner="tr" aria-hidden="true"></span>
-  <header class="sd-doc-header">
-    <nav class="sd-doc-eyebrow" aria-label="Breadcrumb">
-      <span class="sd-doc-eyebrow-mark" aria-hidden="true"></span>
-      {#each eyebrow as item, i}
-        {#if i > 0}<span class="sd-doc-eyebrow-sep" aria-hidden="true">/</span>{/if}
-        <a href={item.path}>{item.label}</a>
-      {/each}
-    </nav>
-    <h1>{page.title}</h1>
-    {#if page.description}
-      <p class="sd-doc-lede">{page.description}</p>
-    {/if}
-  </header>
+  {#if showDocHeaderSlot}
+    <slot name="doc-header" {page} breadcrumbs={eyebrow} />
+  {:else}
+    <header class="sd-doc-header">
+      <nav class="sd-doc-eyebrow" aria-label="Breadcrumb">
+        <span class="sd-doc-eyebrow-mark" aria-hidden="true"></span>
+        {#each eyebrow as item, i}
+          {#if i > 0}<span class="sd-doc-eyebrow-sep" aria-hidden="true">/</span>{/if}
+          <a href={item.path}>{item.label}</a>
+        {/each}
+      </nav>
+      <h1>{page.title}</h1>
+      {#if page.description}
+        <p class="sd-doc-lede">{page.description}</p>
+      {/if}
+    </header>
+  {/if}
   <div class="sd-prose">
     {#if content}
       <svelte:component this={content} />

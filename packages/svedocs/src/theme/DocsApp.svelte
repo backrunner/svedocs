@@ -16,6 +16,11 @@
 
   $: layoutName = typeof page.frontmatter.layout === 'string' ? page.frontmatter.layout : '';
   $: customLayout = layoutName && layoutName !== 'home' && layoutName !== 'docs' ? layouts[layoutName] : undefined;
+  $: hasBackgroundSlot = Boolean($$slots.background);
+  $: hasLandingSlot = Boolean($$slots.landing);
+  $: hasHomeHeroVisualSlot = Boolean($$slots['home-hero-visual']);
+  $: hasHomeFeaturesSlot = Boolean($$slots['home-features']);
+  $: hasDocHeaderSlot = Boolean($$slots['doc-header']);
 </script>
 
 {#if customLayout}
@@ -30,9 +35,44 @@
     content={components[page.id]}
   />
   {:else if page.routePath === '/' || page.frontmatter.layout === 'home'}
-    <HomePage {page} {pages} {search} {config} {loadSearch} content={components[page.id]} />
+    <HomePage
+      {page}
+      {pages}
+      {search}
+      {config}
+      {loadSearch}
+      content={components[page.id]}
+      {hasBackgroundSlot}
+      {hasLandingSlot}
+      {hasHomeHeroVisualSlot}
+      {hasHomeFeaturesSlot}
+    >
+      <svelte:fragment slot="background">
+        <slot name="background" />
+      </svelte:fragment>
+      <svelte:fragment slot="landing" let:page let:pages let:search let:config let:content>
+        <slot name="landing" {page} {pages} {search} {config} {content} />
+      </svelte:fragment>
+      <svelte:fragment slot="home-hero-visual" let:page let:pages let:config>
+        <slot name="home-hero-visual" {page} {pages} {config} />
+      </svelte:fragment>
+      <svelte:fragment slot="home-features" let:page let:pages let:config let:cards>
+        <slot name="home-features" {page} {pages} {config} {cards} />
+      </svelte:fragment>
+    </HomePage>
   {:else if page.kind === 'page' || page.frontmatter.layout === 'page'}
-    <PageLayout {page} {pages} {search} {config} {loadSearch} content={components[page.id]} />
+    <PageLayout {page} {pages} {search} {config} {loadSearch} content={components[page.id]} {hasBackgroundSlot}>
+      <svelte:fragment slot="background">
+        <slot name="background" />
+      </svelte:fragment>
+    </PageLayout>
   {:else}
-    <DocsLayout {page} {pages} {tree} {search} {config} {loadSearch} content={components[page.id]} />
+    <DocsLayout {page} {pages} {tree} {search} {config} {loadSearch} content={components[page.id]} {hasBackgroundSlot} {hasDocHeaderSlot}>
+      <svelte:fragment slot="background">
+        <slot name="background" />
+      </svelte:fragment>
+      <svelte:fragment slot="doc-header" let:page let:breadcrumbs>
+        <slot name="doc-header" {page} {breadcrumbs} />
+      </svelte:fragment>
+    </DocsLayout>
   {/if}

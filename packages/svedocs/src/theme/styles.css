@@ -115,6 +115,8 @@ body {
 }
 
 .sd-root {
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
   background:
     linear-gradient(var(--sd-grid-line) 1px, transparent 1px),
@@ -124,11 +126,35 @@ body {
 }
 
 .sd-root[data-surface="reading"] {
-  position: relative;
-  isolation: isolate;
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--sd-panel) 58%, transparent), transparent 18rem),
     var(--sd-bg);
+}
+
+.sd-root.sd-has-background-slot,
+.sd-root.sd-has-background-slot[data-surface="reading"] {
+  background: var(--sd-bg);
+}
+
+.sd-root.sd-has-background-slot[data-surface="reading"]::after {
+  display: none;
+}
+
+.sd-root.sd-has-background-slot .sd-home-hero::before {
+  display: none;
+}
+
+.sd-background-slot {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.sd-background-slot > * {
+  width: 100%;
+  min-height: 100%;
 }
 
 .sd-root[data-surface="reading"]::after {
@@ -152,6 +178,14 @@ body {
 .sd-root[data-surface="reading"] > .sd-doc-shell,
 .sd-root[data-surface="reading"] > .sd-page,
 .sd-root[data-surface="reading"] > .sd-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.sd-root.sd-has-background-slot > main,
+.sd-root.sd-has-background-slot > .sd-doc-shell,
+.sd-root.sd-has-background-slot > .sd-page,
+.sd-root.sd-has-background-slot > .sd-footer {
   position: relative;
   z-index: 1;
 }

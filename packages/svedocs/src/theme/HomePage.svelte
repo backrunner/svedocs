@@ -9,6 +9,10 @@
   export let config: SvedocsResolvedConfig;
   export let loadSearch: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
   export let content: Component | undefined = undefined;
+  export let hasBackgroundSlot: boolean | undefined = undefined;
+  export let hasLandingSlot: boolean | undefined = undefined;
+  export let hasHomeHeroVisualSlot: boolean | undefined = undefined;
+  export let hasHomeFeaturesSlot: boolean | undefined = undefined;
 
   interface PixelCell {
     index: number;
@@ -105,6 +109,10 @@
   $: secondaryAction = config.theme.home.secondaryAction ?? (
     secondaryDoc ? { label: secondaryDoc.title, href: secondaryDoc.routePath } : undefined
   );
+  $: showBackgroundSlot = hasBackgroundSlot ?? Boolean($$slots.background);
+  $: showLandingSlot = hasLandingSlot ?? Boolean($$slots.landing);
+  $: showHomeHeroVisualSlot = hasHomeHeroVisualSlot ?? Boolean($$slots['home-hero-visual']);
+  $: showHomeFeaturesSlot = hasHomeFeaturesSlot ?? Boolean($$slots['home-features']);
 
   function createHomeCards(pages: SvedocsPage[]): HomeCard[] {
     const docs = pages.filter((candidate) => candidate.kind === 'doc');
@@ -129,77 +137,92 @@
   }
 </script>
 
-  <RootLayout {config} {page} {pages} {search} {loadSearch}>
-  <main id="content" class="sd-home">
-    <section class="sd-home-hero">
-      <span class="sd-home-hero-tape" aria-hidden="true"></span>
-      <div class="sd-home-copy">
-        <p class="sd-kicker">
-          <span class="sd-kicker-mark" aria-hidden="true"></span>
-          {config.theme.home.kicker}
-        </p>
-        <h1>{page.title}</h1>
-        {#if page.description}
-          <p>{page.description}</p>
-        {/if}
-        <div class="sd-actions">
-          <a class="sd-button sd-button-primary" href={primaryAction.href}>
-            <span>{primaryAction.label}</span>
-            <span class="sd-button-arrow" aria-hidden="true"></span>
-          </a>
-          {#if secondaryAction}
-            <a class="sd-button" href={secondaryAction.href}>{secondaryAction.label}</a>
+<RootLayout {config} {page} {pages} {search} {loadSearch} hasBackgroundSlot={showBackgroundSlot}>
+  <svelte:fragment slot="background">
+    <slot name="background" />
+  </svelte:fragment>
+  {#if showLandingSlot}
+    <main id="content" class="sd-home">
+      <slot name="landing" {page} {pages} {search} {config} {content} />
+    </main>
+  {:else}
+    <main id="content" class="sd-home">
+      <section class="sd-home-hero">
+        <span class="sd-home-hero-tape" aria-hidden="true"></span>
+        <div class="sd-home-copy">
+          <p class="sd-kicker">
+            <span class="sd-kicker-mark" aria-hidden="true"></span>
+            {config.theme.home.kicker}
+          </p>
+          <h1>{page.title}</h1>
+          {#if page.description}
+            <p>{page.description}</p>
           {/if}
-        </div>
-      </div>
-      {#if config.theme.home.visual.type === 'image' && config.theme.home.visual.src}
-        <img class="sd-home-visual" src={config.theme.home.visual.src} alt={config.theme.home.visual.alt} />
-      {:else}
-        <div class="sd-pixel-stage" aria-hidden="true">
-          <span class="sd-pixel-frame" data-corner="tl"></span>
-          <span class="sd-pixel-frame" data-corner="tr"></span>
-          <span class="sd-pixel-frame" data-corner="bl"></span>
-          <span class="sd-pixel-frame" data-corner="br"></span>
-          <div class="sd-pixel-grid">
-            {#each cells as cell}
-              <span
-                class:sd-pixel-hot={cell.hot}
-                class:sd-pixel-accent={cell.accent}
-                style={cell.style}
-              ></span>
-            {/each}
+          <div class="sd-actions">
+            <a class="sd-button sd-button-primary" href={primaryAction.href}>
+              <span>{primaryAction.label}</span>
+              <span class="sd-button-arrow" aria-hidden="true"></span>
+            </a>
+            {#if secondaryAction}
+              <a class="sd-button" href={secondaryAction.href}>{secondaryAction.label}</a>
+            {/if}
           </div>
         </div>
-      {/if}
-    </section>
-    <section class="sd-home-grid" aria-label="Documentation entry points">
-      {#each homeCards as card, i}
-        <a href={card.href} style={`--card-index:${i};`}>
-          <span class="sd-home-card-tag">
-            <i aria-hidden="true"></i>
-            {card.label}
-          </span>
-          <div class="sd-home-card-glyph" aria-hidden="true">
-            {#each glyphRows(card.glyph) as row}
-              <div>
-                {#each row as cell}
-                  <i data-on={cell === '1' ? 'true' : 'false'}></i>
+        {#if showHomeHeroVisualSlot}
+          <slot name="home-hero-visual" {page} {pages} {config} />
+        {:else if config.theme.home.visual.type === 'image' && config.theme.home.visual.src}
+          <img class="sd-home-visual" src={config.theme.home.visual.src} alt={config.theme.home.visual.alt} />
+        {:else}
+          <div class="sd-pixel-stage" aria-hidden="true">
+            <span class="sd-pixel-frame" data-corner="tl"></span>
+            <span class="sd-pixel-frame" data-corner="tr"></span>
+            <span class="sd-pixel-frame" data-corner="bl"></span>
+            <span class="sd-pixel-frame" data-corner="br"></span>
+            <div class="sd-pixel-grid">
+              {#each cells as cell}
+                <span
+                  class:sd-pixel-hot={cell.hot}
+                  class:sd-pixel-accent={cell.accent}
+                  style={cell.style}
+                ></span>
+              {/each}
+            </div>
+          </div>
+        {/if}
+      </section>
+      {#if showHomeFeaturesSlot}
+        <slot name="home-features" {page} {pages} {config} cards={homeCards} />
+      {:else}
+        <section class="sd-home-grid" aria-label="Documentation entry points">
+          {#each homeCards as card, i}
+            <a href={card.href} style={`--card-index:${i};`}>
+              <span class="sd-home-card-tag">
+                <i aria-hidden="true"></i>
+                {card.label}
+              </span>
+              <div class="sd-home-card-glyph" aria-hidden="true">
+                {#each glyphRows(card.glyph) as row}
+                  <div>
+                    {#each row as cell}
+                      <i data-on={cell === '1' ? 'true' : 'false'}></i>
+                    {/each}
+                  </div>
                 {/each}
               </div>
-            {/each}
-          </div>
-          <strong>{card.title}</strong>
-          <small>{card.description}</small>
-          <span class="sd-home-card-arrow" aria-hidden="true">→</span>
-        </a>
-      {/each}
-    </section>
-    <section class="sd-prose sd-home-body">
-      {#if content}
-        <svelte:component this={content} />
-      {:else}
-        {@html page.html}
+              <strong>{card.title}</strong>
+              <small>{card.description}</small>
+              <span class="sd-home-card-arrow" aria-hidden="true">→</span>
+            </a>
+          {/each}
+        </section>
       {/if}
-    </section>
-  </main>
+      <section class="sd-prose sd-home-body">
+        {#if content}
+          <svelte:component this={content} />
+        {:else}
+          {@html page.html}
+        {/if}
+      </section>
+    </main>
+  {/if}
 </RootLayout>

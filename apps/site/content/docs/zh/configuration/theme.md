@@ -125,6 +125,107 @@ export default defineConfig({
 
 `home.visual` 可以继续使用内置 pixel 模块，也可以指向项目图片：`{ type: 'image', src: '/hero.png', alt: 'Preview' }`。
 
+## 主题插槽
+
+`DocsApp` 提供命名插槽，用来替换默认视觉层，同时保留内建路由外壳、metadata、header、footer、搜索、Ask AI 和文档导航。
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import { DocsApp } from 'svedocs/theme';
+  import components from 'virtual:svedocs/components';
+  import layouts from 'virtual:svedocs/layouts';
+  import loadSearch from 'virtual:svedocs/search-loader';
+
+  export let data;
+</script>
+
+<DocsApp
+  page={data.page}
+  pages={data.pages}
+  tree={data.tree}
+  search={data.search}
+  config={data.config}
+  {components}
+  {layouts}
+  {loadSearch}
+>
+  <div slot="background" class="brand-background"></div>
+</DocsApp>
+```
+
+`background` 插槽会替换首页、普通单页和文档文章中的内置格子背景。它作为 `aria-hidden` 装饰层渲染，并禁用 pointer events。
+
+首页还提供更细粒度的插槽：
+
+```svelte title="src/routes/+page.svelte"
+<DocsApp
+  page={data.page}
+  pages={data.pages}
+  tree={data.tree}
+  search={data.search}
+  config={data.config}
+  {components}
+  {layouts}
+  {loadSearch}
+>
+  <div slot="home-hero-visual" class="product-orbit" aria-hidden="true"></div>
+
+  <section slot="home-features" let:cards class="feature-strip">
+    {#each cards as card}
+      <a href={card.href}>{card.title}</a>
+    {/each}
+  </section>
+</DocsApp>
+```
+
+用 `home-hero-visual` 替换 pixel hero 特效或配置的 hero 图片；用 `home-features` 替换默认 feature blocks。`home-features` 会收到生成后的 `cards` 数组，方便自定义块复用同一组文档链接。
+
+如果要替换整个 landing 内容，但保留 svedocs header 和 footer，可以使用 `landing`：
+
+```svelte title="src/routes/+page.svelte"
+<DocsApp
+  page={data.page}
+  pages={data.pages}
+  tree={data.tree}
+  search={data.search}
+  config={data.config}
+  {components}
+  {layouts}
+  {loadSearch}
+>
+  <section slot="landing" let:page class="custom-landing">
+    <h1>{page.title}</h1>
+    <p>{page.description}</p>
+  </section>
+</DocsApp>
+```
+
+`landing` 插槽外层仍由主题提供 `main#content`，所以跳过链接和页面语义会保留下来。
+
+文档文章也提供 `doc-header`，适合只替换标题和面包屑区域：
+
+```svelte
+<DocsApp
+  page={data.page}
+  pages={data.pages}
+  tree={data.tree}
+  search={data.search}
+  config={data.config}
+  {components}
+  {layouts}
+  {loadSearch}
+>
+  <header slot="doc-header" let:page let:breadcrumbs class="article-hero">
+    <nav>
+      {#each breadcrumbs as item}
+        <a href={item.path}>{item.label}</a>
+      {/each}
+    </nav>
+    <h1>{page.title}</h1>
+  </header>
+</DocsApp>
+```
+
 ## 交互能力
 
 默认主题包括：

@@ -9,9 +9,14 @@
     export let config: SvedocsResolvedConfig;
     export let loadSearch: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
     export let content: Component | undefined = undefined;
+    export let hasBackgroundSlot: boolean | undefined = undefined;
+    $: showBackgroundSlot = hasBackgroundSlot ?? Boolean($$slots.background);
 </script>
 
-<RootLayout {config} {page} {pages} {search} {loadSearch}>
+<RootLayout {config} {page} {pages} {search} {loadSearch} hasBackgroundSlot={showBackgroundSlot}>
+  <svelte:fragment slot="background">
+    <slot name="background" />
+  </svelte:fragment>
   <main id="content" class="sd-page">
     <section class="sd-page-hero">
       <p class="sd-kicker">{config.site.name}</p>

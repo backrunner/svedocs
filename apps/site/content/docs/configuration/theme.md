@@ -125,6 +125,107 @@ export default defineConfig({
 
 `home.visual` can stay as the built-in pixel module or point at a project image with `{ type: 'image', src: '/hero.png', alt: 'Preview' }`.
 
+## Theme slots
+
+`DocsApp` exposes named slots for replacing the default visual layers while keeping the built-in routing shell, metadata, header, footer, search, Ask AI, and docs navigation.
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import { DocsApp } from 'svedocs/theme';
+  import components from 'virtual:svedocs/components';
+  import layouts from 'virtual:svedocs/layouts';
+  import loadSearch from 'virtual:svedocs/search-loader';
+
+  export let data;
+</script>
+
+<DocsApp
+  page={data.page}
+  pages={data.pages}
+  tree={data.tree}
+  search={data.search}
+  config={data.config}
+  {components}
+  {layouts}
+  {loadSearch}
+>
+  <div slot="background" class="brand-background"></div>
+</DocsApp>
+```
+
+The `background` slot replaces the built-in grid layer on the homepage, single pages, and documentation articles. It is rendered as an `aria-hidden` decorative layer with pointer events disabled.
+
+Homepage-specific slots let you replace smaller regions:
+
+```svelte title="src/routes/+page.svelte"
+<DocsApp
+  page={data.page}
+  pages={data.pages}
+  tree={data.tree}
+  search={data.search}
+  config={data.config}
+  {components}
+  {layouts}
+  {loadSearch}
+>
+  <div slot="home-hero-visual" class="product-orbit" aria-hidden="true"></div>
+
+  <section slot="home-features" let:cards class="feature-strip">
+    {#each cards as card}
+      <a href={card.href}>{card.title}</a>
+    {/each}
+  </section>
+</DocsApp>
+```
+
+Use `home-hero-visual` to replace the pixel hero effect or configured hero image. Use `home-features` to replace the default feature blocks. The slot receives the generated `cards` array so custom blocks can reuse the same documentation links.
+
+To replace the entire landing content while preserving the svedocs header and footer, use `landing`:
+
+```svelte title="src/routes/+page.svelte"
+<DocsApp
+  page={data.page}
+  pages={data.pages}
+  tree={data.tree}
+  search={data.search}
+  config={data.config}
+  {components}
+  {layouts}
+  {loadSearch}
+>
+  <section slot="landing" let:page class="custom-landing">
+    <h1>{page.title}</h1>
+    <p>{page.description}</p>
+  </section>
+</DocsApp>
+```
+
+The theme still provides the `main#content` wrapper for the `landing` slot, so the skip link and page semantics remain intact.
+
+Documentation articles also expose `doc-header` when you only need to replace the title and breadcrumb area:
+
+```svelte
+<DocsApp
+  page={data.page}
+  pages={data.pages}
+  tree={data.tree}
+  search={data.search}
+  config={data.config}
+  {components}
+  {layouts}
+  {loadSearch}
+>
+  <header slot="doc-header" let:page let:breadcrumbs class="article-hero">
+    <nav>
+      {#each breadcrumbs as item}
+        <a href={item.path}>{item.label}</a>
+      {/each}
+    </nav>
+    <h1>{page.title}</h1>
+  </header>
+</DocsApp>
+```
+
 ## Interaction
 
 Built-in theme behavior includes:

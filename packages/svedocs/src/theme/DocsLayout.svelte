@@ -14,6 +14,8 @@
   export let config: SvedocsResolvedConfig;
   export let loadSearch: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
   export let content: Component | undefined = undefined;
+  export let hasBackgroundSlot: boolean | undefined = undefined;
+  export let hasDocHeaderSlot: boolean | undefined = undefined;
 
   let activeHeading = page.headings[0]?.id ?? '';
   let tocEl: HTMLElement | null = null;
@@ -26,6 +28,8 @@
   let mounted = false;
   $: scopedTree = createCorePageTree(filterPagesForCurrentScope(pages, page));
   $: navigationTree = scopedTree.length ? scopedTree : tree;
+  $: showBackgroundSlot = hasBackgroundSlot ?? Boolean($$slots.background);
+  $: showDocHeaderSlot = hasDocHeaderSlot ?? Boolean($$slots['doc-header']);
 
   onMount(() => {
     mounted = true;
@@ -121,7 +125,10 @@
 
 </script>
 
-<RootLayout {config} {page} {pages} {search} {loadSearch} mobileTree={navigationTree} mobileCurrentPath={page.routePath}>
+<RootLayout {config} {page} {pages} {search} {loadSearch} mobileTree={navigationTree} mobileCurrentPath={page.routePath} hasBackgroundSlot={showBackgroundSlot}>
+  <svelte:fragment slot="background">
+    <slot name="background" />
+  </svelte:fragment>
   <div class="sd-doc-shell">
     <aside class="sd-sidebar" aria-label="Documentation">
       <nav>
@@ -129,7 +136,11 @@
       </nav>
     </aside>
     <main id="content" class="sd-content">
-      <DocPage {page} {content} />
+      <DocPage {page} {content} hasDocHeaderSlot={showDocHeaderSlot}>
+        <svelte:fragment slot="doc-header" let:page let:breadcrumbs>
+          <slot name="doc-header" {page} {breadcrumbs} />
+        </svelte:fragment>
+      </DocPage>
     </main>
     <aside
       bind:this={tocEl}

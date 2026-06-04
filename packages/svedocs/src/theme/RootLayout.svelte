@@ -17,6 +17,7 @@
   export let loadSearch: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
   export let mobileTree: SvedocsTreeItem[] = [];
   export let mobileCurrentPath = '';
+  export let hasBackgroundSlot: boolean | undefined = undefined;
 
   const accentPalette: Record<string, string> = {
     emerald: '#007f68',
@@ -37,6 +38,7 @@
   $: isDocsPage = page?.kind === 'doc';
   $: mobileMenuId = `sd-mobile-menu-${createDomId(page?.id ?? page?.routePath ?? 'site')}`;
   $: mobileTreePath = mobileCurrentPath || page?.routePath || '';
+  $: showBackgroundSlot = hasBackgroundSlot ?? Boolean($$slots.background);
 
   let mounted = false;
   let mobileMenuOpen = false;
@@ -152,8 +154,13 @@
   {/if}
 </svelte:head>
 
-<div class="sd-root" data-surface={surface} style={themeStyle}>
+<div class:sd-has-background-slot={showBackgroundSlot} class="sd-root" data-surface={surface} style={themeStyle}>
   <a class="sd-skip" href="#content">Skip to content</a>
+  {#if showBackgroundSlot}
+    <div class="sd-background-slot" aria-hidden="true">
+      <slot name="background" />
+    </div>
+  {/if}
   <header class:sd-mobile-menu-open={mobileMenuOpen} class="sd-topbar">
     <a class="sd-brand" href={config.theme.brand.href}>
       {#if config.theme.brand.logo}
