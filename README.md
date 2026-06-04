@@ -1,39 +1,36 @@
-# svedocs
+<p align="center">
+  <img src="apps/site/static/favicon-256x256.png" alt="svedocs logo" width="96" height="96" />
+</p>
 
-> WIP: svedocs is under active development. The first official stable release has not shipped yet, so package APIs, templates, docs, and deployment defaults may still change before launch.
+<h1 align="center">svedocs</h1>
 
-svedocs is a SvelteKit-native documentation framework for edge-first docs. It keeps content, routing, rendering, search, Ask AI, SEO, Open Graph images, Cloudflare helpers, and the default theme in one integrated framework package, with a CLI for creating and operating projects.
+<p align="center">
+  <strong>A SvelteKit-native documentation framework for edge-first docs.</strong>
+</p>
 
-The repository is a compact pnpm monorepo:
+<p align="center">
+  <a href="https://github.com/backrunner/svedocs/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-11130f?style=flat-square"></a>
+  <img alt="Status" src="https://img.shields.io/badge/status-beta-50d6b3?style=flat-square">
+  <img alt="SvelteKit" src="https://img.shields.io/badge/SvelteKit-native-ff8a66?style=flat-square">
+  <img alt="Cloudflare" src="https://img.shields.io/badge/Cloudflare-ready-11130f?style=flat-square">
+</p>
 
-- `packages/svedocs`: the complete framework package.
-- `packages/cli`: the `svedocs` and `create-svedocs` binaries.
-- `packages/create-svedocs`: a thin compatibility entry for `npm create svedocs` and `pnpm create svedocs`; CLI implementation still lives in `packages/cli`.
-- `apps/site`: the official site and live demo, kept private.
+> svedocs is under active development. The first stable release has not shipped yet, so package APIs, templates, docs, and deployment defaults may still change before launch.
 
-## Why svedocs
+svedocs brings the moving parts of a modern docs site into one compact framework package: content discovery, Svelte-compatible Markdown rendering, navigation, search, Ask AI, SEO, Open Graph images, Cloudflare helpers, and a polished default theme.
 
-- SvelteKit-native rendering with Markdown, `.svx`, and `.mdx`-style authoring.
-- One framework package instead of a split renderer/theme/search package graph.
-- Cloudflare edge SSR as the default deployment path, with static and SPA builds supported.
-- Content manifests, nested navigation, prev/next links, scoped search records, internal link checks, asset checks, and SEO metadata generated from the same source model.
-- Runtime search and Ask AI integrations that can start locally and later move to hosted providers.
-- A Tailwind CSS v4 default theme with docs navigation, ToC, command/search UI, Ask AI, version and locale controls, code block tools, dark mode, and a pixel-style homepage.
+It is built for teams that want documentation to feel native to SvelteKit instead of bolted on through a separate renderer, theme package, search adapter graph, and deployment layer.
 
-## Status
+## Highlights
 
-svedocs is not production-stable yet. The current repository is useful for local development, framework validation, demos, and early integration work, but the public release line is still WIP.
-
-Current implementation includes:
-
-- Content discovery for docs and single pages.
-- Markdown/SVX/MDX-compatible compilation through Svelte.
-- Page tree, sidebar ordering, locale/version scopes, and version lifecycle banners.
-- Local MiniSearch, Algolia, Typesense, and Cloudflare AI Search providers.
-- Ask AI providers for mock responses, Cloudflare AI Search, Workers AI, and OpenAI-compatible APIs.
-- SEO metadata, sitemap, robots.txt, and SVG/PNG Open Graph image generation.
-- CLI commands for create, dev, build, SSG, preview, check, search indexing, OG generation, and Cloudflare deployment scaffolding.
-- Minimal, docs, and Cloudflare starter templates.
+| Capability | What svedocs provides |
+| --- | --- |
+| Native SvelteKit docs | Markdown, `.svx`, and `.mdx`-style authoring compiled through the Svelte stack. |
+| Unified content model | One manifest powers routes, sidebars, previous/next links, search records, SEO, sitemap entries, link checks, and OG routes. |
+| Edge-first deployment | Cloudflare edge SSR is the default path, with static and SPA builds available when needed. |
+| Search and Ask AI | Local MiniSearch for development, plus Algolia, Typesense, Cloudflare AI Search, Workers AI, and OpenAI-compatible providers. |
+| Default theme | Tailwind CSS v4 theme with dark mode, command/search UI, Ask AI, ToC, locales, versions, code tools, and a pixel-style homepage. |
+| Production CLI | Create projects, run dev/build/preview/check, generate search indexes and OG images, and scaffold Cloudflare deployment. |
 
 ## Quick Start
 
@@ -44,7 +41,7 @@ pnpm install
 pnpm --filter @svedocs/site dev
 ```
 
-When packages are published, project creation will be available through the CLI:
+After packages are published, create a project with:
 
 ```sh
 pnpm create svedocs my-docs
@@ -60,7 +57,7 @@ pnpm create svedocs my-docs --template docs
 pnpm create svedocs my-docs --template cloudflare
 ```
 
-## Project Config
+## Configuration
 
 Projects are configured with `svedocs.config.ts`:
 
@@ -88,7 +85,7 @@ export default defineConfig({
 });
 ```
 
-The Vite plugin loads `svedocs.config.ts` by default:
+The Vite plugin loads the config by default:
 
 ```ts
 import { sveltekit } from '@sveltejs/kit/vite';
@@ -102,7 +99,7 @@ export default defineConfig({
 
 ## Content
 
-svedocs reads docs and pages from the configured content roots:
+svedocs reads docs and pages from configured content roots:
 
 ```txt
 content/
@@ -113,11 +110,11 @@ content/
     index.md
 ```
 
-Frontmatter controls title, description, order, icon, locale, version, lifecycle status, and layout selection. The same manifest powers rendering, navigation, search records, link checks, SEO, sitemap entries, and OG image routes.
+Frontmatter controls title, description, order, icon hints, locale, version, lifecycle status, and layout selection. The same parsed source drives rendering, navigation, search records, link checks, SEO metadata, sitemap entries, and Open Graph images.
 
 ## CLI
 
-The CLI lives in `packages/cli` and exposes:
+The CLI lives in `packages/cli` and ships both `svedocs` and `create-svedocs`:
 
 ```sh
 svedocs create
@@ -133,7 +130,33 @@ svedocs og
 svedocs deploy cloudflare
 ```
 
-Commands that read project state load `svedocs.config.*` before applying command-line overrides.
+Content-aware commands load `svedocs.config.*` first, then apply command-line overrides.
+
+## Monorepo
+
+This repository is intentionally compact:
+
+| Path | Purpose |
+| --- | --- |
+| `packages/svedocs` | Integrated framework package: rendering, content, theme, Cloudflare, search, AI, SEO, and OG. |
+| `packages/cli` | CLI implementation for `svedocs` and `create-svedocs`. |
+| `packages/create-svedocs` | Thin package-manager compatibility shim that delegates to `svedocs-cli`. |
+| `apps/site` | Private official site and live demo using the workspace `svedocs` package. |
+
+Public imports stay small and stable:
+
+```txt
+svedocs/config
+svedocs/core
+svedocs/vite
+svedocs/theme
+svedocs/theme/styles.css
+svedocs/cloudflare
+svedocs/search
+svedocs/ai
+svedocs/og
+svedocs/svelte
+```
 
 ## Development
 
@@ -148,29 +171,19 @@ pnpm lint
 pnpm pack:dry-run
 ```
 
-Focused framework validation:
+Focused validation:
 
 ```sh
 pnpm --filter svedocs check
 pnpm --filter svedocs test
 pnpm --filter svedocs build
-```
 
-Focused CLI validation:
-
-```sh
 pnpm --filter svedocs-cli check
 pnpm --filter svedocs-cli test
 pnpm --filter svedocs-cli build
-```
 
-Official site validation:
-
-```sh
 pnpm --filter @svedocs/site check
 pnpm --filter @svedocs/site build
-SVEDOCS_BUILD_MODE=static pnpm --filter @svedocs/site build
-SVEDOCS_BUILD_MODE=spa pnpm --filter @svedocs/site build
 ```
 
 Before publishing packages, run:
@@ -185,26 +198,11 @@ Generated templates have a heavier install/build smoke test:
 pnpm test:templates
 ```
 
-## Package Boundaries
+## Release Status
 
-Public imports are intentionally small and stable:
+svedocs is currently useful for local development, framework validation, demos, and early integration work. Treat npm publishing and compatibility work as release preparation until the official stable line is announced.
 
-- `svedocs/config`: config schema, `defineConfig`, and config loading.
-- `svedocs/core`: content model APIs, manifests, navigation, checks, search records, and shared types.
-- `svedocs/vite`: Vite plugin, virtual modules, and content refresh.
-- `svedocs/theme`: default Svelte theme components.
-- `svedocs/theme/styles.css`: Tailwind CSS v4 theme styles.
-- `svedocs/cloudflare`: build presets, wrangler helpers, and binding types.
-- `svedocs/search`: local and hosted search providers plus indexing sync.
-- `svedocs/ai`: Ask AI providers, SSE responses, and rate limiting.
-- `svedocs/og`: SEO metadata, sitemap/robots, and OG image rendering.
-- `svedocs/svelte`: Svelte-compatible content preprocessing helpers.
-
-The `create-svedocs` package is only a package-manager compatibility shim and must continue to delegate to `svedocs-cli`.
-
-## Publishing
-
-Publishable packages keep MIT license metadata, package `files` and `exports`, and:
+Publishable packages keep MIT license metadata, package `files` and `exports`, and provenance-enabled public publishing:
 
 ```json
 {
@@ -214,7 +212,3 @@ Publishable packages keep MIT license metadata, package `files` and `exports`, a
   }
 }
 ```
-
-The official release has not been announced or shipped yet. Treat all npm publishing and compatibility work as release preparation until that changes.
-
-The product and technical plans live in `.agents/`.
