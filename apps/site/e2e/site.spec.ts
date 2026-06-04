@@ -35,6 +35,25 @@ test('search dialog jumps to docs pages', async ({ page }) => {
   await expect(page).toHaveURL(/\/docs\/configuration$/);
 });
 
+test('keeps the matching navbar link active across docs navigation', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'Top-level navbar active state is covered on desktop without the collapsed menu.');
+  await page.goto('/');
+  await waitForSvedocsHydration(page);
+  await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Configuration' }).click();
+  await expect(page).toHaveURL(/\/docs\/configuration$/);
+  await waitForSvedocsHydration(page, '/docs/configuration');
+
+  const topnav = page.getByRole('navigation', { name: 'Primary' });
+  await expect(topnav.getByRole('link', { name: 'Configuration' })).toHaveAttribute('aria-current', 'page');
+  await expect(topnav.locator('a.sd-active')).toHaveText('Configuration');
+
+  await page.goto('/docs/configuration/theme');
+  await waitForSvedocsHydration(page, '/docs/configuration/theme');
+  await expect(topnav.getByRole('link', { name: 'Configuration' })).toHaveAttribute('aria-current', 'location');
+  await expect(topnav.locator('a.sd-active')).toHaveText('Configuration');
+  await expect(topnav.getByRole('link', { name: 'Docs' })).not.toHaveAttribute('aria-current', /./);
+});
+
 test('docs v0 no longer exists', async ({ page }) => {
   const response = await page.goto('/docs/v0');
   expect(response?.status()).toBe(404);
