@@ -23,9 +23,14 @@ type PackageManifest = {
   version: string;
 };
 
+type PublishTarget = PublishPackage & PackageManifest & {
+  file: string;
+};
+
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const artifactsDir = path.resolve(repoRoot, 'artifacts/npm-local');
 const packages: PublishPackage[] = [
+  { directory: 'packages/svedocs', tarball: 'svedocs.tgz' },
   { directory: 'packages/cli', tarball: 'svedocs-cli.tgz' },
   { directory: 'packages/create-svedocs', tarball: 'create-svedocs.tgz' }
 ];
@@ -42,8 +47,8 @@ async function main(): Promise<void> {
     return;
   }
 
-  const manifests = await readPackageManifests(packages);
-  validatePackageVersions(manifests, args.channel);
+  const targets = await readPublishTargets(packages);
+  validatePackageVersions(targets, args.channel);
   const npmTag = args.channel === 'stable' ? 'latest' : 'beta';
 
   if (!args.dryRun && !args.allowDirty) {
@@ -61,7 +66,7 @@ async function main(): Promise<void> {
   await rm(artifactsDir, { force: true, recursive: true });
   await mkdir(artifactsDir, { recursive: true });
 
-  for (const item of packages) {
+  for (const item of targets) {
     const packageRoot = path.resolve(repoRoot, item.directory);
     const tarballPath = path.resolve(artifactsDir, item.tarball);
     await runCommand('pnpm', ['pack', '--out', path.relative(packageRoot, tarballPath)], {
@@ -69,7 +74,12 @@ async function main(): Promise<void> {
     });
   }
 
-  for (const item of packages) {
+  for (const item of targets) {
+    if (await packageVersionExists(item.name, item.version)) {
+      console.log(`Skipping ${item.name}@${item.version}; it is already published.`);
+      await addDistTag(item.name, item.version, npmTag, args);
+      continue;
+    }
     const tarballPath = path.resolve(artifactsDir, item.tarball);
     const publishArgs = [
       'publish',
@@ -149,15 +159,15 @@ function readValue(argv: string[], index: number, flag: string): string {
   return value;
 }
 
-async function readPackageManifests(items: PublishPackage[]): Promise<Array<PackageManifest & { file: string }>> {
+async function readPublishTargets(items: PublishPackage[]): Promise<PublishTarget[]> {
   return Promise.all(items.map(async (item) => {
     const file = path.resolve(repoRoot, item.directory, 'package.json');
     const manifest = JSON.parse(await readFile(file, 'utf8')) as PackageManifest;
-    return { file, name: manifest.name, version: manifest.version };
+    return { ...item, file, name: manifest.name, version: manifest.version };
   }));
 }
 
-function validatePackageVersions(manifests: Array<PackageManifest & { file: string }>, channel: ReleaseChannel): void {
+function validatePackageVersions(manifests: PublishTarget[], channel: ReleaseChannel): void {
   const versions = new Set(manifests.map((manifest) => manifest.version));
   if (versions.size !== 1) {
     throw new Error([
@@ -178,6 +188,20 @@ function validatePackageVersions(manifests: Array<PackageManifest & { file: stri
   }
 
   console.log(`Publishing ${manifests.map((manifest) => manifest.name).join(', ')} at ${version} with npm tag ${channel === 'stable' ? 'latest' : 'beta'}.`);
+}
+
+async function packageVersionExists(name: string, version: string): Promise<boolean> {
+  const result = await runCommandCaptureOptional('npm', ['view', `${name}@${version}`, 'version'], { cwd: repoRoot });
+  return result.code === 0;
+}
+
+async function addDistTag(name: string, version: string, tag: string, args: PublishNpmArgs): Promise<void> {
+  const commandArgs = ['dist-tag', 'add', `${name}@${version}`, tag];
+  if (args.dryRun) {
+    console.log(`Dry run: npm ${commandArgs.join(' ')}`);
+    return;
+  }
+  await runCommand('npm', [...commandArgs, ...(args.otp ? ['--otp', args.otp] : [])], { cwd: repoRoot });
 }
 
 function renderHelp(): string {
@@ -247,6 +271,27 @@ function runCommandCapture(command: string, args: string[], options: { cwd?: str
       } else {
         reject(new Error(`${command} ${args.join(' ')} exited with code ${code ?? 0}.\n${stderr}`));
       }
+    });
+    child.on('error', reject);
+  });
+}
+
+function runCommandCaptureOptional(command: string, args: string[], options: { cwd?: string } = {}): Promise<{ code: number; stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      cwd: options.cwd,
+      shell: process.platform === 'win32'
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout?.on('data', (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr?.on('data', (chunk) => {
+      stderr += chunk;
+    });
+    child.on('close', (code) => {
+      resolve({ code: code ?? 0, stdout, stderr });
     });
     child.on('error', reject);
   });

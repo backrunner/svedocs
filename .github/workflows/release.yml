@@ -1,4 +1,4 @@
-name: Release npm CLI
+name: Release npm packages
 
 on:
   workflow_dispatch:
@@ -17,7 +17,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: release-npm-cli
+  group: release-npm-packages
   cancel-in-progress: false
 
 jobs:
@@ -59,6 +59,7 @@ jobs:
           const { readFileSync } = require('node:fs');
 
           const packageFiles = [
+            'packages/svedocs/package.json',
             'packages/cli/package.json',
             'packages/create-svedocs/package.json'
           ];
@@ -93,9 +94,32 @@ jobs:
           NODE
       - run: pnpm release:check
       - run: mkdir -p artifacts
+      - run: pnpm pack --out ../../artifacts/svedocs.tgz
+        working-directory: packages/svedocs
       - run: pnpm pack --out ../../artifacts/svedocs-cli.tgz
         working-directory: packages/cli
       - run: pnpm pack --out ../../artifacts/create-svedocs.tgz
         working-directory: packages/create-svedocs
-      - run: npm publish ./artifacts/svedocs-cli.tgz --access public --provenance --tag ${{ steps.release-channel.outputs.npm_tag }}
-      - run: npm publish ./artifacts/create-svedocs.tgz --access public --provenance --tag ${{ steps.release-channel.outputs.npm_tag }}
+      - name: Publish npm packages
+        env:
+          NPM_TAG: ${{ steps.release-channel.outputs.npm_tag }}
+        run: |
+          set -euo pipefail
+
+          publish_package() {
+            local name="$1"
+            local version="$2"
+            local tarball="$3"
+
+            if npm view "${name}@${version}" version >/dev/null 2>&1; then
+              echo "Skipping ${name}@${version}; it is already published."
+              npm dist-tag add "${name}@${version}" "$NPM_TAG"
+              return
+            fi
+
+            npm publish "$tarball" --access public --provenance --tag "$NPM_TAG"
+          }
+
+          publish_package "svedocs" "$(node -p "require('./packages/svedocs/package.json').version")" "./artifacts/svedocs.tgz"
+          publish_package "svedocs-cli" "$(node -p "require('./packages/cli/package.json').version")" "./artifacts/svedocs-cli.tgz"
+          publish_package "create-svedocs" "$(node -p "require('./packages/create-svedocs/package.json').version")" "./artifacts/create-svedocs.tgz"
