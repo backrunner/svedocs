@@ -3383,9 +3383,12 @@ body {
     display: grid;
   }
 
-  .sd-topbar-spacer,
-  .sd-topbar-menu .sd-theme-toggle {
+  .sd-topbar-spacer {
     display: none;
+  }
+
+  .sd-topbar-menu .sd-theme-toggle {
+    justify-self: start;
   }
 
   .sd-brand {

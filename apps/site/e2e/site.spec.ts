@@ -7,7 +7,7 @@ test('renders the official home and docs entry', async ({ page }) => {
   await page.getByRole('link', { name: 'Read docs' }).click();
   await expect(page).toHaveURL(/\/docs$/);
   await expect(page.getByRole('heading', { name: 'Quick Start' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Install' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Create a site' })).toBeVisible();
   await page.goto('/docs/writing/components');
   await waitForSvedocsHydration(page);
   await expect(page.locator('.sd-callout')).toContainText('Components can be injected');
@@ -19,6 +19,7 @@ test('renders the official home and docs entry', async ({ page }) => {
 test('search dialog returns section records', async ({ page }) => {
   await page.goto('/docs');
   await waitForSvedocsHydration(page);
+  await openTopbarMenuIfCollapsed(page);
   await page.getByRole('button', { name: 'Search documentation' }).click();
   await page.getByPlaceholder('Search docs').fill('cloudflare');
   await expect(page.getByRole('option').filter({ hasText: 'Search' }).first()).toBeVisible();
@@ -27,9 +28,10 @@ test('search dialog returns section records', async ({ page }) => {
 test('search dialog jumps to docs pages', async ({ page }) => {
   await page.goto('/docs');
   await waitForSvedocsHydration(page);
+  await openTopbarMenuIfCollapsed(page);
   await page.getByRole('button', { name: 'Search documentation' }).click();
   await page.getByPlaceholder('Search docs').fill('configuration');
-  await page.getByRole('option').filter({ hasText: 'Configuration' }).first().click();
+  await page.locator('.sd-search-results a[role="option"][href="/docs/configuration"]').click();
   await expect(page).toHaveURL(/\/docs\/configuration$/);
 });
 
@@ -90,6 +92,8 @@ test('Ask AI streams an answer and citations', async ({ page }) => {
 
 test('theme toggle updates the document theme', async ({ page }) => {
   await page.goto('/');
+  await waitForSvedocsHydration(page);
+  await openTopbarMenuIfCollapsed(page);
   await page.getByRole('button', { name: /Switch to (dark|light) theme/ }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', /dark|light/);
 });
@@ -100,8 +104,8 @@ test.describe('mobile navigation', () => {
   test('opens the sidebar menu', async ({ page }) => {
     await page.goto('/docs/writing/content');
     await waitForSvedocsHydration(page);
-    await page.getByRole('button', { name: 'Menu' }).click();
-    await expect(page.getByRole('complementary', { name: 'Documentation' })).toBeVisible();
+    await page.getByRole('button', { name: 'Open menu' }).click();
+    await expect(page.getByRole('navigation', { name: 'Documentation' })).toBeVisible();
   });
 });
 
@@ -111,19 +115,40 @@ async function waitForSvedocsHydration(page: import('@playwright/test').Page, ro
   await page.locator(`html[data-svedocs-route="${hydratedRoute}"]`).waitFor();
 }
 
+async function openTopbarMenuIfCollapsed(page: import('@playwright/test').Page) {
+  const menuButton = page.getByRole('button', { name: 'Open menu' });
+  if (await menuButton.isVisible()) {
+    await menuButton.click();
+  }
+}
+
 test('keeps ToC active state bound to scroll position', async ({ page, isMobile }) => {
   test.skip(isMobile, 'ToC is intentionally hidden on mobile.');
   await page.goto('/docs/writing/content');
   await waitForSvedocsHydration(page);
-  await page.getByRole('link', { name: 'Section extraction' }).click();
-  await expect(page.locator('.sd-toc-link.sd-active')).toContainText('Section extraction');
+  await page.locator('.sd-toc').getByRole('link', { name: 'Authoring checklist' }).click();
+  await expect(page.locator('.sd-toc-link.sd-active')).toHaveAttribute('href', '#authoring-checklist');
 });
 
 test('uses the lowest visible heading for the ToC marker', async ({ page, isMobile }) => {
   test.skip(isMobile, 'ToC is intentionally hidden on mobile.');
-  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.setViewportSize({ width: 1280, height: 1200 });
   await page.goto('/docs/writing/content');
   await waitForSvedocsHydration(page);
+  const foundScrollPosition = await page.evaluate(() => {
+    const headings = Array.from(document.querySelectorAll<HTMLElement>('.sd-prose h2[id], .sd-prose h3[id], .sd-prose h4[id]'));
+    const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    for (let y = 0; y <= maxScroll; y += 48) {
+      window.scrollTo(0, y);
+      const visible = headings.filter((heading) => {
+        const top = heading.getBoundingClientRect().top;
+        return top >= 80 && top <= window.innerHeight;
+      });
+      if (visible.length > 1) return true;
+    }
+    return false;
+  });
+  expect(foundScrollPosition).toBe(true);
   await page.waitForFunction(() => {
     const visible = Array.from(document.querySelectorAll<HTMLElement>('.sd-prose h2[id], .sd-prose h3[id], .sd-prose h4[id]'))
       .filter((heading) => {
