@@ -168,6 +168,7 @@ export interface SvedocsResolvedConfig {
     code: {
       lineNumbers: boolean;
       wrap: boolean;
+      copyButton: boolean;
     };
     brand: {
       label: string;

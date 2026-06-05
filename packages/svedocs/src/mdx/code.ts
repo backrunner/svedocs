@@ -71,7 +71,7 @@ export function rehypeCodeBlocks(codeBlocks: SvedocsCodeBlock[] = []) {
 
 export function remarkSvedocsCodeBlocks(
   codeBlocks: SvedocsCodeBlock[] = [],
-  options: { theme?: string; themes?: { light?: string; dark?: string }; transformers?: unknown[]; lineNumbers?: boolean; wrap?: boolean } = {}
+  options: { theme?: string; themes?: { light?: string; dark?: string }; transformers?: unknown[]; lineNumbers?: boolean; wrap?: boolean; copyButton?: boolean } = {}
 ) {
   return async (tree: unknown) => {
     let index = 0;
@@ -87,7 +87,7 @@ export function remarkSvedocsCodeBlocks(
       if (block.diff && block.diffMode === 'split') {
         parent.children[childIndex] = {
           type: 'html',
-          value: renderSplitDiffHtml(block)
+          value: renderSplitDiffHtml(block, { copyButton: options.copyButton !== false })
         };
         return;
       }
@@ -112,7 +112,11 @@ export function remarkSvedocsCodeBlocks(
           .then((html) => {
             parent.children[childIndex] = {
               type: 'html',
-              value: decorateHighlightedCode(html, block, { showLineNumbers: renderLineNumbers, wrap: wrapLines })
+              value: decorateHighlightedCode(html, block, {
+                showLineNumbers: renderLineNumbers,
+                wrap: wrapLines,
+                copyButton: options.copyButton !== false
+              })
             };
           })
           .catch(() => {
@@ -176,12 +180,12 @@ function createCodeProperties(block: SvedocsCodeBlock, showLineNumbers: boolean 
   };
 }
 
-function decorateHighlightedCode(html: string, block: SvedocsCodeBlock, options: { showLineNumbers: boolean; wrap: boolean }): string {
+function decorateHighlightedCode(html: string, block: SvedocsCodeBlock, options: { showLineNumbers: boolean; wrap: boolean; copyButton?: boolean }): string {
   const showLineNumbers = options.showLineNumbers;
   const wrap = options.wrap;
   const trimmed = stripTrailingEmptyLine(html);
   const withDecoratedLines = decorateCodeLines(trimmed, block, showLineNumbers);
-  const header = renderCodeHeader(block);
+  const header = renderCodeHeader(block, { copyButton: options.copyButton !== false });
   return withDecoratedLines.replace(
     /<pre([^>]*)>/,
     (_match, attrs: string) => {
@@ -259,7 +263,7 @@ function findClosingSpan(source: string, offset: number): number {
   return -1;
 }
 
-function renderCodeHeader(block: SvedocsCodeBlock): string {
+function renderCodeHeader(block: SvedocsCodeBlock, options: { copyButton: boolean }): string {
   const language = block.language || 'text';
   const languageLabel = displayLanguage(language);
   const parts: string[] = [];
@@ -277,7 +281,9 @@ function renderCodeHeader(block: SvedocsCodeBlock): string {
     }
     parts.push(`<span class="sd-code-stats">${stats.join('')}</span>`);
   }
-  parts.push(`<button type="button" class="sd-code-copy" data-sd-copy="" aria-label="Copy code" title="Copy code"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h9v14H9zM6 8v12h10"/></svg></button>`);
+  if (options.copyButton) {
+    parts.push(`<button type="button" class="sd-code-copy" data-sd-copy="" aria-label="Copy code" title="Copy code"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h9v14H9zM6 8v12h10"/></svg></button>`);
+  }
   return `<div class="sd-code-header">${parts.join('')}</div>`;
 }
 

@@ -14,6 +14,9 @@ export interface SvedocsVitePluginOptions {
   config?: SvedocsConfig;
   components?: Record<string, string>;
   layouts?: Record<string, string>;
+  theme?: {
+    components?: Record<string, string>;
+  };
 }
 
 const virtualModules = new Set([
@@ -26,6 +29,7 @@ const virtualModules = new Set([
   'virtual:svedocs/search-loader',
   'virtual:svedocs/components',
   'virtual:svedocs/layouts',
+  'virtual:svedocs/theme-components',
   'virtual:svedocs/manifest'
 ]);
 
@@ -95,8 +99,8 @@ export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
       }
       if (id.startsWith(`\0${componentVirtualPrefix}`)) {
         if (!manifest) await refresh();
-          const data = manifest ?? (await loadSvedocsContent(createContentOptions(root, options.config)));
-          const code = await loadPageComponent(root, id, data.pages, options.components ?? {}, resolvedConfig, data.config);
+        const data = manifest ?? (await loadSvedocsContent(createContentOptions(root, options.config)));
+        const code = await loadPageComponent(root, id, data.pages, options.components ?? {}, resolvedConfig, data.config);
         return {
           code,
           map: {
@@ -121,6 +125,7 @@ export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
       if (key === 'search-loader') return `export default () => import('virtual:svedocs/search').then((module) => module.default);`;
       if (key === 'components') return createComponentsModule(data.pages);
       if (key === 'layouts') return createNamedImportModule(options.layouts ?? {});
+      if (key === 'theme-components') return createNamedImportModule(options.theme?.components ?? {});
       if (key === 'manifest') return `export default ${JSON.stringify(data)};`;
       return undefined;
     },
@@ -265,21 +270,22 @@ async function loadPageComponent(
   const raw = await readFile(path.join(root, page.sourcePath), 'utf8');
   const parsed = matter(raw);
   const source = injectSvedocsComponentImports(stripFirstTitleHeading(parsed.content), components);
-    try {
-      const compiled = await compileMdsvex(source, {
-        filename: page.sourcePath,
-        ...createSvedocsMdsvexOptions(
-          source,
-          createMdsvexOptionsFromConfig(rawConfig),
-          {
-            codeThemes: {
-              light: manifestConfig.theme.codeTheme.light,
-              dark: manifestConfig.theme.codeTheme.dark
-            },
-            ...(rawConfig?.markdown?.shiki?.transformers ? { shikiTransformers: rawConfig.markdown.shiki.transformers } : {})
-          }
-        )
-      });
+  try {
+    const compiled = await compileMdsvex(source, {
+      filename: page.sourcePath,
+      ...createSvedocsMdsvexOptions(
+        source,
+        createMdsvexOptionsFromConfig(rawConfig),
+        {
+          codeThemes: {
+            light: manifestConfig.theme.codeTheme.light,
+            dark: manifestConfig.theme.codeTheme.dark
+          },
+          codeCopyButton: manifestConfig.theme.code.copyButton,
+          ...(rawConfig?.markdown?.shiki?.transformers ? { shikiTransformers: rawConfig.markdown.shiki.transformers } : {})
+        }
+      )
+    });
     const result = await compiled;
     return stripInlineSourceMap(result?.code ?? '<script>export const prerender = true;</script>');
   } catch (error) {

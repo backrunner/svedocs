@@ -75,6 +75,11 @@ import {
   RootLayout,
   DocsLayout,
   DocPage,
+  Article,
+  Navbar,
+  TableOfContents,
+  Footer,
+  PageTools,
   HomePage,
   FormField,
   Input,
@@ -84,10 +89,14 @@ import {
   Button
 } from 'svedocs/theme';
 import 'svedocs/theme/styles.css';
+import 'svedocs/theme/base.css';
+import { createSearchController, createAskAiController } from 'svedocs/theme/headless';
+import type { SvedocsThemeComponentMap, SvedocsNavbarProps } from 'svedocs/theme/types';
 ```
 
 完整路由壳层可以直接用 `DocsApp`，也可以组合更底层的组件做自定义站点。
 自定义页面和布局里的表单 UI 可以使用这些基础控件，以继承默认 svedocs 主题风格。
+开发完整自定义主题时，可以通过 `themeComponents` 替换默认组件，并直接复用 headless controllers。
 
 ## Cloudflare
 

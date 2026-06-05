@@ -1,9 +1,10 @@
 <script lang="ts">
   import type { Component } from 'svelte';
   import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
-    import DocsLayout from './DocsLayout.svelte';
-    import HomePage from './HomePage.svelte';
-    import PageLayout from './PageLayout.svelte';
+  import DocsLayout from './DocsLayout.svelte';
+  import HomePage from './HomePage.svelte';
+  import PageLayout from './PageLayout.svelte';
+  import type { SvedocsThemeComponentMap } from './types.js';
 
   export let page: SvedocsPage;
   export let pages: SvedocsPage[] = [];
@@ -12,6 +13,7 @@
   export let config: SvedocsResolvedConfig;
   export let components: Record<string, Component> = {};
   export let layouts: Record<string, Component> = {};
+  export let themeComponents: Partial<SvedocsThemeComponentMap> = {};
   export let loadSearch: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
 
   $: layoutName = typeof page.frontmatter.layout === 'string' ? page.frontmatter.layout : '';
@@ -32,6 +34,7 @@
     {search}
     {config}
     {loadSearch}
+    {themeComponents}
     content={components[page.id]}
   />
   {:else if page.routePath === '/' || page.frontmatter.layout === 'home'}
@@ -42,6 +45,7 @@
       {config}
       {loadSearch}
       content={components[page.id]}
+      {themeComponents}
       {hasBackgroundSlot}
       {hasLandingSlot}
       {hasHomeHeroVisualSlot}
@@ -61,13 +65,13 @@
       </svelte:fragment>
     </HomePage>
   {:else if page.kind === 'page' || page.frontmatter.layout === 'page'}
-    <PageLayout {page} {pages} {search} {config} {loadSearch} content={components[page.id]} {hasBackgroundSlot}>
+    <PageLayout {page} {pages} {search} {config} {loadSearch} content={components[page.id]} {hasBackgroundSlot} {themeComponents}>
       <svelte:fragment slot="background">
         <slot name="background" />
       </svelte:fragment>
     </PageLayout>
   {:else}
-    <DocsLayout {page} {pages} {tree} {search} {config} {loadSearch} content={components[page.id]} {hasBackgroundSlot} {hasDocHeaderSlot}>
+    <DocsLayout {page} {pages} {tree} {search} {config} {loadSearch} content={components[page.id]} {hasBackgroundSlot} {hasDocHeaderSlot} {themeComponents}>
       <svelte:fragment slot="background">
         <slot name="background" />
       </svelte:fragment>

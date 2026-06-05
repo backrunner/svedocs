@@ -30,6 +30,7 @@ export interface CompileMarkdownOptions {
   shikiTransformers?: unknown[];
   codeLineNumbers?: boolean;
   codeWrap?: boolean;
+  codeCopyButton?: boolean;
 }
 
 export async function compileMarkdown(
@@ -47,18 +48,19 @@ export async function compileMarkdown(
     processor.use(plugin as never);
   }
 
-    processor
-      .use(
-        remarkSvedocsCodeBlocks,
-        codeBlocks,
-        {
-          ...(options.codeTheme ? { theme: options.codeTheme } : {}),
-          ...(options.codeThemes ? { themes: options.codeThemes } : {}),
-          ...(options.shikiTransformers ? { transformers: options.shikiTransformers } : {}),
-          ...(typeof options.codeLineNumbers === 'boolean' ? { lineNumbers: options.codeLineNumbers } : {}),
-          ...(typeof options.codeWrap === 'boolean' ? { wrap: options.codeWrap } : {})
-        }
-      )
+  processor
+    .use(
+      remarkSvedocsCodeBlocks,
+      codeBlocks,
+      {
+        ...(options.codeTheme ? { theme: options.codeTheme } : {}),
+        ...(options.codeThemes ? { themes: options.codeThemes } : {}),
+        ...(options.shikiTransformers ? { transformers: options.shikiTransformers } : {}),
+        ...(typeof options.codeLineNumbers === 'boolean' ? { lineNumbers: options.codeLineNumbers } : {}),
+        ...(typeof options.codeWrap === 'boolean' ? { wrap: options.codeWrap } : {}),
+        ...(typeof options.codeCopyButton === 'boolean' ? { copyButton: options.codeCopyButton } : {})
+      }
+    )
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
     .use(rehypeSlug)

@@ -93,7 +93,7 @@ export function createDiffSplitRows(rows: SvedocsDiffRow[]): SvedocsDiffSplitRow
   return splitRows;
 }
 
-export function renderSplitDiffHtml(block: SvedocsCodeBlock): string {
+export function renderSplitDiffHtml(block: SvedocsCodeBlock, options: { copyButton?: boolean } = {}): string {
   const title = block.title ?? 'Diff';
   const rows = block.splitRows.length > 0 ? block.splitRows : createDiffSplitRows(block.diffRows);
   const counts = [
@@ -102,7 +102,7 @@ export function renderSplitDiffHtml(block: SvedocsCodeBlock): string {
   ].filter(Boolean).join(' ');
 
   return `<div class="sd-diff sd-diff-split sd-code" data-language="${escapeAttribute(block.language)}"${block.title ? ` data-title="${escapeAttribute(block.title)}"` : ''} data-diff="true" data-diff-mode="split"${block.addedLines > 0 ? ` data-added-lines="${block.addedLines}"` : ''}${block.removedLines > 0 ? ` data-removed-lines="${block.removedLines}"` : ''} data-copy="${escapeAttribute(block.raw)}">
-  ${renderDiffHeader(title, counts)}
+  ${renderDiffHeader(title, counts, { copyButton: options.copyButton !== false })}
   <div class="sd-diff-panes" role="table" aria-label="${escapeAttribute(title)} diff">
     ${renderPane(rows, 'old', 'Before')}
     ${renderPane(rows, 'new', 'After')}
@@ -125,15 +125,18 @@ function pushPairedChangeRows(
   }
 }
 
-function renderDiffHeader(title: string, counts: string): string {
+function renderDiffHeader(title: string, counts: string, options: { copyButton: boolean }): string {
   const stats = counts
     ? `<span class="sd-code-stats">${counts.split(' ').map(renderDiffStat).join('')}</span>`
+    : '';
+  const copyButton = options.copyButton
+    ? '<button type="button" class="sd-code-copy" data-sd-copy="" aria-label="Copy diff" title="Copy diff"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h9v14H9zM6 8v12h10"/></svg></button>'
     : '';
   return `<div class="sd-code-header">
     <span class="sd-code-language" data-language="diff">Diff</span>
     <span class="sd-code-title">${escapeHtml(title)}</span>
     ${stats}
-    <button type="button" class="sd-code-copy" data-sd-copy="" aria-label="Copy diff" title="Copy diff"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h9v14H9zM6 8v12h10"/></svg></button>
+    ${copyButton}
   </div>`;
 }
 

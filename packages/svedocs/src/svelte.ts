@@ -35,18 +35,23 @@ export function svedocsPreprocess(options: MdsvexOptions = {}): SvedocsPreproces
 export function createSvedocsMdsvexOptions(
   source: string,
   options: MdsvexOptions = {},
-  svedocsOptions: { codeTheme?: string; codeThemes?: { light?: string; dark?: string }; shikiTransformers?: unknown[] } = {}
+  svedocsOptions: { codeTheme?: string; codeThemes?: { light?: string; dark?: string }; shikiTransformers?: unknown[]; codeCopyButton?: boolean } = {}
 ): MdsvexOptions {
   const codeBlocks = extractCodeBlocks(source);
   return {
     extensions: [...svedocsContentExtensions],
     ...options,
-      remarkPlugins: [
-        remarkGfm,
-        remarkMath,
-        [remarkSvedocsCodeBlocks, codeBlocks, { theme: svedocsOptions.codeTheme, themes: svedocsOptions.codeThemes, transformers: svedocsOptions.shikiTransformers }],
-        ...((options.remarkPlugins ?? []) as any[])
-      ] as any,
+    remarkPlugins: [
+      remarkGfm,
+      remarkMath,
+      [remarkSvedocsCodeBlocks, codeBlocks, {
+        theme: svedocsOptions.codeTheme,
+        themes: svedocsOptions.codeThemes,
+        transformers: svedocsOptions.shikiTransformers,
+        ...(typeof svedocsOptions.codeCopyButton === 'boolean' ? { copyButton: svedocsOptions.codeCopyButton } : {})
+      }],
+      ...((options.remarkPlugins ?? []) as any[])
+    ] as any,
     rehypePlugins: [
       rehypeSlug,
       [

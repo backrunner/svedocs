@@ -47,7 +47,7 @@ export default defineConfig({
       ]
     },
     home: {
-      kicker: 'Edge-first Svelte docs',
+      kicker: '',
       primaryAction: { label: 'Read docs', href: '/docs' },
       secondaryAction: { label: 'Configure', href: '/docs/configuration' },
       visual: { type: 'pixel', alt: '' }

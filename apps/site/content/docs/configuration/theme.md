@@ -94,6 +94,9 @@ export default defineConfig({
       light: 'light-plus',
       dark: 'dark-plus'
     },
+    code: {
+      copyButton: true
+    },
     brand: {
       label: 'svedocs',
       href: '/',
@@ -225,6 +228,81 @@ Documentation articles also expose `doc-header` when you only need to replace th
   </header>
 </DocsApp>
 ```
+
+## Theme development
+
+For a full custom theme, treat the default CSS as optional. Keep `svedocs/theme/styles.css` for the bundled visual design, import `svedocs/theme/base.css` for only structural defaults, or import neither and style the rendered components yourself.
+
+Register replacement components in the Vite plugin:
+
+```ts title="vite.config.ts"
+svedocs({
+  theme: {
+    components: {
+      Navbar: '$lib/theme/Navbar.svelte',
+      Article: '$lib/theme/Article.svelte',
+      Search: '$lib/theme/Search.svelte',
+      AskAi: '$lib/theme/AskAi.svelte'
+    }
+  }
+});
+```
+
+Generated route files import `virtual:svedocs/theme-components` and pass it into `DocsApp`, so overrides apply without changing every route:
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import { DocsApp } from 'svedocs/theme';
+  import components from 'virtual:svedocs/components';
+  import layouts from 'virtual:svedocs/layouts';
+  import themeComponents from 'virtual:svedocs/theme-components';
+  import loadSearch from 'virtual:svedocs/search-loader';
+
+  export let data;
+</script>
+
+<DocsApp
+  page={data.page}
+  pages={data.pages}
+  tree={data.tree}
+  search={data.search}
+  config={data.config}
+  {components}
+  {layouts}
+  {themeComponents}
+  {loadSearch}
+/>
+```
+
+Replacement components receive typed props from `svedocs/theme/types`. The component map supports `Root`, `Navbar`, `MobileNav`, `Sidebar`, `Article`, `Toc`, `Search`, `AskAi`, `Footer`, `ThemeToggle`, and `PageTools`.
+
+```svelte title="src/lib/theme/Navbar.svelte"
+<script lang="ts">
+  import type { SvedocsNavbarProps } from 'svedocs/theme/types';
+
+  export let context: SvedocsNavbarProps['context'];
+</script>
+
+<header class="brand-nav">
+  <a href={context.config.theme.brand.href}>{context.config.theme.brand.label}</a>
+</header>
+```
+
+Use `svedocs/theme/headless` when you want the framework behavior without the default UI. It exports controllers for theme context, search, Ask AI, ToC tracking, theme mode, mobile nav, page tools, and code-copy behavior.
+
+```svelte title="src/lib/theme/Search.svelte"
+<script lang="ts">
+  import { createSearchController } from 'svedocs/theme/headless';
+  import type { SvedocsSearchProps } from 'svedocs/theme/types';
+
+  export let records: SvedocsSearchProps['records'] = [];
+  const search = createSearchController({ records });
+</script>
+
+<button type="button" on:click={search.show}>Search</button>
+```
+
+Markdown output still includes stable `sd-*` structure classes for prose, headings, and code blocks so default styles and custom styles can target the same markup. Set `theme.code.copyButton: false` if your theme renders its own copy control.
 
 ## Interaction
 

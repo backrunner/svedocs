@@ -1,31 +1,24 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
+  import { createThemeModeController } from './headless.js';
 
   export let defaultMode: 'light' | 'dark' | 'system' = 'system';
 
+  const controller = createThemeModeController(defaultMode);
   let mode: 'light' | 'dark' = 'light';
+  let unsubscribeMode: (() => void) | undefined;
 
-  function apply(next: 'light' | 'dark') {
-    mode = next;
-    document.documentElement.dataset.theme = next;
-    document.documentElement.style.colorScheme = next;
-    localStorage.setItem('svedocs-theme', next);
-  }
+  onMount(() => {
+    unsubscribeMode = controller.mode.subscribe((value) => (mode = value));
+    return controller.mount();
+  });
 
-    onMount(() => {
-      const current = document.documentElement.dataset.theme;
-      if (current === 'dark' || current === 'light') {
-        mode = current;
-        return;
-      }
-      const stored = localStorage.getItem('svedocs-theme');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const configured = defaultMode === 'system' ? prefersDark ? 'dark' : 'light' : defaultMode;
-      apply(stored === 'dark' || stored === 'light' ? stored : configured);
-    });
+  onDestroy(() => {
+    unsubscribeMode?.();
+  });
 </script>
 
-<button class="sd-theme-toggle" type="button" aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} theme`} title={`Switch to ${mode === 'dark' ? 'light' : 'dark'} theme`} on:click={() => apply(mode === 'dark' ? 'light' : 'dark')}>
+<button class="sd-theme-toggle" type="button" aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} theme`} title={`Switch to ${mode === 'dark' ? 'light' : 'dark'} theme`} on:click={controller.toggle}>
   {#if mode === 'dark'}
     <svg aria-hidden="true" viewBox="0 0 24 24">
       <path d="M12 4V2m0 20v-2m8-8h2M2 12h2m13.66-5.66 1.42-1.42M4.92 19.08l1.42-1.42m11.32 0 1.42 1.42M4.92 4.92l1.42 1.42" />

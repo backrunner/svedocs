@@ -155,7 +155,8 @@ function createMarkdownCompileOptions(
       dark: resolvedConfig.theme.codeTheme.dark
     },
     codeLineNumbers: resolvedConfig.theme.code.lineNumbers,
-    codeWrap: resolvedConfig.theme.code.wrap
+    codeWrap: resolvedConfig.theme.code.wrap,
+    codeCopyButton: resolvedConfig.theme.code.copyButton
   };
 }
 

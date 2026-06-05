@@ -7,7 +7,9 @@ Integrated SvelteKit documentation framework package.
 - `svedocs/config`: config schema and `defineConfig`.
 - `svedocs/core`: content manifest, scoped navigation, checks, search records, and shared types.
 - `svedocs/vite`: virtual modules and content refresh Vite plugin.
-- `svedocs/theme`: default Svelte theme components and Tailwind CSS v4 styles.
+- `svedocs/theme`: default Svelte theme components, replaceable theme component map, and Tailwind CSS v4 styles.
+- `svedocs/theme/headless`: unstyled theme behavior controllers for custom themes.
+- `svedocs/theme/types`: public theme component prop and component-map types.
 - `svedocs/svelte`: `mdsvex`-based Svelte-compatible authoring helpers.
 - `svedocs/search`: weighted local search, scope filters, Cloudflare AI Search provider, and indexing sync.
 - `svedocs/ai`: Ask AI providers, SSE responses, and rate limiting helpers.
@@ -31,8 +33,15 @@ svedocs({
   },
   layouts: {
     feature: '$lib/FeatureLayout.svelte'
+  },
+  theme: {
+    components: {
+      Navbar: '$lib/theme/Navbar.svelte',
+      Article: '$lib/theme/Article.svelte'
+    }
   }
 })
 ```
 
 `.svx` and `.mdx` files can then use `<Callout />` without local imports.
+Registered theme components are exposed through `virtual:svedocs/theme-components` and can replace default navigation, article, search, Ask AI, ToC, and footer rendering.

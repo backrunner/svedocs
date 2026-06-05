@@ -1,10 +1,11 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { onMount, tick } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
   import type { SvedocsSearchRecord } from '../core/types.js';
-  import { filterSearchRecords, searchRecords } from '../search/local.js';
   import type { SearchResult, SearchScope } from '../search/types.js';
+  import { createSearchController } from './headless.js';
   import { portal } from './portal.js';
+  import type { SvedocsSearchController } from './types.js';
 
   export let records: SvedocsSearchRecord[] = [];
   export let loadRecords: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
@@ -12,60 +13,36 @@
   export let provider = 'local';
   export let endpoint = '/api/search';
   export let buildMode = 'edge';
+  export let controller: SvedocsSearchController | undefined = undefined;
 
+  const internalController = createSearchController({ records, loadRecords, scope, provider, endpoint, buildMode });
+  let activeController: SvedocsSearchController = internalController;
   let open = false;
   let query = '';
   let activeIndex = 0;
+  let results: SearchResult[] = [];
+  let remoteStatus: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
+  let remoteError = '';
+  let recordsStatus: 'idle' | 'loading' | 'ready' | 'error' = records.length > 0 ? 'ready' : 'idle';
   let trigger: HTMLButtonElement | undefined;
   let input: HTMLInputElement | undefined;
   let dialog: HTMLDivElement | undefined;
   let previousFocus: HTMLElement | undefined;
-  let remoteResults: SearchResult[] = [];
-  let remoteStatus: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
-  let remoteError = '';
-  let remoteKey = '';
-  let remoteRequestId = 0;
-  let loadedRecords: SvedocsSearchRecord[] = records;
-  let recordsStatus: 'idle' | 'loading' | 'ready' | 'error' = records.length > 0 ? 'ready' : 'idle';
-  let recordsRequest: Promise<SvedocsSearchRecord[]> | undefined;
+  let boundController: SvedocsSearchController | undefined;
+  let unsubscribeController: (() => void) | undefined;
 
-  $: if (records.length > 0 && loadedRecords !== records) {
-    loadedRecords = records;
-    recordsStatus = 'ready';
-  }
-  $: usesRemoteSearch = buildMode === 'edge' && provider !== 'local' && provider !== 'local-json';
-  $: localResults = query.trim()
-    ? searchRecords(loadedRecords, { query, limit: 8, ...scope })
-    : createDefaultResults(loadedRecords, scope);
-  $: results = usesRemoteSearch && query.trim()
-    ? remoteStatus === 'error' ? localResults : remoteResults
-    : localResults;
-  $: activeIndex = Math.min(activeIndex, Math.max(results.length - 1, 0));
-  $: if (usesRemoteSearch && open && query.trim()) {
-    const nextKey = createRemoteKey(provider, endpoint, query, scope);
-    if (nextKey !== remoteKey) {
-      remoteKey = nextKey;
-      void loadRemoteResults(query, scope, ++remoteRequestId);
-    }
-  }
-  $: if (!query.trim()) {
-    remoteResults = [];
-    remoteStatus = 'idle';
-    remoteError = '';
-    remoteKey = '';
-  }
+  $: activeController = controller ?? internalController;
+  $: activeController.setOptions({ records, loadRecords, scope, provider, endpoint, buildMode });
+  $: bindController(activeController);
 
   function show() {
     previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
-    open = true;
-    void ensureRecords();
+    activeController.show();
     tick().then(() => input?.focus());
   }
 
   function hide() {
-    open = false;
-    query = '';
-    activeIndex = 0;
+    activeController.hide();
     tick().then(() => (previousFocus ?? trigger)?.focus());
   }
 
@@ -86,16 +63,38 @@
     }
     if (event.key === 'ArrowDown') {
       event.preventDefault();
-      activeIndex = Math.min(activeIndex + 1, results.length - 1);
+      activeController.moveActive(1);
     }
     if (event.key === 'ArrowUp') {
       event.preventDefault();
-      activeIndex = Math.max(activeIndex - 1, 0);
+      activeController.moveActive(-1);
     }
-    if (event.key === 'Enter' && results[activeIndex]) {
-      void goto(results[activeIndex].url, { keepFocus: false });
-      hide();
+    if (event.key === 'Enter') {
+      const result = activeController.select();
+      if (result) void goto(result.url, { keepFocus: false });
     }
+  }
+
+  function handleInput(event: Event) {
+    activeController.setQuery((event.currentTarget as HTMLInputElement).value);
+  }
+
+  function bindController(nextController: SvedocsSearchController): void {
+    if (boundController === nextController) return;
+    unsubscribeController?.();
+    boundController = nextController;
+    const unsubscribers = [
+      nextController.open.subscribe((value) => (open = value)),
+      nextController.query.subscribe((value) => (query = value)),
+      nextController.activeIndex.subscribe((value) => (activeIndex = value)),
+      nextController.results.subscribe((value) => (results = value)),
+      nextController.remoteStatus.subscribe((value) => (remoteStatus = value)),
+      nextController.remoteError.subscribe((value) => (remoteError = value)),
+      nextController.recordsStatus.subscribe((value) => (recordsStatus = value))
+    ];
+    unsubscribeController = () => {
+      for (const unsubscribe of unsubscribers) unsubscribe();
+    };
   }
 
   onMount(() => {
@@ -107,73 +106,9 @@
     };
   });
 
-  async function ensureRecords(): Promise<SvedocsSearchRecord[]> {
-    if (loadedRecords.length > 0 || !loadRecords) return loadedRecords;
-    if (!recordsRequest) {
-      recordsStatus = 'loading';
-      recordsRequest = loadRecords()
-        .then((nextRecords) => {
-          loadedRecords = nextRecords;
-          recordsStatus = 'ready';
-          return nextRecords;
-        })
-        .catch((error) => {
-          recordsStatus = 'error';
-          recordsRequest = undefined;
-          throw error;
-        });
-    }
-    try {
-      return await recordsRequest;
-    } catch {
-      return loadedRecords;
-    }
-  }
-
-  async function loadRemoteResults(query: string, scope: SearchScope, requestId: number) {
-    remoteResults = [];
-    remoteStatus = 'loading';
-    remoteError = '';
-    try {
-      const response = await fetch(createSearchUrl(endpoint, query, scope, provider));
-      if (!response.ok) throw new Error(`Search returned ${response.status}.`);
-      const payload = await response.json() as { results?: SearchResult[] };
-      if (requestId !== remoteRequestId) return;
-      remoteResults = payload.results ?? [];
-      remoteStatus = 'ready';
-    } catch (error) {
-      if (requestId !== remoteRequestId) return;
-      remoteResults = [];
-      remoteError = error instanceof Error ? error.message : 'Search failed.';
-      remoteStatus = 'error';
-    }
-  }
-
-  function createDefaultResults(records: SvedocsSearchRecord[], scope: SearchScope): SearchResult[] {
-    return filterSearchRecords(records, scope).slice(0, 6).map((record) => ({
-      id: record.id,
-      title: record.title,
-      url: record.url,
-      ...(record.section ? { section: record.section } : {}),
-      excerpt: record.content.slice(0, 150),
-      score: 0.1,
-      metadata: record.metadata
-    }));
-  }
-
-  function createSearchUrl(endpoint: string, query: string, scope: SearchScope, provider: string): string {
-    const url = new URL(endpoint, window.location.origin);
-    url.searchParams.set('q', query);
-    url.searchParams.set('limit', '8');
-    url.searchParams.set('provider', provider);
-    if (scope.locale) url.searchParams.set('locale', scope.locale);
-    if (scope.kind) url.searchParams.set('kind', scope.kind);
-    return url.toString();
-  }
-
-  function createRemoteKey(provider: string, endpoint: string, query: string, scope: SearchScope): string {
-    return JSON.stringify([provider, endpoint, query.trim(), scope.locale, scope.kind]);
-  }
+  onDestroy(() => {
+    unsubscribeController?.();
+  });
 
   function trapFocus(event: KeyboardEvent, root: HTMLElement | undefined) {
     if (!root) return;
@@ -193,7 +128,7 @@
   }
 </script>
 
-<button bind:this={trigger} class="sd-search-trigger" type="button" aria-label="Search documentation" aria-haspopup="dialog" aria-expanded={open} on:click={show}>
+<button bind:this={trigger} class="sd-search-trigger" type="button" aria-label="Search documentation" aria-haspopup="dialog" aria-expanded={open} on:click={show} data-theme-component="search-trigger">
   <span>Search</span>
   <kbd>⌘K</kbd>
 </button>
@@ -209,19 +144,20 @@
     aria-label="Search documentation"
     tabindex="-1"
     on:keydown={handleDialogKeydown}
+    data-theme-component="search"
   >
     <label class="sd-search-box">
       <span class="sd-visually-hidden">Search query</span>
-      <input bind:this={input} bind:value={query} placeholder="Search docs" />
+      <input value={query} placeholder="Search docs" on:input={handleInput} bind:this={input} />
     </label>
     <div class="sd-search-results" role="listbox" aria-label="Search results">
       {#if remoteStatus === 'loading'}
         <p class="sd-empty-state">Searching...</p>
       {/if}
-      {#if recordsStatus === 'loading' && !usesRemoteSearch}
+      {#if recordsStatus === 'loading' && !(buildMode === 'edge' && provider !== 'local' && provider !== 'local-json')}
         <p class="sd-empty-state">Loading search index...</p>
       {/if}
-      {#if recordsStatus === 'error' && !usesRemoteSearch}
+      {#if recordsStatus === 'error' && !(buildMode === 'edge' && provider !== 'local' && provider !== 'local-json')}
         <p class="sd-empty-state">Search index could not be loaded.</p>
       {/if}
       {#if remoteError}
@@ -234,7 +170,7 @@
             href={result.url}
             role="option"
             aria-selected={index === activeIndex}
-            on:mouseenter={() => (activeIndex = index)}
+            on:mouseenter={() => activeController.activate(index)}
             on:click={hide}
           >
             <span>{result.section ?? result.title}</span>

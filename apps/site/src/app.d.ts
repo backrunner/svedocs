@@ -40,6 +40,24 @@ declare module 'virtual:svedocs/search-loader' {
   export default loadSearch;
 }
 
+declare module 'virtual:svedocs/components' {
+  import type { Component } from 'svelte';
+  const components: Record<string, Component>;
+  export default components;
+}
+
+declare module 'virtual:svedocs/layouts' {
+  import type { Component } from 'svelte';
+  const layouts: Record<string, Component>;
+  export default layouts;
+}
+
+declare module 'virtual:svedocs/theme-components' {
+  import type { SvedocsThemeComponentMap } from 'svedocs/theme/types';
+  const components: Partial<SvedocsThemeComponentMap>;
+  export default components;
+}
+
 declare namespace App {
   interface Platform {
     env: {

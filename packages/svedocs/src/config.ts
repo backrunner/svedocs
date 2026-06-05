@@ -36,6 +36,7 @@ export interface SvedocsThemeCodeTheme {
 export interface SvedocsThemeCode {
   lineNumbers?: boolean;
   wrap?: boolean;
+  copyButton?: boolean;
 }
 
 export interface SvedocsShikiOptions {
@@ -92,15 +93,15 @@ export interface SvedocsConfig {
     defaultMode?: 'light' | 'dark' | 'system';
     palette?: SvedocsThemePalette;
     fonts?: SvedocsThemeFonts;
-      radius?: string;
-      codeTheme?: string | SvedocsThemeCodeTheme;
-      code?: SvedocsThemeCode;
-      brand?: SvedocsThemeBrand;
-      nav?: SvedocsNavItem[];
-      social?: SvedocsNavItem[];
-      footer?: false | SvedocsThemeFooter;
-      home?: SvedocsThemeHome;
-    };
+    radius?: string;
+    codeTheme?: string | SvedocsThemeCodeTheme;
+    code?: SvedocsThemeCode;
+    brand?: SvedocsThemeBrand;
+    nav?: SvedocsNavItem[];
+    social?: SvedocsNavItem[];
+    footer?: false | SvedocsThemeFooter;
+    home?: SvedocsThemeHome;
+  };
   markdown?: SvedocsMarkdownOptions;
   search?: false | {
     enabled?: boolean;
@@ -211,7 +212,8 @@ export const svedocsConfigSchema = z.object({
       code: z
         .object({
           lineNumbers: z.boolean().optional(),
-          wrap: z.boolean().optional()
+          wrap: z.boolean().optional(),
+          copyButton: z.boolean().optional()
         })
         .optional(),
       brand: z

@@ -75,6 +75,11 @@ import {
   RootLayout,
   DocsLayout,
   DocPage,
+  Article,
+  Navbar,
+  TableOfContents,
+  Footer,
+  PageTools,
   HomePage,
   FormField,
   Input,
@@ -84,10 +89,14 @@ import {
   Button
 } from 'svedocs/theme';
 import 'svedocs/theme/styles.css';
+import 'svedocs/theme/base.css';
+import { createSearchController, createAskAiController } from 'svedocs/theme/headless';
+import type { SvedocsThemeComponentMap, SvedocsNavbarProps } from 'svedocs/theme/types';
 ```
 
 Use `DocsApp` for the complete route shell or compose lower-level components for custom apps.
 Use the form controls in custom pages and layouts when you want project UI to inherit the default svedocs theme.
+Use `themeComponents` plus the headless controllers when building a fully custom theme without the default stylesheet.
 
 ## Cloudflare
 

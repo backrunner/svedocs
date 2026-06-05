@@ -94,6 +94,9 @@ export default defineConfig({
       light: 'light-plus',
       dark: 'dark-plus'
     },
+    code: {
+      copyButton: true
+    },
     brand: {
       label: 'svedocs',
       href: '/',
@@ -225,6 +228,81 @@ export default defineConfig({
   </header>
 </DocsApp>
 ```
+
+## 主题开发
+
+如果要开发一套完整自定义主题，可以把默认 CSS 当成可选项。保留 `svedocs/theme/styles.css` 会使用内置视觉设计；只导入 `svedocs/theme/base.css` 会得到少量结构和无障碍基础；也可以两者都不导入，完全自己写样式。
+
+在 Vite 插件里注册替换组件：
+
+```ts title="vite.config.ts"
+svedocs({
+  theme: {
+    components: {
+      Navbar: '$lib/theme/Navbar.svelte',
+      Article: '$lib/theme/Article.svelte',
+      Search: '$lib/theme/Search.svelte',
+      AskAi: '$lib/theme/AskAi.svelte'
+    }
+  }
+});
+```
+
+生成的路由会导入 `virtual:svedocs/theme-components` 并传给 `DocsApp`，所以不用逐个页面手动接线：
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import { DocsApp } from 'svedocs/theme';
+  import components from 'virtual:svedocs/components';
+  import layouts from 'virtual:svedocs/layouts';
+  import themeComponents from 'virtual:svedocs/theme-components';
+  import loadSearch from 'virtual:svedocs/search-loader';
+
+  export let data;
+</script>
+
+<DocsApp
+  page={data.page}
+  pages={data.pages}
+  tree={data.tree}
+  search={data.search}
+  config={data.config}
+  {components}
+  {layouts}
+  {themeComponents}
+  {loadSearch}
+/>
+```
+
+替换组件的 props 从 `svedocs/theme/types` 获取类型。可替换组件包括 `Root`、`Navbar`、`MobileNav`、`Sidebar`、`Article`、`Toc`、`Search`、`AskAi`、`Footer`、`ThemeToggle` 和 `PageTools`。
+
+```svelte title="src/lib/theme/Navbar.svelte"
+<script lang="ts">
+  import type { SvedocsNavbarProps } from 'svedocs/theme/types';
+
+  export let context: SvedocsNavbarProps['context'];
+</script>
+
+<header class="brand-nav">
+  <a href={context.config.theme.brand.href}>{context.config.theme.brand.label}</a>
+</header>
+```
+
+如果只想复用框架行为、不使用默认 UI，可以从 `svedocs/theme/headless` 引入 controller。它提供 theme context、搜索、Ask AI、ToC 高亮、明暗模式、移动导航、页面工具和代码复制等行为。
+
+```svelte title="src/lib/theme/Search.svelte"
+<script lang="ts">
+  import { createSearchController } from 'svedocs/theme/headless';
+  import type { SvedocsSearchProps } from 'svedocs/theme/types';
+
+  export let records: SvedocsSearchProps['records'] = [];
+  const search = createSearchController({ records });
+</script>
+
+<button type="button" on:click={search.show}>搜索</button>
+```
+
+Markdown 输出仍然保留稳定的 `sd-*` 结构类名，默认主题和自定义主题都可以针对同一套 prose、heading、code markup 写样式。如果主题自己渲染复制按钮，可以设置 `theme.code.copyButton: false`。
 
 ## 交互能力
 

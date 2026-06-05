@@ -10,6 +10,8 @@ import { createConfiguredOgImageFormat, createConfiguredOgImageTemplate, createO
 import { compileMarkdown, createDiffRows, createDiffSplitRows } from '../src/mdx/compile';
 import { createAlgoliaSearchProvider, createCloudflareAiSearchDocuments, createCloudflareAiSearchProvider, createConfiguredSearchProvider, createConfiguredSearchResponse, createSearchResponse, createTypesenseSearchProvider, searchRecords, syncCloudflareAiSearchIndex } from '../src/search';
 import { createFixturePage } from '../src/testing';
+import { createSearchController, createThemeContext } from '../src/theme/headless';
+import { svedocs } from '../src/vite';
 
 describe('svedocs Batch 0 skeleton', () => {
   it('returns user config from defineConfig', () => {
@@ -25,6 +27,7 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(config.build.mode).toBe('edge');
     expect(config.theme.fonts.sans).toContain('IBM Plex Sans');
     expect(config.theme.codeTheme.dark).toBe('github-dark');
+    expect(config.theme.code.copyButton).toBe(true);
     expect(config.theme.brand).toMatchObject({ label: 'svedocs', href: '/', mark: 'pixel' });
     expect(config.theme.nav.map((item) => item.href)).toEqual(['/docs']);
     expect(config.theme.home.kicker).toBe('SvelteKit-native docs');
@@ -62,6 +65,9 @@ describe('svedocs Batch 0 skeleton', () => {
         codeTheme: {
           light: 'github-light',
           dark: 'vitesse-dark'
+        },
+        code: {
+          copyButton: false
         },
         brand: {
           label: 'Docs Lab',
@@ -104,6 +110,7 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(config.theme.fonts.sans).toContain('Atkinson');
     expect(config.theme.radius).toBe('6px');
     expect(config.theme.codeTheme.dark).toBe('vitesse-dark');
+    expect(config.theme.code.copyButton).toBe(false);
     expect(config.theme.brand).toMatchObject({ label: 'Docs Lab', href: '/home', mark: false });
     expect(config.theme.nav[1]).toMatchObject({ external: true });
     expect(config.theme.social[0]).toMatchObject({ label: 'Discord' });
@@ -228,6 +235,84 @@ describe('svedocs Batch 0 skeleton', () => {
     ]);
 
     expect(records).toHaveLength(1);
+  });
+
+  it('creates theme context and local search controller state for custom themes', () => {
+    const config = resolveSvedocsConfig({
+      search: { scope: 'current' },
+      ai: { scope: 'current' },
+      theme: {
+        nav: [
+          { label: 'Docs', href: '/docs' },
+          { label: 'API', href: '/docs/reference' }
+        ]
+      }
+    });
+    const page = createFixturePage({
+      routePath: '/docs/reference/api',
+      locale: 'en',
+      kind: 'doc'
+    });
+    const record = {
+      id: 'api',
+      pageId: page.id,
+      url: page.routePath,
+      title: 'API Reference',
+      content: 'Theme components and headless controllers',
+      metadata: { locale: 'en', kind: 'doc' }
+    };
+
+    const context = createThemeContext({
+      config,
+      page,
+      pages: [page],
+      search: [record]
+    });
+    const controller = createSearchController({
+      records: [record],
+      scope: context.searchScope,
+      provider: 'local',
+      buildMode: 'edge'
+    });
+
+    controller.show();
+    controller.setQuery('headless');
+
+    expect(context.activeNavHref).toBe('/docs/reference');
+    expect(context.searchScope).toEqual({ locale: 'en' });
+    expect(controller.select()?.url).toBe('/docs/reference/api');
+  });
+
+  it('generates virtual theme component imports from Vite plugin options', async () => {
+    const plugin = svedocs({
+      config: {
+        content: {
+          root: 'content'
+        }
+      },
+      theme: {
+        components: {
+          Navbar: '$lib/theme/Navbar.svelte',
+          Article: '$lib/theme/Article.svelte',
+          Search: '$lib/theme/Search.svelte',
+          AskAi: '$lib/theme/AskAi.svelte'
+        }
+      }
+    }) as unknown as {
+      configResolved(config: { root: string }): Promise<void>;
+      resolveId(id: string): string | undefined;
+      load(id: string): Promise<string> | string;
+    };
+    const root = new URL('fixtures/custom-theme', import.meta.url).pathname;
+
+    await plugin.configResolved?.({ root } as never);
+    const resolvedId = plugin.resolveId?.('virtual:svedocs/theme-components') as string | undefined;
+    const loaded = await plugin.load?.('\0virtual:svedocs/theme-components') as string;
+
+    expect(resolvedId).toBe('\0virtual:svedocs/theme-components');
+    expect(loaded).toContain('import C0 from "$lib/theme/Navbar.svelte";');
+    expect(loaded).toContain('"Navbar": C0');
+    expect(loaded).toContain('"AskAi": C3');
   });
 
   it('loads content from fixture files', async () => {

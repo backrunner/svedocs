@@ -2,6 +2,7 @@
   import type { Component } from 'svelte';
     import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord } from '../core/types.js';
     import RootLayout from './RootLayout.svelte';
+    import type { SvedocsThemeComponentMap } from './types.js';
 
     export let page: SvedocsPage;
     export let pages: SvedocsPage[] = [];
@@ -10,10 +11,12 @@
     export let loadSearch: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
     export let content: Component | undefined = undefined;
     export let hasBackgroundSlot: boolean | undefined = undefined;
+    export let themeComponents: Partial<SvedocsThemeComponentMap> = {};
     $: showBackgroundSlot = hasBackgroundSlot ?? Boolean($$slots.background);
+    $: Root = themeComponents.Root ?? RootLayout;
 </script>
 
-<RootLayout {config} {page} {pages} {search} {loadSearch} hasBackgroundSlot={showBackgroundSlot}>
+<svelte:component this={Root} {config} {page} {pages} {search} {loadSearch} hasBackgroundSlot={showBackgroundSlot} {themeComponents}>
   <svelte:fragment slot="background">
     <slot name="background" />
   </svelte:fragment>
@@ -33,4 +36,4 @@
       {/if}
     </section>
   </main>
-</RootLayout>
+</svelte:component>

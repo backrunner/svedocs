@@ -68,7 +68,8 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
       codeTheme: resolveCodeTheme(config.theme?.codeTheme),
       code: {
         lineNumbers: config.theme?.code?.lineNumbers ?? true,
-        wrap: config.theme?.code?.wrap ?? false
+        wrap: config.theme?.code?.wrap ?? false,
+        copyButton: config.theme?.code?.copyButton ?? true
       },
       brand: {
         label: config.theme?.brand?.label ?? config.site?.name ?? 'svedocs',

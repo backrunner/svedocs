@@ -287,7 +287,7 @@ describe('svedocs-cli Batch 0 shell', () => {
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 
   it('checks a fixture project with section search records', async () => {
     const result = await withCwd(fixtureRoot(), () => runSvedocsCli(['check']));

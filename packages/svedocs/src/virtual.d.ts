@@ -57,3 +57,9 @@ declare module 'virtual:svedocs/layouts' {
   const layouts: Record<string, Component>;
   export default layouts;
 }
+
+declare module 'virtual:svedocs/theme-components' {
+  import type { SvedocsThemeComponentMap } from 'svedocs/theme/types';
+  const components: Partial<SvedocsThemeComponentMap>;
+  export default components;
+}

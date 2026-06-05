@@ -1,6 +1,6 @@
 {
   "name": "svedocs",
-  "version": "0.1.0-beta.2",
+  "version": "0.1.0-beta.3",
   "description": "SvelteKit-native documentation framework.",
   "license": "MIT",
   "repository": {
@@ -47,6 +47,17 @@
     },
     "./theme/styles.css": {
       "default": "./dist/theme/styles.css"
+    },
+    "./theme/base.css": {
+      "default": "./dist/theme/base.css"
+    },
+    "./theme/headless": {
+      "types": "./dist/theme/headless.d.ts",
+      "import": "./dist/theme/headless.js"
+    },
+    "./theme/types": {
+      "types": "./dist/theme/types.d.ts",
+      "import": "./dist/theme/types.js"
     },
     "./cloudflare": {
       "types": "./dist/cloudflare.d.ts",
