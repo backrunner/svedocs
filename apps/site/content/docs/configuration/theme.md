@@ -231,7 +231,23 @@ Documentation articles also expose `doc-header` when you only need to replace th
 
 ## Theme development
 
-For a full custom theme, treat the default CSS as optional. Keep `svedocs/theme/styles.css` for the bundled visual design, import `svedocs/theme/base.css` for only structural defaults, or import neither and style the rendered components yourself.
+Theme development has three layers. You can use only the layer you need:
+
+| Layer | Use it when |
+| --- | --- |
+| Theme tokens | You like the default components and only need brand color, fonts, radius, navigation, homepage, or code settings. |
+| Component replacement | You want to keep the svedocs route shell and replace one or more visual components. |
+| Headless composition | You want full ownership of markup and CSS while reusing search, Ask AI, ToC, theme mode, mobile nav, and copy behavior. |
+
+The default CSS is optional:
+
+| Import | Result |
+| --- | --- |
+| `svedocs/theme/styles.css` | Full bundled visual theme. |
+| `svedocs/theme/base.css` | Minimal reset, accessibility helpers, and prose/code structure. |
+| No theme CSS | Your app or theme package owns all styles. |
+
+Keep configuration values in `svedocs.config.ts`. Put Svelte component imports in the Vite plugin because component paths are build-time imports and should not be serialized into the content config.
 
 Register replacement components in the Vite plugin:
 
@@ -274,7 +290,7 @@ Generated route files import `virtual:svedocs/theme-components` and pass it into
 />
 ```
 
-Replacement components receive typed props from `svedocs/theme/types`. The component map supports `Root`, `Navbar`, `MobileNav`, `Sidebar`, `Article`, `Toc`, `Search`, `AskAi`, `Footer`, `ThemeToggle`, and `PageTools`.
+Replacement components receive typed props from `svedocs/theme/types`. The component map supports `Root`, `Navbar`, `MobileNav`, `Sidebar`, `Article`, `Toc`, `Search`, `AskAi`, `Footer`, `ThemeToggle`, and `PageTools`. See [Components](/docs/reference/theme-components) for the full per-component props.
 
 ```svelte title="src/lib/theme/Navbar.svelte"
 <script lang="ts">
@@ -302,7 +318,17 @@ Use `svedocs/theme/headless` when you want the framework behavior without the de
 <button type="button" on:click={search.show}>Search</button>
 ```
 
+When writing replacement components:
+
+- Keep normal landmarks such as `header`, `nav`, `main`, `article`, `aside`, and `footer`.
+- Render `content` for compiled `.svx` / `.mdx` pages and fall back to `page.html` when no content component exists.
+- Pass `themeComponents` to nested default components when you still compose part of the bundled theme.
+- Use `loadSearch` for large sites instead of forcing all search records into the first route payload.
+- Trigger the default search and Ask AI panels with `svedocs:open-search` and `svedocs:open-ai` events when you build custom command buttons.
+
 Markdown output still includes stable `sd-*` structure classes for prose, headings, and code blocks so default styles and custom styles can target the same markup. Set `theme.code.copyButton: false` if your theme renders its own copy control.
+
+Theme packages can be ordinary Svelte libraries. Export Svelte components from the package, document the expected `svedocs` peer version, and have users register the package component paths in `svedocs({ theme: { components } })`.
 
 ## Interaction
 

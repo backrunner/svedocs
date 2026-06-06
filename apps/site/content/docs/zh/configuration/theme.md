@@ -231,7 +231,23 @@ export default defineConfig({
 
 ## 主题开发
 
-如果要开发一套完整自定义主题，可以把默认 CSS 当成可选项。保留 `svedocs/theme/styles.css` 会使用内置视觉设计；只导入 `svedocs/theme/base.css` 会得到少量结构和无障碍基础；也可以两者都不导入，完全自己写样式。
+主题开发分成三层。按需要使用其中一层即可：
+
+| 层级 | 适合场景 |
+| --- | --- |
+| 主题 token | 你喜欢默认组件，只想换品牌色、字体、圆角、导航、首页或代码块设置。 |
+| 组件替换 | 你想保留 svedocs 路由壳层，但替换一个或多个视觉组件。 |
+| Headless 组合 | 你想完全接管 markup 和 CSS，同时复用搜索、Ask AI、ToC、明暗模式、移动导航和复制行为。 |
+
+默认 CSS 是可选的：
+
+| Import | 结果 |
+| --- | --- |
+| `svedocs/theme/styles.css` | 完整内置视觉主题。 |
+| `svedocs/theme/base.css` | 最小 reset、无障碍 helper 和 prose/code 结构。 |
+| 不导入主题 CSS | 应用或主题包完全接管所有样式。 |
+
+配置值继续放在 `svedocs.config.ts`。Svelte 组件路径放在 Vite 插件里，因为组件路径是构建期 import，不应该被序列化进内容配置。
 
 在 Vite 插件里注册替换组件：
 
@@ -274,7 +290,7 @@ svedocs({
 />
 ```
 
-替换组件的 props 从 `svedocs/theme/types` 获取类型。可替换组件包括 `Root`、`Navbar`、`MobileNav`、`Sidebar`、`Article`、`Toc`、`Search`、`AskAi`、`Footer`、`ThemeToggle` 和 `PageTools`。
+替换组件的 props 从 `svedocs/theme/types` 获取类型。可替换组件包括 `Root`、`Navbar`、`MobileNav`、`Sidebar`、`Article`、`Toc`、`Search`、`AskAi`、`Footer`、`ThemeToggle` 和 `PageTools`。每个组件的完整 props 见 [组件](/docs/zh/reference/theme-components)。
 
 ```svelte title="src/lib/theme/Navbar.svelte"
 <script lang="ts">
@@ -302,7 +318,17 @@ svedocs({
 <button type="button" on:click={search.show}>搜索</button>
 ```
 
+编写替换组件时：
+
+- 保留正常的 `header`、`nav`、`main`、`article`、`aside`、`footer` 等 landmarks。
+- 对 `.svx` / `.mdx` 页面渲染 `content`，没有内容组件时回退到 `page.html`。
+- 仍然组合部分默认组件时，把 `themeComponents` 继续传给嵌套组件。
+- 大型站点优先使用 `loadSearch`，避免把所有搜索记录塞进首屏路由 payload。
+- 自定义命令按钮可以用 `svedocs:open-search` 和 `svedocs:open-ai` 事件打开默认搜索和 Ask AI 面板。
+
 Markdown 输出仍然保留稳定的 `sd-*` 结构类名，默认主题和自定义主题都可以针对同一套 prose、heading、code markup 写样式。如果主题自己渲染复制按钮，可以设置 `theme.code.copyButton: false`。
+
+主题包可以是普通 Svelte library。你可以从包里导出 Svelte 组件，声明期望的 `svedocs` peer version，然后让用户在 `svedocs({ theme: { components } })` 中注册对应组件路径。
 
 ## 交互能力
 

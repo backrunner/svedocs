@@ -53,6 +53,7 @@ Virtual modules:
 | `virtual:svedocs/search-loader` | Dynamic loader for client-side search records |
 | `virtual:svedocs/components` | Compiled `.svx/.mdx` components |
 | `virtual:svedocs/layouts` | Registered custom layouts |
+| `virtual:svedocs/theme-components` | Registered theme component overrides |
 
 ## Core
 
@@ -96,7 +97,7 @@ import type { SvedocsThemeComponentMap, SvedocsNavbarProps } from 'svedocs/theme
 
 Use `DocsApp` for the complete route shell or compose lower-level components for custom apps.
 Use the form controls in custom pages and layouts when you want project UI to inherit the default svedocs theme.
-Use `themeComponents` plus the headless controllers when building a fully custom theme without the default stylesheet.
+Use `themeComponents` plus the headless controllers when building a fully custom theme without the default stylesheet. See [Components](/docs/reference/theme-components) for the per-component props.
 
 ## Cloudflare
 

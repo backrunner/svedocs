@@ -53,6 +53,7 @@ export default defineConfig({
 | `virtual:svedocs/search-loader` | 客户端搜索记录的动态加载器 |
 | `virtual:svedocs/components` | 编译后的 `.svx/.mdx` 组件 |
 | `virtual:svedocs/layouts` | 注册的自定义布局 |
+| `virtual:svedocs/theme-components` | 注册的主题组件替换 |
 
 ## Core
 
@@ -96,7 +97,7 @@ import type { SvedocsThemeComponentMap, SvedocsNavbarProps } from 'svedocs/theme
 
 完整路由壳层可以直接用 `DocsApp`，也可以组合更底层的组件做自定义站点。
 自定义页面和布局里的表单 UI 可以使用这些基础控件，以继承默认 svedocs 主题风格。
-开发完整自定义主题时，可以通过 `themeComponents` 替换默认组件，并直接复用 headless controllers。
+开发完整自定义主题时，可以通过 `themeComponents` 替换默认组件，并直接复用 headless controllers。每个组件的 props 见 [组件](/docs/zh/reference/theme-components)。
 
 ## Cloudflare
 

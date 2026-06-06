@@ -12,9 +12,11 @@ order: 6
 
 - [CLI](/docs/zh/reference/cli)
 - [公开 API](/docs/zh/reference/api)
+- [组件](/docs/zh/reference/theme-components)
 
 ## 这里应该放什么
 
 - 精确的命令形状和 flags。
 - `svedocs/*` 下的稳定导出。
 - Vite 插件注入的虚拟模块。
+- 可替换主题组件的 props 和契约。

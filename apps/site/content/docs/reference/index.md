@@ -12,10 +12,11 @@ This section is the stable surface of the framework: commands, exports, and the 
 
 - [CLI](/docs/reference/cli)
 - [Public API](/docs/reference/api)
+- [Components](/docs/reference/theme-components)
 
 ## What belongs here
 
 - Exact command shapes and flags.
 - Stable imports from `svedocs/*`.
 - Virtual modules injected by the Vite plugin.
-
+- Props and contracts for replaceable theme components.
