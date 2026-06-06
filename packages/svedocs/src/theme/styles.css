@@ -27,6 +27,10 @@
   --sd-accent-2: #d64735;
   --sd-radius: 0px;
   --sd-font-display: var(--font-sans);
+  --sd-scrollbar-size: 10px;
+  --sd-scrollbar-thumb: color-mix(in srgb, var(--sd-ink) 30%, transparent);
+  --sd-scrollbar-thumb-hover: color-mix(in srgb, var(--sd-accent) 62%, var(--sd-ink));
+  --sd-scrollbar-track: transparent;
 }
 
 :root[data-theme="dark"] {
@@ -39,12 +43,17 @@
   --sd-panel: #181b16;
   --sd-accent: #50d6b3;
   --sd-accent-2: #ff8a66;
+  --sd-scrollbar-thumb: color-mix(in srgb, var(--sd-ink) 34%, transparent);
+  --sd-scrollbar-thumb-hover: color-mix(in srgb, var(--sd-accent) 70%, var(--sd-ink));
 }
 
 html {
   scroll-behavior: auto;
   background: var(--sd-bg);
   color: var(--sd-ink);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
 }
 
 body {
@@ -52,6 +61,147 @@ body {
   font-family: var(--font-sans);
   background: var(--sd-bg);
   color: var(--sd-ink);
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+:is(
+  html,
+  body,
+  .sd-sidebar,
+  .sd-toc,
+  .sd-topbar-menu,
+  .sd-search-results,
+  .sd-chat-messages,
+  .sd-prose table,
+  .sd-code code,
+  .sd-prose pre code,
+  .sd-diff-scroll
+) {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+html.sd-is-window-scrolling,
+body.sd-is-window-scrolling,
+:is(
+  .sd-sidebar,
+  .sd-toc,
+  .sd-topbar-menu,
+  .sd-search-results,
+  .sd-chat-messages,
+  .sd-prose table,
+  .sd-code code,
+  .sd-prose pre code,
+  .sd-diff-scroll
+):is(:hover, :focus, :focus-within, .sd-is-scrolling) {
+  scrollbar-color: var(--sd-scrollbar-thumb) var(--sd-scrollbar-track);
+}
+
+:is(
+  html,
+  body,
+  .sd-sidebar,
+  .sd-toc,
+  .sd-topbar-menu,
+  .sd-search-results,
+  .sd-chat-messages,
+  .sd-prose table,
+  .sd-code code,
+  .sd-prose pre code,
+  .sd-diff-scroll
+)::-webkit-scrollbar {
+  width: var(--sd-scrollbar-size);
+  height: var(--sd-scrollbar-size);
+}
+
+:is(
+  html,
+  body,
+  .sd-sidebar,
+  .sd-toc,
+  .sd-topbar-menu,
+  .sd-search-results,
+  .sd-chat-messages,
+  .sd-prose table,
+  .sd-code code,
+  .sd-prose pre code,
+  .sd-diff-scroll
+)::-webkit-scrollbar-track {
+  background: var(--sd-scrollbar-track);
+}
+
+:is(
+  html,
+  body,
+  .sd-sidebar,
+  .sd-toc,
+  .sd-topbar-menu,
+  .sd-search-results,
+  .sd-chat-messages,
+  .sd-prose table,
+  .sd-code code,
+  .sd-prose pre code,
+  .sd-diff-scroll
+)::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  background-clip: padding-box;
+}
+
+html.sd-is-window-scrolling::-webkit-scrollbar-thumb,
+body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
+:is(
+  .sd-sidebar,
+  .sd-toc,
+  .sd-topbar-menu,
+  .sd-search-results,
+  .sd-chat-messages,
+  .sd-prose table,
+  .sd-code code,
+  .sd-prose pre code,
+  .sd-diff-scroll
+):is(:hover, :focus, :focus-within, .sd-is-scrolling)::-webkit-scrollbar-thumb {
+  background-color: var(--sd-scrollbar-thumb);
+}
+
+:is(
+  html,
+  body,
+  .sd-sidebar,
+  .sd-toc,
+  .sd-topbar-menu,
+  .sd-search-results,
+  .sd-chat-messages,
+  .sd-prose table,
+  .sd-code code,
+  .sd-prose pre code,
+  .sd-diff-scroll
+)::-webkit-scrollbar-thumb:hover {
+  background-color: var(--sd-scrollbar-thumb-hover);
+}
+
+@supports (overflow: overlay) {
+  html {
+    overflow-y: overlay;
+  }
+
+  .sd-sidebar,
+  .sd-toc,
+  .sd-topbar-menu,
+  .sd-search-results,
+  .sd-chat-messages,
+  .sd-prose table,
+  .sd-diff-scroll {
+    overflow: overlay;
+  }
+
+  .sd-code code,
+  .sd-prose pre code {
+    overflow-x: overlay;
+    overflow-y: hidden;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2175,6 +2325,7 @@ body {
   max-width: 100%;
   max-height: min(32rem, 72vh);
   overflow: auto;
+  scrollbar-gutter: auto;
   border: 1px solid var(--sd-line);
   border-collapse: separate;
   border-spacing: 0;
@@ -2313,6 +2464,7 @@ body {
   white-space: pre;
   overflow-x: auto;
   overflow-y: hidden;
+  scrollbar-gutter: auto;
 }
 
 .sd-code[data-wrap="true"] code,
@@ -2635,7 +2787,7 @@ body {
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  scrollbar-gutter: stable;
+  scrollbar-gutter: auto;
 }
 
 .sd-diff-scroll:focus-visible {
