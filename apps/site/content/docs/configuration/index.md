@@ -175,6 +175,17 @@ export default defineConfig({
     sitemap: true,
     robots: true,
     defaultAuthor: 'Acme',
+    head: {
+      meta: [
+        { name: 'google-site-verification', content: 'verification-token' }
+      ],
+      links: [
+        { rel: 'alternate', type: 'application/rss+xml', href: '/feed.xml', title: 'RSS' }
+      ],
+      jsonLd: [
+        { '@type': 'Organization', name: 'Acme' }
+      ]
+    },
     ogImage: {
       template: 'default',
       format: 'svg',
@@ -186,6 +197,8 @@ export default defineConfig({
 ```
 
 Set `seo.ogImage = false` to disable automatic OG generation. Use SVG for portable edge/runtime output. Use PNG or Satori when you need richer build-time images and can provide fonts.
+
+`seo.head` is for serializable head additions that should appear on every page, such as verification meta tags, feed links, preload links, and organization-level JSON-LD. Page frontmatter can also define `head` for page-specific additions.
 
 ## Source links
 

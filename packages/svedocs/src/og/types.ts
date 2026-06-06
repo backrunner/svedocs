@@ -1,3 +1,5 @@
+import type { SvedocsResolvedSeoHead } from '../core/types.js';
+
 export interface OgImageInput {
   title: string;
   description?: string;
@@ -39,17 +41,20 @@ export interface SvedocsPageMetadata {
   description: string;
   canonical?: string;
   image?: string;
-    openGraph: {
-      title: string;
-      description: string;
-      type: string;
-      url?: string;
-      image?: string;
-      siteName: string;
-      author?: string;
-      publishedTime?: string;
-      updatedTime?: string;
-    };
+  keywords: string[];
+  robots?: string;
+  head: SvedocsResolvedSeoHead;
+  openGraph: {
+    title: string;
+    description: string;
+    type: string;
+    url?: string;
+    image?: string;
+    siteName: string;
+    author?: string;
+    publishedTime?: string;
+    updatedTime?: string;
+  };
   twitter: {
     card: 'summary' | 'summary_large_image';
     title: string;

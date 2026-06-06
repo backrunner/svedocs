@@ -207,7 +207,9 @@ export interface SvedocsTocController {
 
 export interface SvedocsThemeModeController {
   mode: Writable<'light' | 'dark'>;
+  preference: Writable<'light' | 'dark' | 'system'>;
   apply(mode: 'light' | 'dark'): void;
+  setPreference(preference: 'light' | 'dark' | 'system'): void;
   toggle(): void;
   mount(): () => void;
 }

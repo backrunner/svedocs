@@ -1,12 +1,8 @@
-import { createRobotsTxt } from 'svedocs/og';
+import { createRobotsResponse } from 'svedocs/og';
 import config from 'virtual:svedocs/config';
 
-export const prerender = true;
+export const prerender = config.seo.robots;
 
 export function GET() {
-  return new Response(createRobotsTxt(config), {
-    headers: {
-      'content-type': 'text/plain; charset=utf-8'
-    }
-  });
+  return createRobotsResponse(config);
 }

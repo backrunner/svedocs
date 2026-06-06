@@ -2,15 +2,16 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { get } from 'svelte/store';
 import { createAskResponse, createCloudflareAiSearchAiProvider, createCloudflareKvRateLimiter, createConfiguredAiProvider, createConfiguredAskResponse, createMemoryRateLimiter, createMockAiProvider, createOpenAiCompatibleProvider, createWorkersAiProvider } from '../src/ai';
-import { createCloudflareEnvDts, createWranglerJson, readSvedocsBuildMode, svedocsPagePrerender, svedocsSsr } from '../src/cloudflare';
+import { createCloudflareEnvDts, createWranglerJson, readSvedocsBuildMode, svedocsPagePrerender, svedocsSsr, svedocsTrailingSlash } from '../src/cloudflare';
 import { defineConfig } from '../src/config';
 import { checkPackagePublication, createPageTree, createSearchRecords, flattenPageTree, loadSvedocsContent, resolveSvedocsConfig } from '../src/core';
-import { createConfiguredOgImageFormat, createConfiguredOgImageTemplate, createOgPng, createPageAlternates, createPageMetadata, createPageOgImagePath, createPageOgImageResponse, createRobotsTxt, createSatoriOgSvg, createSitemapXml } from '../src/og';
+import { createConfiguredOgImageFormat, createConfiguredOgImageTemplate, createConfiguredPageOgImageEntries, createJsonLdScript, createOgPng, createPageAlternates, createPageMetadata, createPageOgImagePath, createPageOgImageResponse, createRobotsResponse, createRobotsTxt, createSatoriOgSvg, createSitemapResponse, createSitemapXml, serializeJsonLd } from '../src/og';
 import { compileMarkdown, createDiffRows, createDiffSplitRows } from '../src/mdx/compile';
 import { createAlgoliaSearchProvider, createCloudflareAiSearchDocuments, createCloudflareAiSearchProvider, createConfiguredSearchProvider, createConfiguredSearchResponse, createSearchResponse, createTypesenseSearchProvider, searchRecords, syncCloudflareAiSearchIndex } from '../src/search';
 import { createFixturePage } from '../src/testing';
-import { createSearchController, createThemeContext } from '../src/theme/headless';
+import { createAskAiController, createSearchController, createThemeContext, createThemeModeController } from '../src/theme/headless';
 import { svedocs } from '../src/vite';
 
 describe('svedocs Batch 0 skeleton', () => {
@@ -52,6 +53,9 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(svedocsPagePrerender('edge')).toBe('auto');
     expect(svedocsPagePrerender('static')).toBe(true);
     expect(svedocsPagePrerender('spa')).toBe(true);
+    expect(svedocsTrailingSlash('edge')).toBe('never');
+    expect(svedocsTrailingSlash('static')).toBe('always');
+    expect(svedocsTrailingSlash('spa')).toBe('always');
   });
 
   it('resolves theme customization and SEO author defaults', () => {
@@ -99,6 +103,17 @@ describe('svedocs Batch 0 skeleton', () => {
       },
       seo: {
         defaultAuthor: 'svedocs team',
+        head: {
+          meta: [
+            { name: 'google-site-verification', content: 'verify-me' }
+          ],
+          links: [
+            { rel: 'alternate', type: 'application/rss+xml', href: '/feed.xml', title: 'Feed' }
+          ],
+          jsonLd: [
+            { '@type': 'Organization', name: 'svedocs' }
+          ]
+        },
         ogImage: {
           format: 'png',
           outDir: 'static/custom-og',
@@ -119,6 +134,9 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(config.search.scope).toBe('all');
     expect(config.ai.scope).toBe('all');
     expect(config.seo.defaultAuthor).toBe('svedocs team');
+    expect(config.seo.head.meta[0]).toEqual({ name: 'google-site-verification', content: 'verify-me' });
+    expect(config.seo.head.links[0]).toEqual({ rel: 'alternate', type: 'application/rss+xml', href: '/feed.xml', title: 'Feed' });
+    expect(config.seo.head.jsonLd[0]).toEqual({ '@type': 'Organization', name: 'svedocs' });
     expect(config.seo.ogImage && config.seo.ogImage.format).toBe('png');
     expect(config.seo.ogImage && config.seo.ogImage.outDir).toBe('static/custom-og');
   });
@@ -283,6 +301,162 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(controller.select()?.url).toBe('/docs/reference/api');
   });
 
+  it('updates headless search records when custom themes replace records with an empty set', () => {
+    const page = createFixturePage({ routePath: '/docs/search', locale: 'en', kind: 'doc' });
+    const records = [{
+      id: 'search-theme',
+      pageId: page.id,
+      url: page.routePath,
+      title: 'Search Theme',
+      content: 'Custom search component records',
+      metadata: { locale: 'en', kind: 'doc' }
+    }];
+    const controller = createSearchController({ records, provider: 'local', buildMode: 'edge' });
+
+    controller.setQuery('custom');
+    expect(get(controller.results).map((result) => result.id)).toEqual(['search-theme']);
+
+    controller.setOptions({ records: [] });
+
+    expect(get(controller.results)).toEqual([]);
+    expect(get(controller.recordsStatus)).toBe('idle');
+  });
+
+  it('updates headless Ask AI records when custom themes replace records with an empty set', async () => {
+    const page = createFixturePage({ routePath: '/docs/ask-ai', locale: 'en', kind: 'doc' });
+    const config = resolveSvedocsConfig({
+      ai: {
+        enabled: true,
+        provider: 'mock'
+      }
+    });
+    const records = [{
+      id: 'ask-theme',
+      pageId: page.id,
+      url: page.routePath,
+      title: 'Ask AI Theme',
+      content: 'Custom Ask AI component records',
+      metadata: { locale: 'en', kind: 'doc' }
+    }];
+    const controller = createAskAiController({ config, records, buildMode: 'static' });
+
+    expect(await controller.ensureRecords()).toEqual(records);
+
+    controller.setOptions({ records: [] });
+    await controller.send('Custom Ask AI component records');
+
+    expect(await controller.ensureRecords()).toEqual([]);
+    expect(get(controller.messages).at(-1)?.content).toBe('I could not find a matching local source for that question.');
+  });
+
+  it('tracks theme mode system preference without persisting the resolved mode', () => {
+    const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+    const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+    const originalLocalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+    const storage = new Map<string, string>();
+    const root = { dataset: {} as Record<string, string>, style: {} as { colorScheme?: string } };
+    let prefersDark = true;
+    let mediaListener: ((event: MediaQueryListEvent) => void) | undefined;
+    const media = {
+      get matches() {
+        return prefersDark;
+      },
+      media: '(prefers-color-scheme: dark)',
+      onchange: null,
+      addEventListener(_type: string, listener: EventListenerOrEventListenerObject) {
+        mediaListener = listener as (event: MediaQueryListEvent) => void;
+      },
+      removeEventListener(_type: string, listener: EventListenerOrEventListenerObject) {
+        if (mediaListener === listener) mediaListener = undefined;
+      },
+      addListener() {
+        return undefined;
+      },
+      removeListener() {
+        return undefined;
+      },
+      dispatchEvent() {
+        return true;
+      }
+    } as MediaQueryList;
+    const localStorage = {
+      get length() {
+        return storage.size;
+      },
+      clear() {
+        storage.clear();
+      },
+      getItem(key: string) {
+        return storage.get(key) ?? null;
+      },
+      key(index: number) {
+        return Array.from(storage.keys())[index] ?? null;
+      },
+      removeItem(key: string) {
+        storage.delete(key);
+      },
+      setItem(key: string, value: string) {
+        storage.set(key, value);
+      }
+    } satisfies Storage;
+
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: {
+        matchMedia() {
+          return media;
+        }
+      }
+    });
+    Object.defineProperty(globalThis, 'document', {
+      configurable: true,
+      value: {
+        documentElement: root
+      }
+    });
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: localStorage
+    });
+
+    try {
+      const controller = createThemeModeController('system');
+      const stop = controller.mount();
+
+      expect(get(controller.preference)).toBe('system');
+      expect(get(controller.mode)).toBe('dark');
+      expect(root.dataset.theme).toBe('dark');
+      expect(localStorage.getItem('svedocs-theme')).toBeNull();
+
+      prefersDark = false;
+      mediaListener?.({ matches: false } as MediaQueryListEvent);
+
+      expect(get(controller.mode)).toBe('light');
+
+      controller.apply('dark');
+      expect(get(controller.preference)).toBe('dark');
+      expect(localStorage.getItem('svedocs-theme')).toBe('dark');
+
+      prefersDark = false;
+      mediaListener?.({ matches: false } as MediaQueryListEvent);
+      expect(get(controller.mode)).toBe('dark');
+
+      controller.setPreference('system');
+      expect(localStorage.getItem('svedocs-theme')).toBe('system');
+      expect(get(controller.mode)).toBe('light');
+
+      prefersDark = true;
+      mediaListener?.({ matches: true } as MediaQueryListEvent);
+      expect(get(controller.mode)).toBe('dark');
+
+      stop();
+    } finally {
+      restoreGlobalProperty('window', originalWindow);
+      restoreGlobalProperty('document', originalDocument);
+      restoreGlobalProperty('localStorage', originalLocalStorage);
+    }
+  });
+
   it('generates virtual theme component imports from Vite plugin options', async () => {
     const plugin = svedocs({
       config: {
@@ -315,6 +489,21 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(loaded).toContain('"AskAi": C3');
   });
 
+  it('fails fast when Vite theme component override keys are unknown', () => {
+    expect(() => svedocs({
+      config: {
+        content: {
+          root: 'content'
+        }
+      },
+      theme: {
+        components: {
+          NavBar: '$lib/theme/Navbar.svelte'
+        } as never
+      }
+    })).toThrow(/Unknown svedocs theme component key: "NavBar".*Navbar/);
+  });
+
   it('loads content from fixture files', async () => {
     const manifest = await loadSvedocsContent({
       projectRoot: new URL('fixtures/basic', import.meta.url).pathname,
@@ -340,6 +529,74 @@ describe('svedocs Batch 0 skeleton', () => {
       focusLines: [2]
     });
       expect(manifest.issues).toEqual([]);
+  });
+
+  it('loads serializable SEO head injections from frontmatter', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-seo-head-'));
+    try {
+      await mkdir(path.join(tmp, 'content/docs'), { recursive: true });
+      await mkdir(path.join(tmp, 'content/pages'), { recursive: true });
+      await writeFile(path.join(tmp, 'content/docs/index.md'), [
+        '---',
+        'title: SEO Head',
+        'description: Custom SEO head metadata.',
+        'keywords:',
+        '  - docs',
+        '  - seo',
+        'robots: noindex,nofollow',
+        'head:',
+        '  meta:',
+        '    - name: google-site-verification',
+        '      content: page-token',
+        '    - property: custom:page',
+        '      content: seo-head',
+        '  links:',
+        '    - rel: alternate',
+        '      href: /feed.xml',
+        '      type: application/rss+xml',
+        '      title: Feed',
+        '  json-ld:',
+        '    - "@type": FAQPage',
+        '      name: SEO FAQ',
+        '---',
+        '# SEO Head',
+        '',
+        'Body.'
+      ].join('\n'), 'utf8');
+      await writeFile(path.join(tmp, 'content/pages/index.md'), [
+        '---',
+        'title: Home',
+        'description: Home page.',
+        '---',
+        '# Home'
+      ].join('\n'), 'utf8');
+
+      const manifest = await loadSvedocsContent({
+        projectRoot: tmp,
+        config: {
+          content: {
+            docs: 'content/docs',
+            pages: 'content/pages'
+          }
+        }
+      });
+      const page = manifest.pages.find((candidate) => candidate.routePath === '/docs');
+
+      expect(page?.seo.keywords).toEqual(['docs', 'seo']);
+      expect(page?.seo.robots).toBe('noindex,nofollow');
+      expect(page?.seo.head?.meta).toEqual([
+        { name: 'google-site-verification', content: 'page-token' },
+        { property: 'custom:page', content: 'seo-head' }
+      ]);
+      expect(page?.seo.head?.links).toEqual([
+        { rel: 'alternate', href: '/feed.xml', type: 'application/rss+xml', title: 'Feed' }
+      ]);
+      expect(page?.seo.head?.jsonLd).toEqual([
+        { '@type': 'FAQPage', name: 'SEO FAQ' }
+      ]);
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
   });
 
   it('applies configured Markdown plugins during manifest compilation', async () => {
@@ -568,6 +825,19 @@ describe('svedocs Batch 0 skeleton', () => {
       site: {
         name: 'Fixture',
         url: 'https://fixture.test'
+      },
+      seo: {
+        head: {
+          meta: [
+            { name: 'google-site-verification', content: 'verify-me' }
+          ],
+          links: [
+            { rel: 'alternate', type: 'application/rss+xml', href: '/feed.xml', title: 'Feed' }
+          ],
+          jsonLd: [
+            { '@type': 'Organization', name: 'Fixture Org' }
+          ]
+        }
       }
     });
       const page = createFixturePage({
@@ -580,9 +850,22 @@ describe('svedocs Batch 0 skeleton', () => {
           title: 'Guide',
           description: 'Read the guide.',
           canonical: 'https://fixture.test/docs/guide',
+          keywords: ['docs', 'guide'],
           author: 'Docs Team',
           publishedTime: '2026-05-17T00:00:00.000Z',
-          type: 'article'
+          type: 'article',
+          robots: 'index,follow',
+          head: {
+            meta: [
+              { property: 'custom:page', content: 'guide' }
+            ],
+            links: [
+              { rel: 'preload', href: '/fonts/docs.woff2', as: 'font', type: 'font/woff2', crossorigin: 'anonymous' }
+            ],
+            jsonLd: [
+              { '@type': 'BreadcrumbList', name: 'Guide breadcrumb' }
+            ]
+          }
         }
       });
 
@@ -594,10 +877,27 @@ describe('svedocs Batch 0 skeleton', () => {
       expect(metadata.openGraph.publishedTime).toBe('2026-05-17T00:00:00.000Z');
       expect(metadata.jsonLd.dateModified).toBe('2026-05-18T00:00:00.000Z');
       expect(metadata.openGraph.image).toBe('https://fixture.test/og/docs-guide.svg');
+      expect(metadata.keywords).toEqual(['docs', 'guide']);
+      expect(metadata.robots).toBe('index,follow');
+      expect(metadata.head.meta).toEqual([
+        { name: 'google-site-verification', content: 'verify-me' },
+        { property: 'custom:page', content: 'guide' }
+      ]);
+      expect(metadata.head.links).toEqual([
+        { rel: 'alternate', type: 'application/rss+xml', href: '/feed.xml', title: 'Feed' },
+        { rel: 'preload', href: '/fonts/docs.woff2', as: 'font', type: 'font/woff2', crossorigin: 'anonymous' }
+      ]);
+      expect(metadata.head.jsonLd).toEqual([
+        { '@type': 'Organization', name: 'Fixture Org' },
+        { '@type': 'BreadcrumbList', name: 'Guide breadcrumb' }
+      ]);
     expect(createPageOgImagePath(page)).toBe('/og/docs-guide.svg');
     expect((await createPageOgImageResponse(config, page)).headers.get('content-type')).toContain('image/svg+xml');
     expect(createSitemapXml(config, [page])).toContain('<loc>https://fixture.test/docs/guide</loc>');
     expect(createRobotsTxt(config)).toContain('Sitemap: https://fixture.test/sitemap.xml');
+    expect(await (createSitemapResponse(resolveSvedocsConfig({ seo: { sitemap: false } }), [page])).text()).toBe('Sitemap is disabled.');
+    expect(createSitemapResponse(resolveSvedocsConfig({ seo: { sitemap: false } }), [page]).status).toBe(404);
+    expect(createRobotsResponse(resolveSvedocsConfig({ seo: { robots: false } })).status).toBe(404);
     expect(Array.from((await createOgPng({ title: 'Guide', description: 'Read the guide.' })).slice(0, 8))).toEqual([
       137,
       80,
@@ -615,6 +915,40 @@ describe('svedocs Batch 0 skeleton', () => {
     );
     expect(satoriSvg).toContain('<svg');
     expect(satoriSvg).toContain('#11130f');
+  });
+
+  it('normalizes generated SEO URLs for static output and serializes JSON-LD safely', async () => {
+    const config = resolveSvedocsConfig({
+      site: {
+        name: 'Fixture',
+        url: 'https://fixture.test'
+      },
+      build: {
+        mode: 'static'
+      },
+      seo: {
+        ogImage: false
+      }
+    });
+    const page = createFixturePage({
+      routePath: '/docs/guide',
+      kind: 'doc',
+      title: 'Guide',
+      description: 'Read the guide.',
+      seo: {
+        title: 'Guide',
+        description: 'Read the guide.'
+      }
+    });
+    const metadata = createPageMetadata(config, page);
+
+    expect(metadata.canonical).toBe('https://fixture.test/docs/guide/');
+    expect(metadata.openGraph.url).toBe('https://fixture.test/docs/guide/');
+    expect(createSitemapXml(config, [page])).toContain('<loc>https://fixture.test/docs/guide/</loc>');
+    expect(metadata.openGraph.image).toBeUndefined();
+    expect(createConfiguredPageOgImageEntries(config, [page])).toEqual([]);
+    expect(serializeJsonLd({ name: '</script><script>alert(1)</script>' })).toContain('\\u003c/script\\u003e');
+    expect(createJsonLdScript({ '@type': 'Thing', name: 'Guide' })).toContain('<script type="application/ld+json">');
   });
 
   it('uses configured OG format for metadata and route responses', async () => {
@@ -1424,3 +1758,11 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(result.indexed).toBe(1);
   }, 60_000);
 });
+
+function restoreGlobalProperty(name: 'window' | 'document' | 'localStorage', descriptor: PropertyDescriptor | undefined): void {
+  if (descriptor) {
+    Object.defineProperty(globalThis, name, descriptor);
+    return;
+  }
+  Reflect.deleteProperty(globalThis, name);
+}

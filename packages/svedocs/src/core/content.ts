@@ -9,9 +9,10 @@ import { isResolvedConfig, resolveSvedocsConfig } from './config.js';
 import { extractMarkdownLinks } from './links.js';
 import { createPageTree, wirePrevNext } from './navigation.js';
 import { createPageSearchRecords, createSearchRecords } from './search.js';
-import type { SvedocsContentManifest, SvedocsPage, SvedocsResolvedConfig } from './types.js';
+import type { SvedocsContentManifest, SvedocsPage, SvedocsResolvedConfig, SvedocsSeoHead, SvedocsSeoJsonLd, SvedocsSeoLinkTag, SvedocsSeoMetaTag } from './types.js';
 import {
   booleanFrontmatter,
+  formatRoutePathForBuildMode,
   normalizePath,
   numberFrontmatter,
   stringArrayFrontmatter,
@@ -90,6 +91,8 @@ async function loadContentFile(
   const keywords = stringArrayFrontmatter(frontmatter.keywords);
   const type = stringFrontmatter(frontmatter.type) ?? stringFrontmatter(frontmatter.ogType) ?? stringFrontmatter(frontmatter.og_type);
   const author = stringFrontmatter(frontmatter.author) ?? config.seo.defaultAuthor;
+  const robots = stringFrontmatter(frontmatter.robots);
+  const head = normalizeSeoHead(frontmatter.head);
   const publishedTime = dateFrontmatter(frontmatter.publishedTime)
     ?? dateFrontmatter(frontmatter.published_time)
     ?? dateFrontmatter(frontmatter.published)
@@ -97,9 +100,7 @@ async function loadContentFile(
   const updatedTime = dateFrontmatter(frontmatter.updatedTime)
     ?? dateFrontmatter(frontmatter.updated_time)
     ?? dateFrontmatter(frontmatter.updated);
-  const canonical = stringFrontmatter(frontmatter.canonical) ?? (
-    config.site.url ? new URL(routePath, config.site.url).href : undefined
-  );
+  const canonical = stringFrontmatter(frontmatter.canonical) ?? createPageCanonicalUrl(config, routePath);
   const image = stringFrontmatter(frontmatter.image);
   const page: SvedocsPage = {
     id: createPageId(file),
@@ -132,7 +133,9 @@ async function loadContentFile(
       ...(type ? { type } : {}),
       ...(author ? { author } : {}),
       ...(publishedTime ? { publishedTime } : {}),
-      ...(updatedTime ? { updatedTime } : {})
+      ...(updatedTime ? { updatedTime } : {}),
+      ...(robots ? { robots } : {}),
+      ...(head ? { head } : {})
     },
     search: [],
     lastUpdated: fileStats.mtime.toISOString(),
@@ -140,6 +143,66 @@ async function loadContentFile(
   };
   page.search = createPageSearchRecords(page, renderMarkdown);
   return page;
+}
+
+function normalizeSeoHead(value: unknown): SvedocsSeoHead | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const input = value as Record<string, unknown>;
+  const meta = Array.isArray(input.meta) ? input.meta.map(normalizeSeoMetaTag).filter((tag): tag is SvedocsSeoMetaTag => Boolean(tag)) : [];
+  const links = Array.isArray(input.links) ? input.links.map(normalizeSeoLinkTag).filter((tag): tag is SvedocsSeoLinkTag => Boolean(tag)) : [];
+  const jsonLdInput = input.jsonLd ?? input.jsonld ?? input['json-ld'];
+  const jsonLd = Array.isArray(jsonLdInput) ? jsonLdInput.map(normalizeSeoJsonLd).filter((tag): tag is SvedocsSeoJsonLd => Boolean(tag)) : [];
+  if (meta.length === 0 && links.length === 0 && jsonLd.length === 0) return undefined;
+  return {
+    ...(meta.length > 0 ? { meta } : {}),
+    ...(links.length > 0 ? { links } : {}),
+    ...(jsonLd.length > 0 ? { jsonLd } : {})
+  };
+}
+
+function normalizeSeoMetaTag(value: unknown): SvedocsSeoMetaTag | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const input = value as Record<string, unknown>;
+  const content = stringFrontmatter(input.content);
+  if (!content) return undefined;
+  const tag: SvedocsSeoMetaTag = { content };
+  const name = stringFrontmatter(input.name);
+  const property = stringFrontmatter(input.property);
+  const httpEquiv = stringFrontmatter(input.httpEquiv) ?? stringFrontmatter(input['http-equiv']);
+  const itemprop = stringFrontmatter(input.itemprop);
+  if (name) tag.name = name;
+  if (property) tag.property = property;
+  if (httpEquiv) tag.httpEquiv = httpEquiv;
+  if (itemprop) tag.itemprop = itemprop;
+  return tag.name || tag.property || tag.httpEquiv || tag.itemprop ? tag : undefined;
+}
+
+function normalizeSeoLinkTag(value: unknown): SvedocsSeoLinkTag | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const input = value as Record<string, unknown>;
+  const rel = stringFrontmatter(input.rel);
+  const href = stringFrontmatter(input.href);
+  if (!rel || !href) return undefined;
+  const tag: SvedocsSeoLinkTag = { rel, href };
+  const hreflang = stringFrontmatter(input.hreflang);
+  const type = stringFrontmatter(input.type);
+  const media = stringFrontmatter(input.media);
+  const title = stringFrontmatter(input.title);
+  const sizes = stringFrontmatter(input.sizes);
+  const as = stringFrontmatter(input.as);
+  const crossorigin = stringFrontmatter(input.crossorigin);
+  if (hreflang) tag.hreflang = hreflang;
+  if (type) tag.type = type;
+  if (media) tag.media = media;
+  if (title) tag.title = title;
+  if (sizes) tag.sizes = sizes;
+  if (as) tag.as = as;
+  if (crossorigin) tag.crossorigin = crossorigin;
+  return tag;
+}
+
+function normalizeSeoJsonLd(value: unknown): SvedocsSeoJsonLd | undefined {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as SvedocsSeoJsonLd : undefined;
 }
 
 function createMarkdownCompileOptions(
@@ -162,6 +225,11 @@ function createMarkdownCompileOptions(
 
 function createEditUrl(baseUrl: string, sourcePath: string): string {
   return `${baseUrl.replace(/\/$/, '')}/${normalizePath(sourcePath)}`;
+}
+
+function createPageCanonicalUrl(config: SvedocsResolvedConfig, routePath: string): string | undefined {
+  if (!config.site.url) return undefined;
+  return new URL(formatRoutePathForBuildMode(routePath, config.build.mode), config.site.url).href;
 }
 
 function dateFrontmatter(value: unknown): string | undefined {

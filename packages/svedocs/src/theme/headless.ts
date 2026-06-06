@@ -72,7 +72,7 @@ export function createThemeStyle(config: SvedocsResolvedConfig): string {
 }
 
 export function createThemeInitScript(defaultMode: 'light' | 'dark' | 'system'): string {
-  return `<script>(function(){try{var d=${JSON.stringify(defaultMode)};var s=localStorage.getItem('svedocs-theme');var t=s==='dark'||s==='light'?s:(d==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):d);document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;}catch(e){}})();<\/script>`;
+  return `<script>(function(){try{var d=${JSON.stringify(defaultMode)};var s=localStorage.getItem('svedocs-theme');var p=s==='dark'||s==='light'||s==='system'?s:d;var t=p==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;}catch(e){}})();<\/script>`;
 }
 
 export function resolveColor(value: string, fallback: string): string {
@@ -138,6 +138,9 @@ export function createSearchController(initial: SvedocsSearchControllerOptions =
   const loadedRecords = writable(initial.records ?? []);
   const recordsStatus = writable<'idle' | 'loading' | 'ready' | 'error'>((initial.records?.length ?? 0) > 0 ? 'ready' : 'idle');
   let recordsRequest: Promise<SvedocsSearchRecord[]> | undefined;
+  let recordsSource = initial.records;
+  let loadRecordsSource = initial.loadRecords;
+  let recordsVersion = 0;
   let remoteKey = '';
   let remoteRequestId = 0;
 
@@ -161,10 +164,26 @@ export function createSearchController(initial: SvedocsSearchControllerOptions =
   });
 
   function setOptions(nextOptions: Partial<SvedocsSearchControllerOptions>): void {
+    const recordsChanged = Object.hasOwn(nextOptions, 'records') && nextOptions.records !== recordsSource;
+    const loadRecordsChanged = Object.hasOwn(nextOptions, 'loadRecords') && nextOptions.loadRecords !== loadRecordsSource;
     options.update((current) => normalizeSearchOptions({ ...current, ...nextOptions }));
-    if (nextOptions.records && nextOptions.records.length > 0) {
-      loadedRecords.set(nextOptions.records);
-      recordsStatus.set('ready');
+    if (loadRecordsChanged) {
+      loadRecordsSource = nextOptions.loadRecords;
+      recordsRequest = undefined;
+      recordsVersion += 1;
+      if (!recordsChanged) {
+        const nextRecords = recordsSource ?? [];
+        loadedRecords.set(nextRecords);
+        recordsStatus.set(nextRecords.length > 0 ? 'ready' : 'idle');
+      }
+    }
+    if (recordsChanged) {
+      recordsSource = nextOptions.records;
+      recordsRequest = undefined;
+      recordsVersion += 1;
+      const nextRecords = nextOptions.records ?? [];
+      loadedRecords.set(nextRecords);
+      recordsStatus.set(nextRecords.length > 0 ? 'ready' : 'idle');
     }
     syncRemoteResults();
   }
@@ -214,16 +233,20 @@ export function createSearchController(initial: SvedocsSearchControllerOptions =
     const currentOptions = get(options);
     if (currentRecords.length > 0 || !currentOptions.loadRecords) return currentRecords;
     if (!recordsRequest) {
+      const requestVersion = recordsVersion;
       recordsStatus.set('loading');
       recordsRequest = currentOptions.loadRecords()
         .then((nextRecords) => {
+          if (requestVersion !== recordsVersion) return get(loadedRecords);
           loadedRecords.set(nextRecords);
           recordsStatus.set('ready');
           return nextRecords;
         })
         .catch((error) => {
-          recordsStatus.set('error');
-          recordsRequest = undefined;
+          if (requestVersion === recordsVersion) {
+            recordsStatus.set('error');
+            recordsRequest = undefined;
+          }
           throw error;
         });
     }
@@ -293,11 +316,27 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
   const loading = writable(false);
   const loadedRecords = writable(initial.records ?? []);
   let recordsRequest: Promise<SvedocsSearchRecord[]> | undefined;
+  let recordsSource = initial.records;
+  let loadRecordsSource = initial.loadRecords;
+  let recordsVersion = 0;
   let messageId = 0;
 
   function setOptions(nextOptions: Partial<SvedocsAskAiControllerOptions>): void {
+    const recordsChanged = Object.hasOwn(nextOptions, 'records') && nextOptions.records !== recordsSource;
+    const loadRecordsChanged = Object.hasOwn(nextOptions, 'loadRecords') && nextOptions.loadRecords !== loadRecordsSource;
     options.update((current) => normalizeAskOptions({ ...current, ...nextOptions }));
-    if (nextOptions.records && nextOptions.records.length > 0) loadedRecords.set(nextOptions.records);
+    if (loadRecordsChanged) {
+      loadRecordsSource = nextOptions.loadRecords;
+      recordsRequest = undefined;
+      recordsVersion += 1;
+      if (!recordsChanged) loadedRecords.set(recordsSource ?? []);
+    }
+    if (recordsChanged) {
+      recordsSource = nextOptions.records;
+      recordsRequest = undefined;
+      recordsVersion += 1;
+      loadedRecords.set(nextOptions.records ?? []);
+    }
   }
 
   function nextId(): number {
@@ -408,13 +447,15 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
     const currentOptions = get(options);
     if (currentRecords.length > 0 || !currentOptions.loadRecords) return currentRecords;
     if (!recordsRequest) {
+      const requestVersion = recordsVersion;
       recordsRequest = currentOptions.loadRecords()
         .then((nextRecords) => {
+          if (requestVersion !== recordsVersion) return get(loadedRecords);
           loadedRecords.set(nextRecords);
           return nextRecords;
         })
         .catch((error) => {
-          recordsRequest = undefined;
+          if (requestVersion === recordsVersion) recordsRequest = undefined;
           throw error;
         });
     }
@@ -652,23 +693,33 @@ export function createTocController(initial: { page: SvedocsPage }): SvedocsTocC
 
 export function createThemeModeController(defaultMode: 'light' | 'dark' | 'system' = 'system'): SvedocsThemeModeController {
   const mode = writable<'light' | 'dark'>('light');
+  const preference = writable<'light' | 'dark' | 'system'>(defaultMode);
   let media: MediaQueryList | undefined;
 
-  function resolveDefaultMode(): 'light' | 'dark' {
-    if (defaultMode !== 'system') return defaultMode;
+  function resolveMode(nextPreference: 'light' | 'dark' | 'system'): 'light' | 'dark' {
+    if (nextPreference !== 'system') return nextPreference;
     if (typeof window === 'undefined') return 'light';
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
 
-  function apply(nextMode: 'light' | 'dark'): void {
+  function applyResolvedMode(nextMode: 'light' | 'dark'): void {
     mode.set(nextMode);
     if (typeof document !== 'undefined') {
       document.documentElement.dataset.theme = nextMode;
       document.documentElement.style.colorScheme = nextMode;
     }
+  }
+
+  function setPreference(nextPreference: 'light' | 'dark' | 'system'): void {
+    preference.set(nextPreference);
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('svedocs-theme', nextMode);
+      localStorage.setItem('svedocs-theme', nextPreference);
     }
+    applyResolvedMode(resolveMode(nextPreference));
+  }
+
+  function apply(nextMode: 'light' | 'dark'): void {
+    setPreference(nextMode);
   }
 
   function toggle(): void {
@@ -677,27 +728,31 @@ export function createThemeModeController(defaultMode: 'light' | 'dark' | 'syste
 
   function syncFromSystem(): void {
     const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('svedocs-theme') : undefined;
-    if (stored === 'dark' || stored === 'light') {
-      mode.set(stored);
-      return;
-    }
-    apply(resolveDefaultMode());
+    const nextPreference = stored === 'dark' || stored === 'light' || stored === 'system' ? stored : defaultMode;
+    preference.set(nextPreference);
+    applyResolvedMode(resolveMode(nextPreference));
+  }
+
+  function syncFromMedia(): void {
+    if (get(preference) === 'system') applyResolvedMode(resolveMode('system'));
   }
 
   function mount(): () => void {
     const current = typeof document !== 'undefined' ? document.documentElement.dataset.theme : undefined;
     mode.set(current === 'dark' ? 'dark' : 'light');
-    if (typeof window !== 'undefined' && defaultMode === 'system') {
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
       media = window.matchMedia('(prefers-color-scheme: dark)');
-      media.addEventListener('change', syncFromSystem);
+      media.addEventListener('change', syncFromMedia);
     }
     syncFromSystem();
-    return () => media?.removeEventListener('change', syncFromSystem);
+    return () => media?.removeEventListener('change', syncFromMedia);
   }
 
   return {
     mode,
+    preference,
     apply,
+    setPreference,
     toggle,
     mount
   };

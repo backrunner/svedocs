@@ -175,6 +175,17 @@ export default defineConfig({
     sitemap: true,
     robots: true,
     defaultAuthor: 'Acme',
+    head: {
+      meta: [
+        { name: 'google-site-verification', content: 'verification-token' }
+      ],
+      links: [
+        { rel: 'alternate', type: 'application/rss+xml', href: '/feed.xml', title: 'RSS' }
+      ],
+      jsonLd: [
+        { '@type': 'Organization', name: 'Acme' }
+      ]
+    },
     ogImage: {
       template: 'default',
       format: 'svg',
@@ -186,6 +197,8 @@ export default defineConfig({
 ```
 
 设置 `seo.ogImage = false` 可以禁用自动 OG 生成。SVG 更适合 edge/runtime 输出。需要更复杂的构建期图片时，可以用 PNG 或 Satori，并显式提供字体。
+
+`seo.head` 用来配置每个页面都要输出的可序列化 head 内容，例如站点验证 meta、feed link、preload link 和组织级 JSON-LD。页面 frontmatter 也可以定义 `head` 来追加页面级内容。
 
 ## 源码链接
 

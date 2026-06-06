@@ -2,6 +2,7 @@ import { pathToFileURL } from 'node:url';
 import { z } from 'zod';
 import type { SvedocsResolvedConfig } from './core.js';
 import { resolveSvedocsConfig } from './core.js';
+import type { SvedocsSeoHead } from './core/types.js';
 import type { OgTemplate } from './og/types.js';
 
 export interface SvedocsNavItem {
@@ -123,6 +124,7 @@ export interface SvedocsConfig {
     sitemap?: boolean;
     robots?: boolean;
     defaultAuthor?: string;
+    head?: SvedocsSeoHead;
     ogImage?: false | {
       template?: 'default' | string | OgTemplate;
       format?: 'svg' | 'png';
@@ -327,6 +329,39 @@ export const svedocsConfigSchema = z.object({
       sitemap: z.boolean().optional(),
       robots: z.boolean().optional(),
       defaultAuthor: z.string().optional(),
+      head: z
+        .object({
+          meta: z
+            .array(
+              z.object({
+                name: z.string().optional(),
+                property: z.string().optional(),
+                httpEquiv: z.string().optional(),
+                itemprop: z.string().optional(),
+                content: z.string()
+              })
+            )
+            .optional(),
+          links: z
+            .array(
+              z.object({
+                rel: z.string(),
+                href: z.string(),
+                hreflang: z.string().optional(),
+                type: z.string().optional(),
+                media: z.string().optional(),
+                title: z.string().optional(),
+                sizes: z.string().optional(),
+                as: z.string().optional(),
+                crossorigin: z.string().optional()
+              })
+            )
+            .optional(),
+          jsonLd: z.array(z.record(z.string(), z.unknown())).optional(),
+          jsonld: z.array(z.record(z.string(), z.unknown())).optional(),
+          'json-ld': z.array(z.record(z.string(), z.unknown())).optional()
+        })
+        .optional(),
       ogImage: z
         .union([
           z.literal(false),

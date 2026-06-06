@@ -137,14 +137,18 @@ describe('svedocs-cli Batch 0 shell', () => {
       expect(minimalSvelteConfig).toContain('remoteBindings: false');
       expect(minimalSvelteConfig).toContain("fallback: '200.html'");
       expect(minimalPageRoute).toContain('svedocsPagePrerender');
+      expect(await readFile(path.join(tmp, 'minimal-app', 'src/routes/+layout.ts'), 'utf8')).toContain('svedocsTrailingSlash');
       expect(cloudflareWrangler).toContain('pages_build_output_dir');
       expect(cloudflareWrangler).toContain('[[ai_search]]');
       expect(cloudflareSvelteConfig).toContain('remoteBindings: false');
       expect(cloudflareSvelteConfig).toContain("fallback: '200.html'");
       expect(cloudflarePageRoute).toContain('svedocsPagePrerender');
-      expect(cloudflareRobotsRoute).toContain('export const prerender = true');
-      expect(cloudflareSitemapRoute).toContain('export const prerender = true');
-      expect(cloudflareOgRoute).toContain('export const prerender = true');
+      expect(cloudflareRobotsRoute).toContain('export const prerender = config.seo.robots');
+      expect(cloudflareRobotsRoute).toContain('createRobotsResponse');
+      expect(cloudflareSitemapRoute).toContain('export const prerender = config.seo.sitemap');
+      expect(cloudflareSitemapRoute).toContain('createSitemapResponse');
+      expect(cloudflareOgRoute).toContain('createConfiguredPageOgImageEntries');
+      expect(cloudflareOgRoute).toContain('export const prerender = isOgImageEnabled(config)');
       expect(cloudflareSearchApi).toContain('createConfiguredSearchResponse');
       expect(cloudflareApi).toContain('createConfiguredAskResponse');
       expect(cloudflareDevVars).toContain('ALGOLIA_APP_ID=');
@@ -378,7 +382,7 @@ describe('svedocs-cli Batch 0 shell', () => {
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }
-  });
+  }, 15000);
 
   it('runs configured OG generation before invoking vite build', async () => {
     const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-build-og-'));

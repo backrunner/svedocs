@@ -23,10 +23,25 @@ type: article
 keywords:
   - SvelteKit
   - documentation
+robots: index,follow
+head:
+  meta:
+    - name: google-site-verification
+      content: page-token
+  links:
+    - rel: alternate
+      href: /feed.xml
+      type: application/rss+xml
+      title: RSS
+  jsonLd:
+    - "@type": FAQPage
+      name: Search FAQ
 ---
 ```
 
 如果设置了 `site.url`，svedocs 会自动生成 canonical URL。
+
+`head` 用来追加页面级的可序列化 head 内容。全局 `seo.head` 会先合并，然后追加页面 frontmatter 里的内容。默认 RootLayout 会自动渲染 `meta`、`link` 和额外 JSON-LD。
 
 ## 元数据
 
@@ -36,6 +51,7 @@ keywords:
 - canonical URL。
 - Open Graph 和 Twitter card 标签。
 - 文档页和单页的 JSON-LD。
+- `keywords`、`robots` 和可序列化的 `head` 追加内容。
 - frontmatter 提供时的 author、published time 和 updated time。
 
 自定义布局时可以直接用 `createPageMetadata(config, page)`。
@@ -43,18 +59,16 @@ keywords:
 ## 站点地图和 robots
 
 ```ts title="src/routes/sitemap.xml/+server.ts"
-import { createSitemapXml } from 'svedocs/og';
+import { createSitemapResponse } from 'svedocs/og';
 import config from 'virtual:svedocs/config';
 import pages from 'virtual:svedocs/pages';
 
 export const GET = () => {
-  return new Response(createSitemapXml(config, pages), {
-    headers: { 'content-type': 'application/xml; charset=utf-8' }
-  });
+  return createSitemapResponse(config, pages);
 };
 ```
 
-`createRobotsTxt(config)` 可以生成对应的 `robots.txt` 响应。
+`createRobotsResponse(config)` 可以生成对应的 `robots.txt` 响应。两个 response helper 会在对应的 `seo.sitemap` 或 `seo.robots` 被禁用时返回 `404`。
 
 ## 动态 OG 路由
 
@@ -64,34 +78,39 @@ import {
   createConfiguredOgImageFormat,
   createConfiguredOgImageRenderer,
   createConfiguredOgImageTemplate,
-  createPageOgImageEntries,
+  createConfiguredPageOgImageEntries,
   createPageOgImagePath,
-  createPageOgImageResponse
+  createPageOgImageResponse,
+  isOgImageEnabled
 } from 'svedocs/og';
 import config from 'virtual:svedocs/config';
 import pages from 'virtual:svedocs/pages';
 
-export const prerender = true;
+export const prerender = isOgImageEnabled(config);
 
 const format = createConfiguredOgImageFormat(config);
+const template = createConfiguredOgImageTemplate(config);
 
 export function entries() {
-  return createPageOgImageEntries(pages, format);
+  return createConfiguredPageOgImageEntries(config, pages);
 }
 
 export const GET = async ({ params }) => {
+  if (!isOgImageEnabled(config)) error(404, 'OG images are disabled.');
   const requestPath = `/og/${params.path}`;
   const page = pages.find((candidate) => createPageOgImagePath(candidate, format) === requestPath);
   if (!page) error(404, `No OG image found for ${requestPath}`);
   return createPageOgImageResponse(config, page, {
     format,
     renderer: createConfiguredOgImageRenderer(config),
-    template: createConfiguredOgImageTemplate(config)
+    ...(template ? { template } : {})
   });
 };
 ```
 
 SVG OG 路由适合 edge runtime。PNG 可以在构建期通过 CLI 生成。
+
+自定义根布局可以用 `svedocs/og` 里的 `createJsonLdScript(value)` 配合 Svelte `{@html ...}` 渲染 JSON-LD。它会先转义 script 敏感字符，然后返回完整的 `<script type="application/ld+json">` 标签。
 
 ## 构建期 OG 资源
 

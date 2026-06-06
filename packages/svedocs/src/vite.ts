@@ -8,6 +8,10 @@ import { loadConfigFromFile, type Plugin } from 'vite';
 import type { SvedocsConfig } from './config.js';
 import { loadSvedocsContent, type SvedocsContentManifest, type SvedocsPage } from './core.js';
 import { createSvedocsMdsvexOptions } from './svelte.js';
+import type { SvedocsThemeComponentMap } from './theme/types.js';
+
+export type SvedocsThemeComponentName = keyof SvedocsThemeComponentMap;
+export type SvedocsThemeComponentImports = Partial<Record<SvedocsThemeComponentName, string>>;
 
 export interface SvedocsVitePluginOptions {
   configFile?: string;
@@ -15,9 +19,24 @@ export interface SvedocsVitePluginOptions {
   components?: Record<string, string>;
   layouts?: Record<string, string>;
   theme?: {
-    components?: Record<string, string>;
+    components?: SvedocsThemeComponentImports;
   };
 }
+
+const themeComponentNames = [
+  'Root',
+  'Navbar',
+  'MobileNav',
+  'Sidebar',
+  'Article',
+  'Toc',
+  'Search',
+  'AskAi',
+  'Footer',
+  'ThemeToggle',
+  'PageTools'
+] as const satisfies readonly SvedocsThemeComponentName[];
+const themeComponentNameSet = new Set<string>(themeComponentNames);
 
 const virtualModules = new Set([
   'virtual:svedocs/config',
@@ -47,6 +66,7 @@ export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
   let manifest: SvedocsContentManifest | undefined;
   let resolvedConfig: SvedocsConfig | undefined;
   let resolvedConfigFile: string | undefined;
+  const themeComponentImports = normalizeThemeComponentImports(options.theme?.components);
 
   async function refresh() {
     const loaded = await loadPluginConfig(root, options);
@@ -125,7 +145,7 @@ export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
       if (key === 'search-loader') return `export default () => import('virtual:svedocs/search').then((module) => module.default);`;
       if (key === 'components') return createComponentsModule(data.pages);
       if (key === 'layouts') return createNamedImportModule(options.layouts ?? {});
-      if (key === 'theme-components') return createNamedImportModule(options.theme?.components ?? {});
+      if (key === 'theme-components') return createNamedImportModule(themeComponentImports);
       if (key === 'manifest') return `export default ${JSON.stringify(data)};`;
       return undefined;
     },
@@ -246,14 +266,48 @@ function loadPageDataModule(id: string, pages: SvedocsPage[]): string {
   return `export default ${JSON.stringify(page)};`;
 }
 
-function createNamedImportModule(entries: Record<string, string>): string {
-  const imports = Object.entries(entries)
+function createNamedImportModule(entries: Record<string, string | undefined>): string {
+  const resolvedEntries = Object.entries(entries)
+    .filter((entry): entry is [string, string] => typeof entry[1] === 'string' && entry[1].trim().length > 0);
+  const imports = resolvedEntries
     .map(([, specifier], index) => `import C${index} from ${JSON.stringify(specifier)};`)
     .join('\n');
-  const exports = Object.keys(entries)
-    .map((name, index) => `${JSON.stringify(name)}: C${index}`)
+  const exports = resolvedEntries
+    .map(([name], index) => `${JSON.stringify(name)}: C${index}`)
     .join(',\n  ');
   return `${imports}\nexport default {\n  ${exports}\n};`;
+}
+
+function normalizeThemeComponentImports(entries: SvedocsThemeComponentImports | undefined): SvedocsThemeComponentImports {
+  const normalized: SvedocsThemeComponentImports = {};
+  const unknown: string[] = [];
+  const invalid: string[] = [];
+
+  for (const [name, specifier] of Object.entries(entries ?? {})) {
+    if (!themeComponentNameSet.has(name)) {
+      unknown.push(name);
+      continue;
+    }
+    if (typeof specifier !== 'string' || specifier.trim().length === 0) {
+      invalid.push(name);
+      continue;
+    }
+    normalized[name as SvedocsThemeComponentName] = specifier.trim();
+  }
+
+  if (unknown.length > 0) {
+    const label = unknown.length === 1 ? 'component key' : 'component keys';
+    throw new Error(
+      `Unknown svedocs theme ${label}: ${unknown.map((name) => JSON.stringify(name)).join(', ')}. ` +
+      `Supported keys are: ${themeComponentNames.join(', ')}.`
+    );
+  }
+  if (invalid.length > 0) {
+    const label = invalid.length === 1 ? 'component import' : 'component imports';
+    throw new Error(`Invalid svedocs theme ${label}: ${invalid.join(', ')} must be non-empty import specifiers.`);
+  }
+
+  return normalized;
 }
 
 async function loadPageComponent(

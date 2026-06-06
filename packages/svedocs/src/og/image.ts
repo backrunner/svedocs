@@ -25,10 +25,19 @@ export function createConfiguredOgImageTemplate(config: SvedocsResolvedConfig): 
     : undefined;
 }
 
+export function isOgImageEnabled(config: SvedocsResolvedConfig): boolean {
+  return config.seo.ogImage !== false;
+}
+
 export function createPageOgImageEntries(pages: SvedocsPage[], format: 'svg' | 'png' = 'svg'): Array<{ path: string }> {
   return pages
     .filter((page) => !page.hidden)
     .map((page) => ({ path: createPageOgImagePath(page, format).replace(/^\/og\//, '') }));
+}
+
+export function createConfiguredPageOgImageEntries(config: SvedocsResolvedConfig, pages: SvedocsPage[]): Array<{ path: string }> {
+  if (!isOgImageEnabled(config)) return [];
+  return createPageOgImageEntries(pages, createConfiguredOgImageFormat(config));
 }
 
 export async function createPageOgImageResponse(

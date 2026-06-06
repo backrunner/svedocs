@@ -104,6 +104,11 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
       sitemap: config.seo?.sitemap ?? true,
       robots: config.seo?.robots ?? true,
       ...(config.seo?.defaultAuthor ? { defaultAuthor: config.seo.defaultAuthor } : {}),
+      head: {
+        meta: config.seo?.head?.meta ?? [],
+        links: config.seo?.head?.links ?? [],
+        jsonLd: config.seo?.head?.jsonLd ?? config.seo?.head?.jsonld ?? config.seo?.head?.['json-ld'] ?? []
+      },
       ogImage:
         config.seo?.ogImage === false
           ? false

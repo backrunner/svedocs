@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
-  import { createPageAlternates, createPageMetadata } from '../og/metadata.js';
+  import { createJsonLdScript, createPageAlternates, createPageMetadata } from '../og/metadata.js';
   import AskAiPanel from './AskAiPanel.svelte';
   import Footer from './Footer.svelte';
   import { createDomId, createMobileNavController, createThemeContext, createThemeInitScript, createThemeStyle } from './headless.js';
@@ -28,7 +28,10 @@
 
   $: metadata = page ? createPageMetadata(config, page) : undefined;
   $: alternates = page ? createPageAlternates(config, page, pages) : [];
-  $: jsonLd = metadata ? JSON.stringify(metadata.jsonLd) : '';
+  $: jsonLdScripts = metadata ? [
+    createJsonLdScript(metadata.jsonLd),
+    ...metadata.head.jsonLd.map((entry) => createJsonLdScript(entry))
+  ] : [];
   $: themeStyle = createThemeStyle(config);
   $: context = createThemeContext({
     config,
@@ -135,6 +138,12 @@
   {@html createThemeInitScript(config.theme.defaultMode)}
   <title>{metadata?.title ?? config.site.title}</title>
   <meta name="description" content={metadata?.description ?? config.site.description} />
+  {#if metadata?.keywords.length}
+    <meta name="keywords" content={metadata.keywords.join(', ')} />
+  {/if}
+  {#if metadata?.robots}
+    <meta name="robots" content={metadata.robots} />
+  {/if}
   {#if metadata?.canonical}
     <link rel="canonical" href={metadata.canonical} />
   {/if}
@@ -167,7 +176,31 @@
     {#if metadata.twitter.image}
       <meta name="twitter:image" content={metadata.twitter.image} />
     {/if}
-    <script type="application/ld+json">{jsonLd}</script>
+    {#each metadata.head.meta as tag}
+      <meta
+        name={tag.name}
+        property={tag.property}
+        http-equiv={tag.httpEquiv}
+        itemprop={tag.itemprop}
+        content={tag.content}
+      />
+    {/each}
+    {#each metadata.head.links as tag}
+      <link
+        rel={tag.rel}
+        href={tag.href}
+        hreflang={tag.hreflang}
+        type={tag.type}
+        media={tag.media}
+        title={tag.title}
+        sizes={tag.sizes}
+        as={tag.as}
+        crossorigin={tag.crossorigin}
+      />
+    {/each}
+    {#each jsonLdScripts as script}
+      {@html script}
+    {/each}
   {/if}
 </svelte:head>
 

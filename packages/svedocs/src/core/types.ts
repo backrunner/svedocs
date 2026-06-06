@@ -1,3 +1,39 @@
+export interface SvedocsSeoMetaTag {
+  name?: string;
+  property?: string;
+  httpEquiv?: string;
+  itemprop?: string;
+  content: string;
+}
+
+export interface SvedocsSeoLinkTag {
+  rel: string;
+  href: string;
+  hreflang?: string;
+  type?: string;
+  media?: string;
+  title?: string;
+  sizes?: string;
+  as?: string;
+  crossorigin?: string;
+}
+
+export type SvedocsSeoJsonLd = Record<string, unknown>;
+
+export interface SvedocsSeoHead {
+  meta?: SvedocsSeoMetaTag[];
+  links?: SvedocsSeoLinkTag[];
+  jsonLd?: SvedocsSeoJsonLd[];
+  jsonld?: SvedocsSeoJsonLd[];
+  'json-ld'?: SvedocsSeoJsonLd[];
+}
+
+export interface SvedocsResolvedSeoHead {
+  meta: SvedocsSeoMetaTag[];
+  links: SvedocsSeoLinkTag[];
+  jsonLd: SvedocsSeoJsonLd[];
+}
+
 export interface SvedocsSeo {
   title: string;
   description?: string;
@@ -8,6 +44,8 @@ export interface SvedocsSeo {
   author?: string;
   publishedTime?: string;
   updatedTime?: string;
+  robots?: string;
+  head?: SvedocsSeoHead;
 }
 
 export interface SvedocsHeading {
@@ -231,6 +269,7 @@ export interface SvedocsResolvedConfig {
     sitemap: boolean;
     robots: boolean;
     defaultAuthor?: string;
+    head: SvedocsResolvedSeoHead;
     ogImage: false | {
       template: string | SvedocsOgTemplate;
       format: 'svg' | 'png';

@@ -23,10 +23,25 @@ type: article
 keywords:
   - SvelteKit
   - documentation
+robots: index,follow
+head:
+  meta:
+    - name: google-site-verification
+      content: page-token
+  links:
+    - rel: alternate
+      href: /feed.xml
+      type: application/rss+xml
+      title: RSS
+  jsonLd:
+    - "@type": FAQPage
+      name: Search FAQ
 ---
 ```
 
 If `site.url` is set, svedocs generates canonical URLs automatically.
+
+Use `head` for page-specific serializable additions. Global `seo.head` values are merged first, then page frontmatter additions are appended. The default root layout renders `meta`, `link`, and extra JSON-LD entries automatically.
 
 ## Metadata
 
@@ -36,6 +51,7 @@ The default root layout renders:
 - Canonical URL.
 - Open Graph and Twitter card tags.
 - JSON-LD for docs pages and single pages.
+- `keywords`, `robots`, and serializable `head` additions.
 - Article author, publish time, and update time when frontmatter provides them.
 
 Use `createPageMetadata(config, page)` from `svedocs/og` when building custom layouts.
@@ -43,18 +59,16 @@ Use `createPageMetadata(config, page)` from `svedocs/og` when building custom la
 ## Sitemap and robots
 
 ```ts title="src/routes/sitemap.xml/+server.ts"
-import { createSitemapXml } from 'svedocs/og';
+import { createSitemapResponse } from 'svedocs/og';
 import config from 'virtual:svedocs/config';
 import pages from 'virtual:svedocs/pages';
 
 export const GET = () => {
-  return new Response(createSitemapXml(config, pages), {
-    headers: { 'content-type': 'application/xml; charset=utf-8' }
-  });
+  return createSitemapResponse(config, pages);
 };
 ```
 
-`createRobotsTxt(config)` provides a matching `robots.txt` response.
+`createRobotsResponse(config)` provides a matching `robots.txt` response. Both response helpers return `404` when the corresponding `seo.sitemap` or `seo.robots` flag is disabled.
 
 ## Dynamic OG route
 
@@ -64,34 +78,39 @@ import {
   createConfiguredOgImageFormat,
   createConfiguredOgImageRenderer,
   createConfiguredOgImageTemplate,
-  createPageOgImageEntries,
+  createConfiguredPageOgImageEntries,
   createPageOgImagePath,
-  createPageOgImageResponse
+  createPageOgImageResponse,
+  isOgImageEnabled
 } from 'svedocs/og';
 import config from 'virtual:svedocs/config';
 import pages from 'virtual:svedocs/pages';
 
-export const prerender = true;
+export const prerender = isOgImageEnabled(config);
 
 const format = createConfiguredOgImageFormat(config);
+const template = createConfiguredOgImageTemplate(config);
 
 export function entries() {
-  return createPageOgImageEntries(pages, format);
+  return createConfiguredPageOgImageEntries(config, pages);
 }
 
 export const GET = async ({ params }) => {
+  if (!isOgImageEnabled(config)) error(404, 'OG images are disabled.');
   const requestPath = `/og/${params.path}`;
   const page = pages.find((candidate) => createPageOgImagePath(candidate, format) === requestPath);
   if (!page) error(404, `No OG image found for ${requestPath}`);
   return createPageOgImageResponse(config, page, {
     format,
     renderer: createConfiguredOgImageRenderer(config),
-    template: createConfiguredOgImageTemplate(config)
+    ...(template ? { template } : {})
   });
 };
 ```
 
 SVG OG routes are portable to edge runtimes. PNG generation is available through the CLI for build-time assets.
+
+Custom root layouts can use `createJsonLdScript(value)` from `svedocs/og` when rendering JSON-LD through Svelte `{@html ...}`. It escapes script-sensitive characters before returning the complete `<script type="application/ld+json">` tag.
 
 ## Build-time OG assets
 

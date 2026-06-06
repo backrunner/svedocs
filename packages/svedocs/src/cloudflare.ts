@@ -2,6 +2,7 @@ import type { SvedocsResolvedConfig } from './core.js';
 
 export type SvedocsBuildMode = 'edge' | 'static' | 'spa';
 export type SvedocsPagePrerenderOption = true | false | 'auto';
+export type SvedocsTrailingSlashOption = 'always' | 'never' | 'ignore';
 
 export interface CloudflareBindingShape {
   AI?: unknown;
@@ -55,6 +56,10 @@ export function svedocsSsr(mode = readSvedocsBuildMode()): boolean {
 export function svedocsPagePrerender(mode = readSvedocsBuildMode()): SvedocsPagePrerenderOption {
   if (mode === 'static' || mode === 'spa') return true;
   return 'auto';
+}
+
+export function svedocsTrailingSlash(mode = readSvedocsBuildMode()): SvedocsTrailingSlashOption {
+  return mode === 'static' || mode === 'spa' ? 'always' : 'never';
 }
 
 function readSvedocsBuildModeEnv(): string | undefined {

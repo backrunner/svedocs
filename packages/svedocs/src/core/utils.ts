@@ -2,6 +2,15 @@ export function normalizePath(value: string): string {
   return value.replace(/\\/g, '/');
 }
 
+export function formatRoutePathForBuildMode(routePath: string, mode: 'edge' | 'static' | 'spa'): string {
+  const clean = routePath.replace(/^\/+|\/+$/g, '');
+  const normalized = clean ? `/${clean}` : '/';
+  if (mode === 'static' || mode === 'spa') {
+    return normalized === '/' ? '/' : `${normalized}/`;
+  }
+  return normalized;
+}
+
 export function stripContentExtension(value: string): string {
   return value.replace(/\.(md|mdx|svx)$/i, '');
 }
