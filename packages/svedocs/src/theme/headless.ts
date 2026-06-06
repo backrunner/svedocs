@@ -619,7 +619,14 @@ export function createTocController(initial: { page: SvedocsPage }): SvedocsTocC
     const link = tocEl.querySelector<HTMLElement>(`a.sd-toc-link[href="#${cssEscape(id)}"]`);
     if (!link) return;
     const markerHeight = Math.min(24, Math.max(16, link.offsetHeight - 12));
-    indicatorTop.set(link.offsetTop + (link.offsetHeight - markerHeight) / 2);
+    const atBottom = (window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 2;
+    const isLastLink = !link.nextElementSibling || !link.nextElementSibling.matches('a.sd-toc-link');
+    if (atBottom && isLastLink) {
+      const paddingBottom = parseFloat(getComputedStyle(tocEl).paddingBottom) || 0;
+      indicatorTop.set(tocEl.scrollHeight - paddingBottom - markerHeight);
+    } else {
+      indicatorTop.set(link.offsetTop + (link.offsetHeight - markerHeight) / 2);
+    }
     indicatorHeight.set(markerHeight);
     indicatorReady.set(true);
   }
