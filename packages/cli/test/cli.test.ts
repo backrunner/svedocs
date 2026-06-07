@@ -117,9 +117,11 @@ describe('svedocs-cli Batch 0 shell', () => {
       const minimalPackage = await readFile(path.join(tmp, 'minimal-app', 'package.json'), 'utf8');
       const minimalSvelteConfig = await readFile(path.join(tmp, 'minimal-app', 'svelte.config.js'), 'utf8');
       const minimalPageRoute = await readFile(path.join(tmp, 'minimal-app', 'src/routes/+page.ts'), 'utf8');
+      const minimalErrorRoute = await readFile(path.join(tmp, 'minimal-app', 'src/routes/+error.svelte'), 'utf8');
       const cloudflareWrangler = await readFile(path.join(tmp, 'edge-app', 'wrangler.toml'), 'utf8');
       const cloudflareSvelteConfig = await readFile(path.join(tmp, 'edge-app', 'svelte.config.js'), 'utf8');
       const cloudflarePageRoute = await readFile(path.join(tmp, 'edge-app', 'src/routes/+page.ts'), 'utf8');
+      const cloudflareErrorRoute = await readFile(path.join(tmp, 'edge-app', 'src/routes/+error.svelte'), 'utf8');
       const cloudflareRobotsRoute = await readFile(path.join(tmp, 'edge-app', 'src/routes/robots.txt/+server.ts'), 'utf8');
       const cloudflareSitemapRoute = await readFile(path.join(tmp, 'edge-app', 'src/routes/sitemap.xml/+server.ts'), 'utf8');
       const cloudflareOgRoute = await readFile(path.join(tmp, 'edge-app', 'src/routes/og/[...path]/+server.ts'), 'utf8');
@@ -137,12 +139,16 @@ describe('svedocs-cli Batch 0 shell', () => {
       expect(minimalSvelteConfig).toContain('remoteBindings: false');
       expect(minimalSvelteConfig).toContain("fallback: '200.html'");
       expect(minimalPageRoute).toContain('svedocsPagePrerender');
+      expect(minimalErrorRoute).toContain('themeComponents.Error ?? ErrorPage');
+      expect(minimalErrorRoute).toContain('virtual:svedocs/theme-components');
       expect(await readFile(path.join(tmp, 'minimal-app', 'src/routes/+layout.ts'), 'utf8')).toContain('svedocsTrailingSlash');
       expect(cloudflareWrangler).toContain('pages_build_output_dir');
       expect(cloudflareWrangler).toContain('[[ai_search]]');
       expect(cloudflareSvelteConfig).toContain('remoteBindings: false');
       expect(cloudflareSvelteConfig).toContain("fallback: '200.html'");
       expect(cloudflarePageRoute).toContain('svedocsPagePrerender');
+      expect(cloudflareErrorRoute).toContain('themeComponents.Error ?? ErrorPage');
+      expect(cloudflareErrorRoute).toContain('virtual:svedocs/theme-components');
       expect(cloudflareRobotsRoute).toContain('export const prerender = config.seo.robots');
       expect(cloudflareRobotsRoute).toContain('createRobotsResponse');
       expect(cloudflareSitemapRoute).toContain('export const prerender = config.seo.sitemap');
