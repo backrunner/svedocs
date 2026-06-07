@@ -129,6 +129,20 @@ Read [Configuration](/docs/configuration) and jump to
 [Build modes](/docs/configuration#build-modes).
 ```
 
+External links receive a small inline icon in the default theme so readers can distinguish off-site navigation:
+
+```md
+Read the [SvelteKit docs](https://svelte.dev/docs/kit).
+```
+
+For example, the [SvelteKit documentation](https://svelte.dev/docs/kit) link is marked as an external web link.
+
+Use a standalone internal link with a `card` title to render a Fumadocs-style link card:
+
+```md
+[SEO and OG](/docs/integrations/seo-og "card: Metadata, sitemap, robots, JSON-LD, and Open Graph routes.")
+```
+
 Local assets are checked when `checks.assets` is enabled:
 
 ```md

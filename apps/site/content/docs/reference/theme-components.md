@@ -60,16 +60,29 @@ The map type is:
 | Key | Default component | Props type |
 | --- | --- | --- |
 | `Root` | `RootLayout` | `SvedocsRootProps` |
+| `Layout` | `LayoutShell` | `SvedocsLayoutShellProps` |
+| `Docs` | `DocsLayout` | `SvedocsDocsLayoutProps` |
+| `DocsShell` | `DocsShell` | `SvedocsDocsShellProps` |
+| `Page` | `PageLayout` | `SvedocsPageLayoutProps` |
+| `PageShell` | `PageShell` | `SvedocsPageShellProps` |
+| `Home` | `HomePage` | `SvedocsHomeLayoutProps` |
+| `Error` | `ErrorPage` | `SvedocsErrorProps` |
+| `Brand` | `Brand` | `SvedocsBrandProps` |
+| `TopNav` | `TopNav` | `SvedocsTopNavProps` |
+| `Header` | `Navbar` | `SvedocsHeaderProps` |
 | `Navbar` | `Navbar` | `SvedocsNavbarProps` |
 | `MobileNav` | `MobileNav` | `SvedocsMobileNavProps` |
+| `SocialNav` | `SocialNav` | `SvedocsSocialNavProps` |
 | `Sidebar` | `SidebarTree` | `SvedocsSidebarProps` |
 | `Article` | `Article` | `SvedocsArticleProps` |
 | `Toc` | `TableOfContents` | `SvedocsTocProps` |
 | `Search` | `SearchDialog` | `SvedocsSearchProps` |
 | `AskAi` | `AskAiPanel` | `SvedocsAskAiProps` |
 | `Footer` | `Footer` | `SvedocsFooterProps` |
+| `FooterLinks` | `FooterLinks` | `SvedocsFooterLinksProps` |
 | `ThemeToggle` | `ThemeToggle` | `SvedocsThemeToggleProps` |
 | `PageTools` | `PageTools` | `SvedocsPageToolsProps` |
+| `RenderError` | `RenderError` | `SvedocsRenderErrorProps` |
 
 ## Shared context
 
@@ -111,7 +124,7 @@ Slots: `background`, `landing`, `home-hero-visual`, `home-features`, and `doc-he
 
 ## Root
 
-`Root` owns the document metadata, theme initialization script, skip link, top navbar, Ask AI mount point, page tools, footer, and shared background slot.
+`Root` owns document metadata, the theme initialization script, route hydration state, scrollbar visibility behavior, and the shared background slot. Its default visual shell is `Layout`.
 
 | Prop | Notes |
 | --- | --- |
@@ -123,9 +136,38 @@ Slots: `background`, `landing`, `home-hero-visual`, `home-features`, and `doc-he
 
 The default root renders `<slot />` as the page body and `<slot name="background" />` as a decorative layer.
 
+## Layouts
+
+`Docs`, `Page`, `Home`, and `Error` are the page-level layouts used by `DocsApp` and generated routes. Replace them when you want to keep framework routing, metadata, and content loading but provide a new page shell. `Error` renders SvelteKit error pages with the same themed root, header, footer, search, theme mode, and `noindex` metadata; generated templates include `src/routes/+error.svelte`.
+
+| Component | Notes |
+| --- | --- |
+| `Docs` | Docs article shell with sidebar, article, and ToC. |
+| `Page` | Standalone page shell. |
+| `Home` | Home page shell and feature entry points. |
+| `Error` | Receives `status`, `message`, `error`, `path`, config, manifest data, search, and `themeComponents`. |
+
+`Docs`, `Page`, and `Home` receive the current `page`, `pages`, `tree`, `search`, `config`, `loadSearch`, page `content`, and `themeComponents` so replacement layouts can reuse the same navigation and runtime data as the bundled theme.
+
+## Basic Layout Components
+
+`Layout`, `DocsShell`, and `PageShell` are lower-level visual layout components. Replace them when your theme only needs a different outer frame or content geometry while preserving the default page-level behavior.
+
+| Component | Notes |
+| --- | --- |
+| `Layout` | Site frame inside `Root`: skip link, header, background slot, default slot, Ask AI, page tools, and footer. |
+| `DocsShell` | Documentation content geometry: sidebar, article region, and ToC. |
+| `PageShell` | Standalone page body and error page body. Supports `variant="page"` and `variant="error"`. |
+
+`Layout` receives `SvedocsLayoutShellProps`, including `context`, `themeStyle`, mobile-nav state, `themeComponents`, and mobile callbacks. If you replace it, keep rendering the default slot, the `background` slot when `hasBackgroundSlot` is true, and the header/footer or your own equivalents.
+
+`DocsShell` receives `page`, `navigationTree`, `content`, `context`, `tocController`, `hasDocHeaderSlot`, and `themeComponents`. The default shell still delegates to replaceable `Sidebar`, `Article`, and `Toc`.
+
+`PageShell` receives optional `page`, `variant`, `title`, `description`, `kicker`, `content`, `html`, `status`, `path`, and `actions`. The default `Page` and `Error` components both use it, so replacing `PageShell` updates normal standalone pages and the default error page together.
+
 ## Navbar
 
-`Navbar` renders brand, primary navigation, search, locale/version switcher, social links, theme toggle, and mobile navigation.
+`Navbar` renders brand, primary navigation, search, locale/version switcher, social links, theme toggle, and mobile navigation. `Header` is an alias replacement point for `Navbar`, and the default navbar composes `Brand`, `TopNav`, `SocialNav`, `Search`, `ThemeToggle`, and `MobileNav`.
 
 | Prop | Notes |
 | --- | --- |
@@ -182,6 +224,7 @@ Custom sidebars should preserve normal links and `aria-current="page"` on the ac
 | `content` | Compiled Svelte content component for `.svx` / `.mdx`; fallback is `page.html`. |
 | `context` | Optional `SvedocsThemeContext`. |
 | `hasDocHeaderSlot` | Forces or disables the `doc-header` slot branch. |
+| `themeComponents` | Passed through so the default article can use a custom `RenderError`. |
 
 The default article exposes a `doc-header` slot with `page` and `breadcrumbs`. If you replace the component, keep rendering either `content` or `page.html`, and keep stable article landmarks for accessibility.
 
@@ -208,6 +251,22 @@ The default article exposes a `doc-header` slot with `page` and `breadcrumbs`. I
 | `controller` | Optional `SvedocsTocController`; `DocsLayout` passes a shared controller. |
 
 Use `createTocController({ page })` in a custom layout when the ToC and article body need to share active-heading state.
+
+## RenderError
+
+`RenderError` is the default error boundary UI for rendering failures inside the theme. The bundled `DocsApp`, `Root`, `Error`, `Docs`, `Layout`, `DocsShell`, `PageShell`, `Home`, and `Article` components catch local render errors with `<svelte:boundary>` and render this component instead of taking down the whole route.
+
+| Prop | Notes |
+| --- | --- |
+| `error` | Unknown thrown value from the boundary. |
+| `reset` | Optional Svelte boundary reset callback. |
+| `title`, `message`, `label` | User-facing copy for the failed area. |
+| `variant` | `layout`, `article`, `content`, `navigation`, `tools`, `section`, or a custom string. |
+| `page` | Current page when available. |
+| `context` | Optional `SvedocsThemeContext`. |
+| `tree` | Optional navigation tree used for a docs-home action. |
+
+Replace `RenderError` when your theme needs different recovery actions, logging, telemetry, or copy. Keep the UI calm and local: article failures should still leave the header/sidebar visible, and sidebar/ToC failures should not hide the article.
 
 ## Search
 
@@ -276,7 +335,7 @@ The default panel accepts JSON responses and `text/event-stream` deltas. It also
 | --- | --- |
 | `context` | Required `SvedocsThemeContext`. |
 
-The default footer hides on docs article pages. A custom footer can choose a different rule by reading `context.isDocsPage` and `context.surface`.
+The default footer hides on docs article pages and composes `FooterLinks`. A custom footer can choose a different rule by reading `context.isDocsPage` and `context.surface`.
 
 ## ThemeToggle
 

@@ -129,6 +129,20 @@ Read [Configuration](/docs/configuration) and jump to
 [Build modes](/docs/configuration#build-modes).
 ```
 
+外部链接在默认主题里会带一个小的内联图标，帮助读者区分站外跳转：
+
+```md
+Read the [SvelteKit docs](https://svelte.dev/docs/kit).
+```
+
+例如，[SvelteKit documentation](https://svelte.dev/docs/kit) 这个链接会被标记为外部网页链接。
+
+独立一行的内部链接可以通过 `card` title 渲染成类似 Fumadocs 的卡片式链接：
+
+```md
+[SEO and OG](/docs/integrations/seo-og "card: Metadata, sitemap, robots, JSON-LD, and Open Graph routes.")
+```
+
 启用 `checks.assets` 时，本地资源也会被检查：
 
 ```md

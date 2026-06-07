@@ -72,9 +72,11 @@ Use dry-runs in CI until credentials are ready. The commands print the generated
 
 ## Pages in this section
 
-- [Search and Ask AI](/docs/integrations/search-ai): providers, routes, indexing, citations, streaming, and rate limits.
-- [Cloudflare](/docs/integrations/cloudflare): build presets, Wrangler output, AI Search bindings, Workers AI, and local development.
-- [SEO and OG](/docs/integrations/seo-og): metadata, canonical URLs, sitemap, robots, JSON-LD, dynamic OG routes, and build-time assets.
+[Search and Ask AI](/docs/integrations/search-ai "card: Providers, routes, indexing, citations, streaming, and rate limits.")
+
+[Cloudflare](/docs/integrations/cloudflare "card: Build presets, Wrangler output, AI Search bindings, Workers AI, and local development.")
+
+[SEO and OG](/docs/integrations/seo-og "card: Metadata, canonical URLs, sitemap, robots, JSON-LD, dynamic OG routes, and build-time assets.")
 
 ## Choosing a path
 

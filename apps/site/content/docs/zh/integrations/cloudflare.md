@@ -20,7 +20,7 @@ const preset = createCloudflarePreset(process.env.SVEDOCS_BUILD_MODE ?? 'edge');
 export default {
   kit: {
     adapter: preset.adapter === '@sveltejs/adapter-cloudflare'
-      ? adapterCloudflare({ platformProxy: { remoteBindings: false } })
+      ? adapterCloudflare({ platformProxy: { remoteBindings: false, persist: false } })
       : adapterStatic({ fallback: preset.mode === 'spa' ? '200.html' : undefined })
   }
 };
@@ -42,7 +42,7 @@ instance_name = "svedocs"
 
 如果你用的是 AI Search namespace，就把 `cloudflare.aiSearch.namespace` 配上，svedocs 会输出 `[[ai_search_namespaces]]`，而不是 `[[ai_search]]`。
 
-`platformProxy.remoteBindings` 在本地 adapter 配置里默认关闭，这样 edge 构建和预渲染就不需要 Cloudflare 账号。`cloudflare.aiSearch.remote` 也默认是 `false`；只有在你确实想让本地开发直连远端 Cloudflare 资源时，才把这两个开关一起打开。
+`platformProxy.remoteBindings` 在本地 adapter 配置里默认关闭，这样 edge 构建和预渲染就不需要 Cloudflare 账号。`platformProxy.persist` 默认也关闭，用来避免反复重启 dev server 时遇到本地 Miniflare state 锁。`cloudflare.aiSearch.remote` 默认是 `false`；只有在你确实想让本地开发直连 Cloudflare 资源时，才主动打开远端 bindings。
 
 ## 运行时类型
 

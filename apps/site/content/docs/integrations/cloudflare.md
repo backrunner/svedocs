@@ -20,7 +20,7 @@ const preset = createCloudflarePreset(process.env.SVEDOCS_BUILD_MODE ?? 'edge');
 export default {
   kit: {
     adapter: preset.adapter === '@sveltejs/adapter-cloudflare'
-      ? adapterCloudflare({ platformProxy: { remoteBindings: false } })
+      ? adapterCloudflare({ platformProxy: { remoteBindings: false, persist: false } })
       : adapterStatic({ fallback: preset.mode === 'spa' ? '200.html' : undefined })
   }
 };
@@ -42,7 +42,7 @@ instance_name = "svedocs"
 
 For AI Search namespaces, configure `cloudflare.aiSearch.namespace`; svedocs will emit `[[ai_search_namespaces]]` instead of `[[ai_search]]`.
 
-`platformProxy.remoteBindings` is disabled in the local adapter config so edge builds and prerendering do not require a Cloudflare account. `cloudflare.aiSearch.remote` also defaults to `false`; set both intentionally only when you want local development to talk to remote Cloudflare resources.
+`platformProxy.remoteBindings` is disabled in the local adapter config so edge builds and prerendering do not require a Cloudflare account. `platformProxy.persist` is disabled by default to avoid local Miniflare state locks during repeated dev-server restarts. `cloudflare.aiSearch.remote` defaults to `false`; set remote bindings intentionally only when you want local development to talk to Cloudflare resources.
 
 ## Runtime types
 
@@ -68,4 +68,3 @@ AI Search is opt-in. A default project keeps MiniSearch local search, and only e
 Cloudflare-backed routes should always keep local fallback behavior. The template search route uses `createConfiguredSearchResponse`, so Cloudflare AI Search falls back to local JSON search when no binding is present. The Ask AI route uses `createConfiguredAskResponse`, so missing AI Search, Workers AI, or OpenAI-compatible credentials fall back to the mock provider with local citations.
 
 Use `.dev.vars.example` for environment names and keep real tokens out of the repository.
-

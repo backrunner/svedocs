@@ -60,16 +60,29 @@ svedocs({
 | Key | 默认组件 | Props 类型 |
 | --- | --- | --- |
 | `Root` | `RootLayout` | `SvedocsRootProps` |
+| `Layout` | `LayoutShell` | `SvedocsLayoutShellProps` |
+| `Docs` | `DocsLayout` | `SvedocsDocsLayoutProps` |
+| `DocsShell` | `DocsShell` | `SvedocsDocsShellProps` |
+| `Page` | `PageLayout` | `SvedocsPageLayoutProps` |
+| `PageShell` | `PageShell` | `SvedocsPageShellProps` |
+| `Home` | `HomePage` | `SvedocsHomeLayoutProps` |
+| `Error` | `ErrorPage` | `SvedocsErrorProps` |
+| `Brand` | `Brand` | `SvedocsBrandProps` |
+| `TopNav` | `TopNav` | `SvedocsTopNavProps` |
+| `Header` | `Navbar` | `SvedocsHeaderProps` |
 | `Navbar` | `Navbar` | `SvedocsNavbarProps` |
 | `MobileNav` | `MobileNav` | `SvedocsMobileNavProps` |
+| `SocialNav` | `SocialNav` | `SvedocsSocialNavProps` |
 | `Sidebar` | `SidebarTree` | `SvedocsSidebarProps` |
 | `Article` | `Article` | `SvedocsArticleProps` |
 | `Toc` | `TableOfContents` | `SvedocsTocProps` |
 | `Search` | `SearchDialog` | `SvedocsSearchProps` |
 | `AskAi` | `AskAiPanel` | `SvedocsAskAiProps` |
 | `Footer` | `Footer` | `SvedocsFooterProps` |
+| `FooterLinks` | `FooterLinks` | `SvedocsFooterLinksProps` |
 | `ThemeToggle` | `ThemeToggle` | `SvedocsThemeToggleProps` |
 | `PageTools` | `PageTools` | `SvedocsPageToolsProps` |
+| `RenderError` | `RenderError` | `SvedocsRenderErrorProps` |
 
 ## 共享上下文
 
@@ -111,7 +124,7 @@ Slots：`background`、`landing`、`home-hero-visual`、`home-features` 和 `doc
 
 ## Root
 
-`Root` 负责文档 metadata、主题初始化脚本、skip link、顶部导航、Ask AI 挂载点、页面工具、footer 和共享背景 slot。
+`Root` 负责文档 metadata、主题初始化脚本、路由 hydration 状态、滚动条显隐行为和共享背景 slot。默认的可视外壳是 `Layout`。
 
 | Prop | 说明 |
 | --- | --- |
@@ -123,9 +136,38 @@ Slots：`background`、`landing`、`home-hero-visual`、`home-features` 和 `doc
 
 默认 root 会把 `<slot />` 渲染成页面主体，把 `<slot name="background" />` 渲染成装饰背景层。
 
+## 布局组件
+
+`Docs`、`Page`、`Home` 和 `Error` 是 `DocsApp` 与生成路由使用的页面级布局。想保留框架路由、metadata 和内容加载，但换一套页面 shell 时可以替换它们。`Error` 会用同一个主题 root、header、footer、搜索、明暗模式和 `noindex` metadata 渲染 SvelteKit 错误页；生成模板已经包含 `src/routes/+error.svelte`。
+
+| 组件 | 说明 |
+| --- | --- |
+| `Docs` | 文档文章 shell，包含 sidebar、article 和 ToC。 |
+| `Page` | 独立页面 shell。 |
+| `Home` | 首页 shell 和入口卡片。 |
+| `Error` | 接收 `status`、`message`、`error`、`path`、config、manifest data、search 和 `themeComponents`。 |
+
+`Docs`、`Page` 和 `Home` 都会接收当前 `page`、`pages`、`tree`、`search`、`config`、`loadSearch`、页面 `content` 和 `themeComponents`，替换布局时可以复用和内置主题一样的导航与运行时数据。
+
+## 基础布局组件
+
+`Layout`、`DocsShell` 和 `PageShell` 是更底层的可视布局组件。当主题只需要换外层框架或内容几何结构、不想重写页面级行为时，替换它们即可。
+
+| 组件 | 说明 |
+| --- | --- |
+| `Layout` | `Root` 内部的站点框架：skip link、header、背景 slot、默认 slot、Ask AI、页面工具和 footer。 |
+| `DocsShell` | 文档内容几何结构：sidebar、article 区域和 ToC。 |
+| `PageShell` | 独立页面正文和错误页正文。支持 `variant="page"` 和 `variant="error"`。 |
+
+`Layout` 接收 `SvedocsLayoutShellProps`，包含 `context`、`themeStyle`、移动导航状态、`themeComponents` 和移动端回调。替换它时，应继续渲染默认 slot、在 `hasBackgroundSlot` 为 true 时渲染 `background` slot，并提供 header/footer 或你自己的等价区域。
+
+`DocsShell` 接收 `page`、`navigationTree`、`content`、`context`、`tocController`、`hasDocHeaderSlot` 和 `themeComponents`。默认 shell 仍然会委托给可替换的 `Sidebar`、`Article` 和 `Toc`。
+
+`PageShell` 接收可选的 `page`、`variant`、`title`、`description`、`kicker`、`content`、`html`、`status`、`path` 和 `actions`。默认 `Page` 和 `Error` 都会使用它，所以替换 `PageShell` 可以同时更新普通独立页和默认错误页。
+
 ## Navbar
 
-`Navbar` 渲染品牌、主导航、搜索、locale/version switcher、社交链接、主题切换和移动端导航。
+`Navbar` 渲染品牌、主导航、搜索、locale/version switcher、社交链接、主题切换和移动端导航。`Header` 是 `Navbar` 的别名替换点；默认 navbar 会组合 `Brand`、`TopNav`、`SocialNav`、`Search`、`ThemeToggle` 和 `MobileNav`。
 
 | Prop | 说明 |
 | --- | --- |
@@ -182,6 +224,7 @@ Slots：`background`、`landing`、`home-hero-visual`、`home-features` 和 `doc
 | `content` | `.svx` / `.mdx` 编译后的 Svelte 内容组件；没有时使用 `page.html`。 |
 | `context` | 可选，`SvedocsThemeContext`。 |
 | `hasDocHeaderSlot` | 强制开启或关闭 `doc-header` slot 分支。 |
+| `themeComponents` | 继续传给默认 article，用于渲染自定义 `RenderError`。 |
 
 默认 article 提供 `doc-header` slot，传入 `page` 和 `breadcrumbs`。替换组件时，要继续渲染 `content` 或 `page.html`，并保留清晰的 article landmark。
 
@@ -208,6 +251,22 @@ Slots：`background`、`landing`、`home-hero-visual`、`home-features` 和 `doc
 | `controller` | 可选，`SvedocsTocController`；`DocsLayout` 会传入共享 controller。 |
 
 自定义 layout 中如果 ToC 和文章正文需要共享 active-heading 状态，可以使用 `createTocController({ page })`。
+
+## RenderError
+
+`RenderError` 是主题内部渲染失败时的默认 error boundary UI。内置的 `DocsApp`、`Root`、`Error`、`Docs`、`Layout`、`DocsShell`、`PageShell`、`Home` 和 `Article` 会用 `<svelte:boundary>` 捕获局部渲染错误，并渲染这个组件，而不是让整个路由崩掉。
+
+| Prop | 说明 |
+| --- | --- |
+| `error` | boundary 捕获到的未知错误值。 |
+| `reset` | 可选的 Svelte boundary reset 回调。 |
+| `title`、`message`、`label` | 当前失败区域的用户可见文案。 |
+| `variant` | `layout`、`article`、`content`、`navigation`、`tools`、`section` 或自定义字符串。 |
+| `page` | 可用时传入当前页面。 |
+| `context` | 可选，`SvedocsThemeContext`。 |
+| `tree` | 可选导航树，用于生成 docs-home 操作。 |
+
+当主题需要自定义恢复操作、日志、遥测或文案时，可以替换 `RenderError`。建议保持错误展示局部且克制：文章失败时仍然保留 header/sidebar，sidebar/ToC 失败时不要挡住文章正文。
 
 ## Search
 

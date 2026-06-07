@@ -290,7 +290,7 @@ svedocs({
 />
 ```
 
-替换组件的 props 从 `svedocs/theme/types` 获取类型。可替换组件包括 `Root`、`Navbar`、`MobileNav`、`Sidebar`、`Article`、`Toc`、`Search`、`AskAi`、`Footer`、`ThemeToggle` 和 `PageTools`。每个组件的完整 props 见 [组件](/docs/zh/reference/theme-components)。
+替换组件的 props 从 `svedocs/theme/types` 获取类型。可替换组件包括 `Root`、`Layout`、`Docs`、`DocsShell`、`Page`、`PageShell`、`Home`、`Error`、`Header`、`Navbar`、`Brand`、`TopNav`、`MobileNav`、`SocialNav`、`Sidebar`、`Article`、`Toc`、`Search`、`AskAi`、`Footer`、`FooterLinks`、`ThemeToggle`、`PageTools` 和 `RenderError`。每个组件的完整 props 见 [组件](/docs/zh/reference/theme-components)。
 
 ```svelte title="src/lib/theme/Navbar.svelte"
 <script lang="ts">
@@ -323,10 +323,14 @@ svedocs({
 - 保留正常的 `header`、`nav`、`main`、`article`、`aside`、`footer` 等 landmarks。
 - 对 `.svx` / `.mdx` 页面渲染 `content`，没有内容组件时回退到 `page.html`。
 - 仍然组合部分默认组件时，把 `themeComponents` 继续传给嵌套组件。
+- 如果替换 `Root`、`Docs`、`Page`、`Home` 或 `Error`，继续把 `pages`、`tree`、`search`、`config` 和 `loadSearch` 传进 theme context 或嵌套默认组件，这样侧栏高亮、移动导航、搜索和 Ask AI 才能保持联动。
+- 只调整布局几何结构时，优先替换 `Layout`、`DocsShell` 或 `PageShell`，再考虑替换更大的 `Root`、`Docs`、`Page` 或 `Error`。
 - 大型站点优先使用 `loadSearch`，避免把所有搜索记录塞进首屏路由 payload。
 - 自定义命令按钮可以用 `svedocs:open-search` 和 `svedocs:open-ai` 事件打开默认搜索和 Ask AI 面板。
 
 Markdown 输出仍然保留稳定的 `sd-*` 结构类名，默认主题和自定义主题都可以针对同一套 prose、heading、code markup 写样式。如果主题自己渲染复制按钮，可以设置 `theme.code.copyButton: false`。
+
+生成模板已经包含 `src/routes/+error.svelte`。注册 `theme.components.Error` 可以替换完整路由错误页；注册 `theme.components.RenderError` 可以替换文章内容、布局区域、导航和工具里的局部 error boundary UI。生成的错误路由会捕获自定义 `Error` 组件自身的失败，并回退到内置 `ErrorPage`。
 
 主题包可以是普通 Svelte library。你可以从包里导出 Svelte 组件，声明期望的 `svedocs` peer version，然后让用户在 `svedocs({ theme: { components } })` 中注册对应组件路径。
 

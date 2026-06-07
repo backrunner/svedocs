@@ -290,7 +290,7 @@ Generated route files import `virtual:svedocs/theme-components` and pass it into
 />
 ```
 
-Replacement components receive typed props from `svedocs/theme/types`. The component map supports `Root`, `Navbar`, `MobileNav`, `Sidebar`, `Article`, `Toc`, `Search`, `AskAi`, `Footer`, `ThemeToggle`, and `PageTools`. See [Components](/docs/reference/theme-components) for the full per-component props.
+Replacement components receive typed props from `svedocs/theme/types`. The component map supports `Root`, `Layout`, `Docs`, `DocsShell`, `Page`, `PageShell`, `Home`, `Error`, `Header`, `Navbar`, `Brand`, `TopNav`, `MobileNav`, `SocialNav`, `Sidebar`, `Article`, `Toc`, `Search`, `AskAi`, `Footer`, `FooterLinks`, `ThemeToggle`, `PageTools`, and `RenderError`. See [Components](/docs/reference/theme-components) for the full per-component props.
 
 ```svelte title="src/lib/theme/Navbar.svelte"
 <script lang="ts">
@@ -323,10 +323,14 @@ When writing replacement components:
 - Keep normal landmarks such as `header`, `nav`, `main`, `article`, `aside`, and `footer`.
 - Render `content` for compiled `.svx` / `.mdx` pages and fall back to `page.html` when no content component exists.
 - Pass `themeComponents` to nested default components when you still compose part of the bundled theme.
+- If you replace `Root`, `Docs`, `Page`, `Home`, or `Error`, keep passing `pages`, `tree`, `search`, `config`, and `loadSearch` into the theme context or nested default components so sidebar highlighting, mobile navigation, search, and Ask AI keep working.
+- Replace `Layout`, `DocsShell`, or `PageShell` for layout geometry changes before replacing the larger `Root`, `Docs`, `Page`, or `Error` components.
 - Use `loadSearch` for large sites instead of forcing all search records into the first route payload.
 - Trigger the default search and Ask AI panels with `svedocs:open-search` and `svedocs:open-ai` events when you build custom command buttons.
 
 Markdown output still includes stable `sd-*` structure classes for prose, headings, and code blocks so default styles and custom styles can target the same markup. Set `theme.code.copyButton: false` if your theme renders its own copy control.
+
+Generated templates include `src/routes/+error.svelte`. Register `theme.components.Error` to replace full-route error pages, and register `theme.components.RenderError` to replace local error-boundary UI inside article content, layout regions, navigation, and tools. The generated error route catches failures in a custom `Error` component and falls back to the bundled `ErrorPage`.
 
 Theme packages can be ordinary Svelte libraries. Export Svelte components from the package, document the expected `svedocs` peer version, and have users register the package component paths in `svedocs({ theme: { components } })`.
 

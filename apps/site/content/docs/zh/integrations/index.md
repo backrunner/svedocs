@@ -72,9 +72,11 @@ svedocs deploy cloudflare --write
 
 ## 本节内容
 
-- [搜索和 Ask AI](/docs/zh/integrations/search-ai)：provider、路由、索引、引用、流式响应和限流。
-- [Cloudflare](/docs/zh/integrations/cloudflare)：构建 preset、Wrangler 输出、AI Search bindings、Workers AI 和本地开发。
-- [SEO 和 OG](/docs/zh/integrations/seo-og)：metadata、canonical URL、sitemap、robots、JSON-LD、动态 OG 路由和构建期资产。
+[搜索和 Ask AI](/docs/zh/integrations/search-ai "card: Provider、路由、索引、引用、流式响应和限流。")
+
+[Cloudflare](/docs/zh/integrations/cloudflare "card: 构建 preset、Wrangler 输出、AI Search bindings、Workers AI 和本地开发。")
+
+[SEO 和 OG](/docs/zh/integrations/seo-og "card: Metadata、canonical URL、sitemap、robots、JSON-LD、动态 OG 路由和构建期资产。")
 
 ## 选择路径
 
