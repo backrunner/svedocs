@@ -3,11 +3,10 @@
   import type { Component } from 'svelte';
   import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
   import { createPageTree as createCorePageTree } from '../core/navigation.js';
-  import Article from './Article.svelte';
   import { createThemeContext, createTocController } from './headless.js';
+  import DocsShell from './DocsShell.svelte';
+  import SafeRenderError from './SafeRenderError.svelte';
   import RootLayout from './RootLayout.svelte';
-  import SidebarTree from './SidebarTree.svelte';
-  import TableOfContents from './TableOfContents.svelte';
   import type { SvedocsThemeComponentMap } from './types.js';
 
   export let page: SvedocsPage;
@@ -29,9 +28,8 @@
   $: context = createThemeContext({ config, page, pages, tree: navigationTree, search, ...(loadSearch ? { loadSearch } : {}) });
   $: tocController.setPage(page);
   $: Root = themeComponents.Root ?? RootLayout;
-  $: Sidebar = themeComponents.Sidebar ?? SidebarTree;
-  $: ArticleComponent = themeComponents.Article ?? Article;
-  $: Toc = themeComponents.Toc ?? TableOfContents;
+  $: Shell = themeComponents.DocsShell ?? DocsShell;
+  $: ErrorComponent = SafeRenderError;
 
   onMount(() => tocController.mount());
 
@@ -57,19 +55,36 @@
   <svelte:fragment slot="background">
     <slot name="background" />
   </svelte:fragment>
-  <div class="sd-doc-shell">
-    <aside class="sd-sidebar" aria-label="Documentation">
-      <nav>
-        <svelte:component this={Sidebar} items={navigationTree} currentPath={page.routePath} />
-      </nav>
-    </aside>
-    <main id="content" class="sd-content">
-      <svelte:component this={ArticleComponent} {page} {content} {context} hasDocHeaderSlot={showDocHeaderSlot}>
-        <svelte:fragment slot="doc-header" let:page let:breadcrumbs>
-          <slot name="doc-header" {page} {breadcrumbs} />
-        </svelte:fragment>
-      </svelte:component>
-    </main>
-    <svelte:component this={Toc} {page} controller={tocController} />
-  </div>
+  <svelte:boundary>
+    <svelte:component
+      this={Shell}
+      {page}
+      {content}
+      {context}
+      {navigationTree}
+      {themeComponents}
+      tocController={tocController}
+      hasDocHeaderSlot={showDocHeaderSlot}
+    >
+      <svelte:fragment slot="doc-header" let:page let:breadcrumbs>
+        <slot name="doc-header" {page} {breadcrumbs} />
+      </svelte:fragment>
+    </svelte:component>
+    {#snippet failed(error, reset)}
+      <main id="content" class="sd-content">
+        <svelte:component
+          this={ErrorComponent} component={themeComponents.RenderError}
+          {error}
+          {reset}
+          {page}
+          {context}
+          tree={navigationTree}
+          variant="layout"
+          label="Documentation layout issue"
+          title="This documentation layout could not render"
+          message="A layout component failed while rendering. Retry the section, or use the top navigation to continue."
+        />
+      </main>
+    {/snippet}
+  </svelte:boundary>
 </svelte:component>

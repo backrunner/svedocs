@@ -389,6 +389,7 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
 .sd-sidebar a,
 .sd-sidebar-link,
 .sd-sidebar-summary-link,
+.sd-sidebar-section-link,
 .sd-toc-link,
 .sd-button,
 .sd-prev-next,
@@ -593,6 +594,7 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
 .sd-sidebar-link:focus-visible,
 .sd-sidebar-summary:focus-visible,
 .sd-sidebar-summary-link:focus-visible,
+.sd-sidebar-section-link:focus-visible,
 .sd-toc-link:focus-visible {
   outline: 2px solid var(--sd-accent);
   outline-offset: 2px;
@@ -1718,6 +1720,7 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
 }
 
 .sd-sidebar-section-heading {
+  position: relative;
   display: flex;
   align-items: center;
   gap: .45rem;
@@ -1740,6 +1743,36 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
 
 .sd-sidebar-section-heading.sd-active {
   color: var(--sd-ink);
+}
+
+.sd-sidebar-section-link {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  color: inherit;
+}
+
+.sd-sidebar-section-link:hover {
+  color: var(--sd-accent);
+}
+
+.sd-sidebar-section-link.sd-active {
+  color: var(--sd-ink);
+}
+
+.sd-sidebar-section-link.sd-active::after {
+  content: "";
+  position: absolute;
+  inset: -.28rem -.38rem;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--sd-accent) 36%, transparent);
+  background:
+    linear-gradient(135deg, var(--sd-accent) 0 1px, transparent 1px) top left/4px 4px no-repeat,
+    linear-gradient(225deg, var(--sd-accent) 0 1px, transparent 1px) top right/4px 4px no-repeat,
+    linear-gradient(45deg, var(--sd-accent) 0 1px, transparent 1px) bottom left/4px 4px no-repeat,
+    linear-gradient(315deg, var(--sd-accent) 0 1px, transparent 1px) bottom right/4px 4px no-repeat;
+  opacity: .75;
 }
 
 .sd-sidebar-section-icon {
@@ -1776,6 +1809,7 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
 }
 
 .sd-sidebar-summary {
+  position: relative;
   display: flex;
   align-items: center;
   gap: .4rem;
@@ -1928,12 +1962,29 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
 }
 
 .sd-sidebar-summary.sd-active {
+  background: color-mix(in srgb, var(--sd-accent) 14%, transparent);
   color: var(--sd-ink);
+  border-radius: 0;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sd-accent) 32%, transparent);
 }
 
 .sd-sidebar-summary.sd-active .sd-sidebar-summary-link {
   color: var(--sd-ink);
   font-weight: 500;
+}
+
+.sd-sidebar-summary.sd-active::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  border-radius: 0;
+  background:
+    linear-gradient(135deg, var(--sd-accent) 0 1px, transparent 1px) top left/4px 4px no-repeat,
+    linear-gradient(225deg, var(--sd-accent) 0 1px, transparent 1px) top right/4px 4px no-repeat,
+    linear-gradient(45deg, var(--sd-accent) 0 1px, transparent 1px) bottom left/4px 4px no-repeat,
+    linear-gradient(315deg, var(--sd-accent) 0 1px, transparent 1px) bottom right/4px 4px no-repeat;
+  opacity: .55;
 }
 
 .sd-sidebar-section-label {
@@ -2125,6 +2176,216 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
   max-width: 62ch;
 }
 
+.sd-error-page {
+  display: grid;
+  place-items: center;
+  min-height: min(68vh, 42rem);
+  padding: clamp(2.2rem, 8vw, 5rem) 1.2rem;
+}
+
+.sd-error-panel {
+  position: relative;
+  width: min(100%, 740px);
+  border: 1px solid color-mix(in srgb, var(--sd-line) 86%, transparent);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--sd-accent) 9%, transparent), transparent 34%),
+    var(--sd-panel);
+  padding: clamp(1.35rem, 4vw, 2.6rem);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sd-panel) 82%, transparent);
+}
+
+.sd-error-panel::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, var(--sd-accent) 0 1px, transparent 1px) top left/7px 7px no-repeat,
+    linear-gradient(225deg, var(--sd-accent) 0 1px, transparent 1px) top right/7px 7px no-repeat,
+    linear-gradient(45deg, var(--sd-accent) 0 1px, transparent 1px) bottom left/7px 7px no-repeat,
+    linear-gradient(315deg, var(--sd-accent) 0 1px, transparent 1px) bottom right/7px 7px no-repeat;
+  opacity: .58;
+}
+
+.sd-error-panel h1 {
+  max-width: 12ch;
+  margin: .7rem 0 0;
+  color: var(--sd-ink);
+  font-family: var(--sd-font-display);
+  font-size: clamp(2.4rem, 8vw, 5.5rem);
+  font-weight: 650;
+  line-height: .92;
+}
+
+.sd-error-panel p {
+  max-width: 62ch;
+  margin: 1rem 0 0;
+  color: var(--sd-muted);
+  font-size: clamp(1rem, 1.6vw, 1.16rem);
+  line-height: 1.7;
+}
+
+.sd-error-panel code {
+  display: inline-block;
+  max-width: 100%;
+  margin-top: 1rem;
+  overflow-wrap: anywhere;
+  border: 1px solid color-mix(in srgb, var(--sd-line) 80%, transparent);
+  background: color-mix(in srgb, var(--sd-bg) 70%, var(--sd-panel));
+  color: color-mix(in srgb, var(--sd-ink) 85%, var(--sd-muted));
+  padding: .32rem .5rem;
+  font: .88rem var(--font-mono);
+}
+
+.sd-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1.5rem;
+}
+
+.sd-render-error {
+  position: relative;
+  display: flex;
+  gap: .95rem;
+  margin: 1.2rem 0;
+  border: 1px solid color-mix(in srgb, var(--sd-accent-2) 36%, var(--sd-line));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--sd-accent-2) 8%, transparent), transparent 34%),
+    color-mix(in srgb, var(--sd-panel) 94%, var(--sd-bg));
+  color: var(--sd-ink);
+  padding: 1rem;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sd-panel) 70%, transparent);
+}
+
+.sd-render-error::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, var(--sd-accent-2) 0 1px, transparent 1px) top left/6px 6px no-repeat,
+    linear-gradient(225deg, var(--sd-accent-2) 0 1px, transparent 1px) top right/6px 6px no-repeat,
+    linear-gradient(45deg, var(--sd-accent-2) 0 1px, transparent 1px) bottom left/6px 6px no-repeat,
+    linear-gradient(315deg, var(--sd-accent-2) 0 1px, transparent 1px) bottom right/6px 6px no-repeat;
+  opacity: .55;
+}
+
+.sd-render-error-mark {
+  width: .62rem;
+  min-height: 2.2rem;
+  flex: 0 0 auto;
+  image-rendering: pixelated;
+  background:
+    linear-gradient(var(--sd-accent-2), var(--sd-accent-2)) 0 0 / 100% 42% no-repeat,
+    linear-gradient(var(--sd-accent), var(--sd-accent)) 0 100% / 100% 42% no-repeat;
+}
+
+.sd-render-error-body {
+  min-width: 0;
+}
+
+.sd-render-error-kicker {
+  margin: 0 0 .24rem;
+  color: color-mix(in srgb, var(--sd-accent-2) 82%, var(--sd-ink));
+  font: 650 .75rem/1.35 var(--font-sans);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.sd-render-error strong {
+  display: block;
+  color: var(--sd-ink);
+  font: 650 1rem/1.35 var(--font-sans);
+  letter-spacing: 0;
+}
+
+.sd-render-error p {
+  max-width: 60ch;
+  margin: .45rem 0 0;
+  color: var(--sd-muted);
+  font-size: .93rem;
+  line-height: 1.62;
+}
+
+.sd-render-error details {
+  margin-top: .78rem;
+  color: var(--sd-muted);
+  font-size: .86rem;
+}
+
+.sd-render-error summary {
+  width: fit-content;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--sd-ink) 82%, var(--sd-muted));
+  font-weight: 600;
+}
+
+.sd-render-error summary:hover {
+  color: var(--sd-accent-2);
+}
+
+.sd-render-error code {
+  display: block;
+  max-width: 100%;
+  margin-top: .52rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  border: 1px solid color-mix(in srgb, var(--sd-line) 80%, transparent);
+  background: color-mix(in srgb, var(--sd-bg) 74%, var(--sd-panel));
+  color: color-mix(in srgb, var(--sd-ink) 86%, var(--sd-muted));
+  padding: .5rem .62rem;
+  font: .82rem/1.6 var(--font-mono);
+}
+
+.sd-render-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  margin-top: .95rem;
+}
+
+.sd-render-error .sd-button {
+  min-width: auto;
+  min-height: 2.1rem;
+  padding: 0 .7rem;
+  font-size: .84rem;
+}
+
+.sd-sidebar .sd-render-error,
+.sd-toc .sd-render-error {
+  display: grid;
+  gap: .62rem;
+  margin: .35rem 0;
+  padding: .75rem;
+}
+
+.sd-sidebar .sd-render-error-mark,
+.sd-toc .sd-render-error-mark {
+  width: 2rem;
+  min-height: .38rem;
+}
+
+.sd-sidebar .sd-render-error strong,
+.sd-toc .sd-render-error strong {
+  font-size: .9rem;
+}
+
+.sd-sidebar .sd-render-error p,
+.sd-toc .sd-render-error p {
+  font-size: .82rem;
+  line-height: 1.5;
+}
+
+.sd-render-error[data-variant="tools"] {
+  max-width: min(92vw, 28rem);
+  margin: 1rem;
+}
+
+.sd-content > .sd-render-error {
+  margin-top: 2rem;
+}
+
 .sd-prose {
   padding-top: 2rem;
   color: color-mix(in srgb, var(--sd-ink) 94%, var(--sd-muted));
@@ -2304,6 +2565,91 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
 
 .sd-prose a:hover {
   color: color-mix(in srgb, var(--sd-accent) 70%, var(--sd-accent-2));
+}
+
+.sd-external-link-icon {
+  display: inline;
+  width: .82em;
+  height: .82em;
+  margin-left: .18em;
+  transform: translateY(.08em);
+  stroke-width: 2;
+}
+
+.sd-link-card-row {
+  max-width: 74ch;
+  margin: 1.2rem 0;
+}
+
+.sd-prose .sd-link-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 4.6rem;
+  padding: .9rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--sd-line) 82%, transparent);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--sd-accent) 8%, transparent), transparent 34%),
+    var(--sd-panel);
+  color: var(--sd-ink);
+  text-decoration: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sd-panel) 82%, transparent);
+  transition: border-color .14s ease, background .14s ease, color .14s ease, transform .14s ease;
+}
+
+.sd-prose .sd-link-card:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--sd-accent) 42%, var(--sd-line));
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--sd-accent) 12%, transparent), transparent 42%),
+    var(--sd-panel);
+  color: var(--sd-ink);
+}
+
+.sd-prose .sd-link-card::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, var(--sd-accent) 0 1px, transparent 1px) top left/5px 5px no-repeat,
+    linear-gradient(225deg, var(--sd-accent) 0 1px, transparent 1px) top right/5px 5px no-repeat,
+    linear-gradient(45deg, var(--sd-accent) 0 1px, transparent 1px) bottom left/5px 5px no-repeat,
+    linear-gradient(315deg, var(--sd-accent) 0 1px, transparent 1px) bottom right/5px 5px no-repeat;
+  opacity: .42;
+}
+
+.sd-link-card-content {
+  display: grid;
+  gap: .22rem;
+  min-width: 0;
+}
+
+.sd-link-card-title {
+  color: var(--sd-ink);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.sd-link-card-description {
+  color: var(--sd-muted);
+  font-size: .92rem;
+  line-height: 1.55;
+}
+
+.sd-link-card-arrow {
+  display: inline-flex;
+  width: 1.8rem;
+  height: 1.8rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--sd-accent) 38%, transparent);
+  color: var(--sd-accent);
+  font-family: var(--font-mono);
+  font-size: .9rem;
 }
 
 .sd-callout {

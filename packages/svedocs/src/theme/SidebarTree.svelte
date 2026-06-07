@@ -7,7 +7,7 @@
   export let depth = 0;
 
   function isActive(item: SvedocsTreeItem): boolean {
-    return item.path === currentPath;
+    return normalizeHref(item.path) === normalizeHref(currentPath);
   }
 
   function isActiveBranch(item: SvedocsTreeItem): boolean {
@@ -25,6 +25,13 @@
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
     void goto(href, { keepFocus: false });
+  }
+
+  function normalizeHref(href: string | undefined): string {
+    if (!href) return '';
+    const [path = ''] = href.split(/[?#]/);
+    const normalized = path === '/' ? '/' : path.replace(/\/+$/, '');
+    return normalized || '/';
   }
 
   $: sections = depth === 0 ? splitIntoSections(items) : null;
@@ -51,11 +58,16 @@
   <div class="sd-sidebar-root">
     {#each sections as section, sectionIndex}
       {#if section.heading}
-        <div class="sd-sidebar-section-heading" class:sd-first={sectionIndex === 0} class:sd-active={section.items.some((item) => isActiveBranch(item))}>
+        {@const sectionActive = isActive(section.heading)}
+        <div class="sd-sidebar-section-heading" class:sd-first={sectionIndex === 0} class:sd-active={sectionActive || section.items.some((item) => isActiveBranch(item))}>
           {#if section.heading.icon}
             <span class="sd-sidebar-section-icon" aria-hidden="true">{section.heading.icon}</span>
           {/if}
-          <span>{section.heading.title}</span>
+          {#if section.heading.path}
+            <a class="sd-sidebar-section-link" class:sd-active={sectionActive} href={section.heading.path} aria-current={sectionActive ? 'page' : undefined}>{section.heading.title}</a>
+          {:else}
+            <span>{section.heading.title}</span>
+          {/if}
         </div>
       {/if}
       <ul class="sd-sidebar-list" data-depth={depth}>
@@ -72,7 +84,7 @@
                   {/if}
                   <span class="sd-sidebar-summary-label">
                     {#if item.path}
-                      <a class="sd-sidebar-summary-link" href={item.path} on:click={(event) => handleSummaryLinkClick(event, item.path)}>{item.title}</a>
+                      <a class="sd-sidebar-summary-link" href={item.path} aria-current={active ? 'page' : undefined} on:click={(event) => handleSummaryLinkClick(event, item.path)}>{item.title}</a>
                     {:else}
                       <span>{item.title}</span>
                     {/if}
@@ -86,7 +98,7 @@
                 </div>
               </details>
             {:else if item.path}
-              <a class="sd-sidebar-link" class:sd-active={active} href={item.path}>
+              <a class="sd-sidebar-link" class:sd-active={active} href={item.path} aria-current={active ? 'page' : undefined}>
                 {#if item.icon}
                   <span class="sd-sidebar-icon" aria-hidden="true">{item.icon}</span>
                 {/if}
@@ -114,7 +126,7 @@
                 <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></svg>
               </span>
               {#if item.path}
-                <a class="sd-sidebar-summary-link" href={item.path} on:click={(event) => handleSummaryLinkClick(event, item.path)}>{item.title}</a>
+                <a class="sd-sidebar-summary-link" href={item.path} aria-current={active ? 'page' : undefined} on:click={(event) => handleSummaryLinkClick(event, item.path)}>{item.title}</a>
               {:else}
                 <span class="sd-sidebar-summary-text">{item.title}</span>
               {/if}
@@ -124,7 +136,7 @@
             </div>
           </details>
         {:else if item.path}
-          <a class="sd-sidebar-link" class:sd-active={active} href={item.path}>
+          <a class="sd-sidebar-link" class:sd-active={active} href={item.path} aria-current={active ? 'page' : undefined}>
             <span>{item.title}</span>
           </a>
         {:else}

@@ -1,11 +1,14 @@
 <script lang="ts">
   import type { Component } from 'svelte';
-  import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord } from '../core/types.js';
+  import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
+  import { createThemeContext } from './headless.js';
+  import SafeRenderError from './SafeRenderError.svelte';
   import RootLayout from './RootLayout.svelte';
   import type { SvedocsThemeComponentMap } from './types.js';
 
   export let page: SvedocsPage;
   export let pages: SvedocsPage[] = [];
+  export let tree: SvedocsTreeItem[] = [];
   export let search: SvedocsSearchRecord[] = [];
   export let config: SvedocsResolvedConfig;
   export let loadSearch: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
@@ -116,6 +119,8 @@
   $: showHomeHeroVisualSlot = hasHomeHeroVisualSlot ?? Boolean($$slots['home-hero-visual']);
   $: showHomeFeaturesSlot = hasHomeFeaturesSlot ?? Boolean($$slots['home-features']);
   $: Root = themeComponents.Root ?? RootLayout;
+  $: ErrorComponent = SafeRenderError;
+  $: context = createThemeContext({ config, page, pages, tree, search, ...(loadSearch ? { loadSearch } : {}) });
 
   function createHomeCards(pages: SvedocsPage[]): HomeCard[] {
     const docs = pages.filter((candidate) => candidate.kind === 'doc');
@@ -140,13 +145,13 @@
   }
 </script>
 
-<svelte:component this={Root} {config} {page} {pages} {search} {loadSearch} hasBackgroundSlot={showBackgroundSlot} {themeComponents}>
+<svelte:component this={Root} {config} {page} {pages} {tree} {search} {loadSearch} hasBackgroundSlot={showBackgroundSlot} {themeComponents}>
   <svelte:fragment slot="background">
     <slot name="background" />
   </svelte:fragment>
   {#if showLandingSlot}
     <main id="content" class="sd-home">
-      <slot name="landing" {page} {pages} {search} {config} {content} />
+      <slot name="landing" {page} {pages} {tree} {search} {config} {content} />
     </main>
   {:else}
     <main id="content" class="sd-home">
@@ -222,11 +227,26 @@
         </section>
       {/if}
       <section class="sd-prose sd-home-body">
-        {#if content}
-          <svelte:component this={content} />
-        {:else}
-          {@html page.html}
-        {/if}
+        <svelte:boundary>
+          {#if content}
+            <svelte:component this={content} />
+          {:else}
+            {@html page.html}
+          {/if}
+          {#snippet failed(error, reset)}
+            <svelte:component
+              this={ErrorComponent} component={themeComponents.RenderError}
+              {error}
+              {reset}
+              {page}
+              {context}
+              variant="content"
+              label="Home content issue"
+              title="Home content could not render"
+              message="The home page content failed while rendering. The rest of the site is still available."
+            />
+          {/snippet}
+        </svelte:boundary>
       </section>
     </main>
   {/if}

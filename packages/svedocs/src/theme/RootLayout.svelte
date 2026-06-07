@@ -2,11 +2,9 @@
   import { onDestroy, onMount } from 'svelte';
   import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
   import { createJsonLdScript, createPageAlternates, createPageMetadata } from '../og/metadata.js';
-  import AskAiPanel from './AskAiPanel.svelte';
-  import Footer from './Footer.svelte';
   import { createDomId, createMobileNavController, createThemeContext, createThemeInitScript, createThemeStyle } from './headless.js';
-  import Navbar from './Navbar.svelte';
-  import PageTools from './PageTools.svelte';
+  import LayoutShell from './LayoutShell.svelte';
+  import SafeRenderError from './SafeRenderError.svelte';
   import type { SvedocsThemeComponentMap } from './types.js';
 
   export let config: SvedocsResolvedConfig;
@@ -15,6 +13,9 @@
   export let tree: SvedocsTreeItem[] = [];
   export let search: SvedocsSearchRecord[] = [];
   export let loadSearch: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
+  export let headTitle = '';
+  export let headDescription = '';
+  export let headRobots = '';
   export let mobileTree: SvedocsTreeItem[] = [];
   export let mobileCurrentPath = '';
   export let hasBackgroundSlot: boolean | undefined = undefined;
@@ -44,10 +45,10 @@
   $: mobileMenuId = `sd-mobile-menu-${createDomId(page?.id ?? page?.routePath ?? 'site')}`;
   $: mobileTreePath = mobileCurrentPath || page?.routePath || '';
   $: showBackgroundSlot = hasBackgroundSlot ?? Boolean($$slots.background);
-  $: NavbarComponent = themeComponents.Navbar ?? Navbar;
-  $: AskAiComponent = themeComponents.AskAi ?? AskAiPanel;
-  $: FooterComponent = themeComponents.Footer ?? Footer;
-  $: PageToolsComponent = themeComponents.PageTools ?? PageTools;
+  $: title = headTitle || metadata?.title || (page ? config.site.title : `Error - ${config.site.title}`);
+  $: description = headDescription || metadata?.description || config.site.description;
+  $: robots = headRobots || metadata?.robots || (!page ? 'noindex' : '');
+  $: Layout = themeComponents.Layout ?? LayoutShell;
 
   onMount(() => {
     mounted = true;
@@ -136,13 +137,13 @@
 
 <svelte:head>
   {@html createThemeInitScript(config.theme.defaultMode)}
-  <title>{metadata?.title ?? config.site.title}</title>
-  <meta name="description" content={metadata?.description ?? config.site.description} />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  {#if robots}
+    <meta name="robots" content={robots} />
+  {/if}
   {#if metadata?.keywords.length}
     <meta name="keywords" content={metadata.keywords.join(', ')} />
-  {/if}
-  {#if metadata?.robots}
-    <meta name="robots" content={metadata.robots} />
   {/if}
   {#if metadata?.canonical}
     <link rel="canonical" href={metadata.canonical} />
@@ -204,37 +205,55 @@
   {/if}
 </svelte:head>
 
-<div class:sd-has-background-slot={showBackgroundSlot} class="sd-root" data-surface={context.surface} style={themeStyle}>
-  <a class="sd-skip" href="#content">Skip to content</a>
-  {#if showBackgroundSlot}
-    <div class="sd-background-slot" aria-hidden="true">
-      <slot name="background" />
-    </div>
-  {/if}
+<svelte:boundary>
   <svelte:component
-    this={NavbarComponent}
+    this={Layout}
     {context}
+    {themeStyle}
     {mobileTree}
     mobileCurrentPath={mobileTreePath}
     {mobileMenuId}
     {mobileMenuOpen}
+    hasBackgroundSlot={showBackgroundSlot}
     {themeComponents}
     onToggleMobileMenu={mobileNav.toggle}
     onCloseMobileMenu={mobileNav.close}
-  />
-  <slot />
-  {#if context.isDocsPage}
-    {#if config.ai.enabled}
-      <svelte:component
-        this={AskAiComponent}
-        {config}
-        records={search}
-        loadRecords={loadSearch}
-        scope={context.aiScope}
-        buildMode={config.build.mode}
-      />
-    {/if}
-    <svelte:component this={PageToolsComponent} {config} />
-  {/if}
-  <svelte:component this={FooterComponent} {context} />
-</div>
+  >
+    <svelte:fragment slot="background">
+      <slot name="background" />
+    </svelte:fragment>
+    <slot />
+  </svelte:component>
+  {#snippet failed(error, reset)}
+    <svelte:component
+      this={LayoutShell}
+      {context}
+      {themeStyle}
+      {mobileTree}
+      mobileCurrentPath={mobileTreePath}
+      {mobileMenuId}
+      {mobileMenuOpen}
+      hasBackgroundSlot={showBackgroundSlot}
+      {themeComponents}
+      onToggleMobileMenu={mobileNav.toggle}
+      onCloseMobileMenu={mobileNav.close}
+    >
+      <svelte:fragment slot="background">
+        <slot name="background" />
+      </svelte:fragment>
+      <main id="content" class="sd-route-render-error" data-theme-component="route-render-error">
+        <svelte:component
+          this={SafeRenderError} component={themeComponents.RenderError}
+          {error}
+          {reset}
+          {context}
+          tree={context.tree}
+          variant="layout"
+          label="Layout issue"
+          title="The page layout could not render"
+          message="The default site shell is still available. Retry after checking the replacement Layout component."
+        />
+      </main>
+    </svelte:component>
+  {/snippet}
+</svelte:boundary>

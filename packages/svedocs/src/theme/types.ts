@@ -6,6 +6,14 @@ import type { SearchResult, SearchScope } from '../search/types.js';
 export type SvedocsContentComponent = Component | undefined;
 export type SvedocsThemeSurface = 'home' | 'reading';
 export type SvedocsRecordLoader = () => Promise<SvedocsSearchRecord[]>;
+export type SvedocsPageShellVariant = 'page' | 'error';
+export type SvedocsPageShellAction = {
+  label: string;
+  href: string;
+  primary?: boolean;
+  external?: boolean;
+};
+export type SvedocsRenderErrorVariant = 'layout' | 'article' | 'content' | 'navigation' | 'tools' | 'section';
 
 export interface SvedocsThemeContext {
   config: SvedocsResolvedConfig;
@@ -33,6 +41,59 @@ export interface SvedocsAppProps {
   loadSearch?: SvedocsRecordLoader;
 }
 
+export interface SvedocsDocsLayoutProps {
+  page: SvedocsPage;
+  pages?: SvedocsPage[];
+  tree?: SvedocsTreeItem[];
+  search?: SvedocsSearchRecord[];
+  config: SvedocsResolvedConfig;
+  loadSearch?: SvedocsRecordLoader;
+  content?: SvedocsContentComponent;
+  hasBackgroundSlot?: boolean;
+  hasDocHeaderSlot?: boolean;
+  themeComponents?: Partial<SvedocsThemeComponentMap>;
+}
+
+export interface SvedocsPageLayoutProps {
+  page: SvedocsPage;
+  pages?: SvedocsPage[];
+  tree?: SvedocsTreeItem[];
+  search?: SvedocsSearchRecord[];
+  config: SvedocsResolvedConfig;
+  loadSearch?: SvedocsRecordLoader;
+  content?: SvedocsContentComponent;
+  hasBackgroundSlot?: boolean;
+  themeComponents?: Partial<SvedocsThemeComponentMap>;
+}
+
+export interface SvedocsHomeLayoutProps {
+  page: SvedocsPage;
+  pages?: SvedocsPage[];
+  tree?: SvedocsTreeItem[];
+  search?: SvedocsSearchRecord[];
+  config: SvedocsResolvedConfig;
+  loadSearch?: SvedocsRecordLoader;
+  content?: SvedocsContentComponent;
+  hasBackgroundSlot?: boolean;
+  hasLandingSlot?: boolean;
+  hasHomeHeroVisualSlot?: boolean;
+  hasHomeFeaturesSlot?: boolean;
+  themeComponents?: Partial<SvedocsThemeComponentMap>;
+}
+
+export interface SvedocsErrorProps {
+  status?: number;
+  message?: string;
+  error?: Error | { message?: string } | null;
+  path?: string;
+  config: SvedocsResolvedConfig;
+  pages?: SvedocsPage[];
+  tree?: SvedocsTreeItem[];
+  search?: SvedocsSearchRecord[];
+  loadSearch?: SvedocsRecordLoader;
+  themeComponents?: Partial<SvedocsThemeComponentMap>;
+}
+
 export interface SvedocsRootProps {
   config: SvedocsResolvedConfig;
   page?: SvedocsPage;
@@ -40,10 +101,59 @@ export interface SvedocsRootProps {
   tree?: SvedocsTreeItem[];
   search?: SvedocsSearchRecord[];
   loadSearch?: SvedocsRecordLoader;
+  headTitle?: string;
+  headDescription?: string;
+  headRobots?: string;
   mobileTree?: SvedocsTreeItem[];
   mobileCurrentPath?: string;
   hasBackgroundSlot?: boolean;
   themeComponents?: Partial<SvedocsThemeComponentMap>;
+}
+
+export interface SvedocsLayoutShellProps {
+  context: SvedocsThemeContext;
+  themeStyle?: string;
+  mobileTree?: SvedocsTreeItem[];
+  mobileCurrentPath?: string;
+  mobileMenuId?: string;
+  mobileMenuOpen?: boolean;
+  hasBackgroundSlot?: boolean;
+  themeComponents?: Partial<SvedocsThemeComponentMap>;
+  onToggleMobileMenu?: () => void;
+  onCloseMobileMenu?: () => void;
+}
+
+export interface SvedocsDocsShellProps {
+  page: SvedocsPage;
+  navigationTree?: SvedocsTreeItem[];
+  content?: SvedocsContentComponent;
+  context: SvedocsThemeContext;
+  tocController: SvedocsTocController;
+  hasDocHeaderSlot?: boolean;
+  themeComponents?: Partial<SvedocsThemeComponentMap>;
+}
+
+export interface SvedocsPageShellProps {
+  page?: SvedocsPage;
+  variant?: SvedocsPageShellVariant;
+  title?: string;
+  description?: string;
+  kicker?: string;
+  content?: SvedocsContentComponent;
+  html?: string;
+  status?: number;
+  path?: string;
+  actions?: SvedocsPageShellAction[];
+  context?: SvedocsThemeContext;
+  themeComponents?: Partial<SvedocsThemeComponentMap>;
+}
+
+export interface SvedocsBrandProps {
+  context: SvedocsThemeContext;
+}
+
+export interface SvedocsTopNavProps {
+  context: SvedocsThemeContext;
 }
 
 export interface SvedocsNavbarProps {
@@ -55,6 +165,12 @@ export interface SvedocsNavbarProps {
   themeComponents?: Partial<SvedocsThemeComponentMap>;
   onToggleMobileMenu?: () => void;
   onCloseMobileMenu?: () => void;
+}
+
+export type SvedocsHeaderProps = SvedocsNavbarProps;
+
+export interface SvedocsSocialNavProps {
+  context: SvedocsThemeContext;
 }
 
 export interface SvedocsMobileNavProps {
@@ -74,6 +190,19 @@ export interface SvedocsArticleProps {
   content?: SvedocsContentComponent;
   context?: SvedocsThemeContext;
   hasDocHeaderSlot?: boolean;
+  themeComponents?: Partial<SvedocsThemeComponentMap>;
+}
+
+export interface SvedocsRenderErrorProps {
+  error?: unknown;
+  reset?: () => void;
+  title?: string;
+  message?: string;
+  label?: string;
+  variant?: SvedocsRenderErrorVariant | string;
+  page?: SvedocsPage;
+  context?: SvedocsThemeContext;
+  tree?: SvedocsTreeItem[];
 }
 
 export interface SvedocsTocProps {
@@ -103,6 +232,11 @@ export interface SvedocsAskAiProps {
 
 export interface SvedocsFooterProps {
   context: SvedocsThemeContext;
+  themeComponents?: Partial<SvedocsThemeComponentMap>;
+}
+
+export interface SvedocsFooterLinksProps {
+  context: SvedocsThemeContext;
 }
 
 export interface SvedocsThemeToggleProps {
@@ -116,16 +250,29 @@ export interface SvedocsPageToolsProps {
 
 export interface SvedocsThemeComponentMap {
   Root: Component<SvedocsRootProps>;
+  Layout: Component<SvedocsLayoutShellProps>;
+  Docs: Component<SvedocsDocsLayoutProps>;
+  DocsShell: Component<SvedocsDocsShellProps>;
+  Page: Component<SvedocsPageLayoutProps>;
+  PageShell: Component<SvedocsPageShellProps>;
+  Home: Component<SvedocsHomeLayoutProps>;
+  Error: Component<SvedocsErrorProps>;
+  Brand: Component<SvedocsBrandProps>;
+  TopNav: Component<SvedocsTopNavProps>;
+  Header: Component<SvedocsHeaderProps>;
   Navbar: Component<SvedocsNavbarProps>;
   MobileNav: Component<SvedocsMobileNavProps>;
+  SocialNav: Component<SvedocsSocialNavProps>;
   Sidebar: Component<SvedocsSidebarProps>;
   Article: Component<SvedocsArticleProps>;
   Toc: Component<SvedocsTocProps>;
   Search: Component<SvedocsSearchProps>;
   AskAi: Component<SvedocsAskAiProps>;
   Footer: Component<SvedocsFooterProps>;
+  FooterLinks: Component<SvedocsFooterLinksProps>;
   ThemeToggle: Component<SvedocsThemeToggleProps>;
   PageTools: Component<SvedocsPageToolsProps>;
+  RenderError: Component<SvedocsRenderErrorProps>;
 }
 
 export interface SvedocsSearchController {

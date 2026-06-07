@@ -3,12 +3,16 @@
   import type { Component } from 'svelte';
   import type { SvedocsPage } from '../core/types.js';
   import { copyCodeToClipboard } from './headless.js';
-  import type { SvedocsThemeContext } from './types.js';
+  import SafeRenderError from './SafeRenderError.svelte';
+  import type { SvedocsThemeComponentMap, SvedocsThemeContext } from './types.js';
 
   export let page: SvedocsPage;
   export let content: Component | undefined = undefined;
   export let context: SvedocsThemeContext | undefined = undefined;
   export let hasDocHeaderSlot: boolean | undefined = undefined;
+  export let themeComponents: Partial<SvedocsThemeComponentMap> = {};
+
+  $: ErrorComponent = SafeRenderError;
   $: breadcrumbs = createBreadcrumbs(page);
   $: kind = page.kind === 'doc' ? 'Documentation' : 'Page';
   $: eyebrow = breadcrumbs.length > 0 ? breadcrumbs : [{ label: kind, path: page.kind === 'doc' ? '/docs' : '/' }];
@@ -72,11 +76,26 @@
     </header>
   {/if}
   <div class="sd-prose">
-    {#if content}
-      <svelte:component this={content} />
-    {:else}
-      {@html page.html}
-    {/if}
+    <svelte:boundary>
+      {#if content}
+        <svelte:component this={content} />
+      {:else}
+        {@html page.html}
+      {/if}
+      {#snippet failed(error, reset)}
+        <svelte:component
+          this={ErrorComponent} component={themeComponents.RenderError}
+          {error}
+          {reset}
+          {page}
+          {context}
+          variant="content"
+          label="Article rendering issue"
+          title="This article could not render"
+          message="The article content failed while rendering. Navigation and page tools are still available."
+        />
+      {/snippet}
+    </svelte:boundary>
   </div>
   <footer class="sd-doc-footer">
     <div class="sd-doc-meta">

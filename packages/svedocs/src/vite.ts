@@ -25,16 +25,29 @@ export interface SvedocsVitePluginOptions {
 
 const themeComponentNames = [
   'Root',
+  'Layout',
+  'Docs',
+  'DocsShell',
+  'Page',
+  'PageShell',
+  'Home',
+  'Error',
+  'Brand',
+  'TopNav',
+  'Header',
   'Navbar',
   'MobileNav',
+  'SocialNav',
   'Sidebar',
   'Article',
   'Toc',
   'Search',
   'AskAi',
   'Footer',
+  'FooterLinks',
   'ThemeToggle',
-  'PageTools'
+  'PageTools',
+  'RenderError'
 ] as const satisfies readonly SvedocsThemeComponentName[];
 const themeComponentNameSet = new Set<string>(themeComponentNames);
 
@@ -152,8 +165,18 @@ export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
     async handleHotUpdate(ctx) {
       if (/\.(md|mdx|svx)$/.test(ctx.file) || ctx.file === resolvedConfigFile || /svedocs\.config\.[cm]?[jt]s$/.test(ctx.file)) {
         await refresh();
-        const modules = Array.from(virtualModules)
-          .map((id) => ctx.server.moduleGraph.getModuleById(`\0${id}`))
+        const moduleIds = new Set<string>(Array.from(virtualModules, (id) => `\0${id}`));
+        for (const page of manifest?.pages ?? []) {
+          moduleIds.add(`\0${pageVirtualPrefix}${encodeURIComponent(page.id)}.js`);
+          moduleIds.add(`\0${componentVirtualPrefix}${encodeURIComponent(page.id)}.svelte`);
+        }
+        for (const id of ctx.server.moduleGraph.idToModuleMap.keys()) {
+          if (id.startsWith(`\0${pageVirtualPrefix}`) || id.startsWith(`\0${componentVirtualPrefix}`)) {
+            moduleIds.add(id);
+          }
+        }
+        const modules = Array.from(moduleIds)
+          .map((id) => ctx.server.moduleGraph.getModuleById(id))
           .filter((module) => module !== undefined);
         return modules;
       }

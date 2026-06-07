@@ -466,10 +466,16 @@ describe('svedocs Batch 0 skeleton', () => {
       },
       theme: {
         components: {
+          Layout: '$lib/theme/Layout.svelte',
+          DocsShell: '$lib/theme/DocsShell.svelte',
+          PageShell: '$lib/theme/PageShell.svelte',
+          Error: '$lib/theme/Error.svelte',
+          Brand: '$lib/theme/Brand.svelte',
           Navbar: '$lib/theme/Navbar.svelte',
           Article: '$lib/theme/Article.svelte',
           Search: '$lib/theme/Search.svelte',
-          AskAi: '$lib/theme/AskAi.svelte'
+          AskAi: '$lib/theme/AskAi.svelte',
+          RenderError: '$lib/theme/RenderError.svelte'
         }
       }
     }) as unknown as {
@@ -484,9 +490,12 @@ describe('svedocs Batch 0 skeleton', () => {
     const loaded = await plugin.load?.('\0virtual:svedocs/theme-components') as string;
 
     expect(resolvedId).toBe('\0virtual:svedocs/theme-components');
-    expect(loaded).toContain('import C0 from "$lib/theme/Navbar.svelte";');
-    expect(loaded).toContain('"Navbar": C0');
-    expect(loaded).toContain('"AskAi": C3');
+    expect(loaded).toContain('import C0 from "$lib/theme/Layout.svelte";');
+    expect(loaded).toContain('"Layout": C0');
+    expect(loaded).toContain('"Error": C3');
+    expect(loaded).toContain('"Navbar": C5');
+    expect(loaded).toContain('"AskAi": C8');
+    expect(loaded).toContain('"RenderError": C9');
   });
 
   it('fails fast when Vite theme component override keys are unknown', () => {
