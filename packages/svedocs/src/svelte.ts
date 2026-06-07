@@ -6,6 +6,7 @@ import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import { extractCodeBlocks, rehypeCodeBlocks, remarkSvedocsCodeBlocks } from './mdx/code.js';
+import { rehypeSvedocsLinks } from './mdx/links.js';
 
 export const svedocsContentExtensions = ['.md', '.mdx', '.svx'] as const;
 export const svedocsSvelteExtensions = ['.svelte', ...svedocsContentExtensions] as const;
@@ -69,6 +70,7 @@ export function createSvedocsMdsvexOptions(
         }
       ],
       rehypeKatex,
+      rehypeSvedocsLinks,
       [rehypeCodeBlocks, codeBlocks],
       ...((options.rehypePlugins ?? []) as any[])
     ] as any

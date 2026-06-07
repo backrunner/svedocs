@@ -12,6 +12,7 @@ import type { SvedocsCodeBlock, SvedocsHeading } from '../core/types.js';
 import { extractMarkdownOutline, markdownAstToPlainText } from './ast.js';
 import { extractCodeBlocks, rehypeCodeBlocks, remarkSvedocsCodeBlocks } from './code.js';
 import { createDiffRows, createDiffSplitRows } from './diff.js';
+import { rehypeSvedocsLinks } from './links.js';
 import { markdownToPlainText } from './utils.js';
 
 export interface CompiledMarkdown {
@@ -75,7 +76,8 @@ export async function compileMarkdown(
         value: '#'
       }
     })
-    .use(rehypeKatex);
+    .use(rehypeKatex)
+    .use(rehypeSvedocsLinks);
 
   for (const plugin of options.rehypePlugins ?? []) {
     processor.use(plugin as never);

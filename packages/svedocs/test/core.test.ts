@@ -1446,6 +1446,21 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(compiled.html).toContain('</span></span><span class="line sd-line-add" data-line="2" data-diff-kind="add"');
   });
 
+  it('adds external link icons and renders internal link cards', async () => {
+    const compiled = await compileMarkdown([
+      'Read [SvelteKit](https://svelte.dev/docs/kit).',
+      '',
+      '[SEO and OG](/docs/integrations/seo-og "card: Metadata, sitemap, and robots.")'
+    ].join('\n'));
+
+    expect(compiled.html).toContain('class="sd-external-link"');
+    expect(compiled.html).toContain('class="sd-external-link-icon"');
+    expect(compiled.html).toContain('class="sd-link-card-row"');
+    expect(compiled.html).toContain('class="sd-link-card"');
+    expect(compiled.html).toContain('class="sd-link-card-title"');
+    expect(compiled.html).toContain('Metadata, sitemap, and robots.');
+  });
+
   it('renders Ask AI event streams and applies rate limits', async () => {
     const page = createFixturePage({
       search: [
