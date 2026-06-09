@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "svedocs",
+  "main": "apps/site/.svelte-kit/cloudflare/_worker.js",
+  "compatibility_date": "2026-05-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "apps/site/.svelte-kit/cloudflare",
+    "binding": "ASSETS"
+  },
+  "ai_search": [
+    {
+      "binding": "SVEDOCS_AI_SEARCH",
+      "instance_name": "svedocs",
+      "remote": true
+    }
+  ]
+}
