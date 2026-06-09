@@ -8,6 +8,21 @@
     "directory": "apps/site/.svelte-kit/cloudflare",
     "binding": "ASSETS"
   },
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 0.1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 0.1,
+      "persist": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false,
+      "persist": true,
+      "head_sampling_rate": 0.1
+    }
+  },
   "ai_search": [
     {
       "binding": "SVEDOCS_AI_SEARCH",
