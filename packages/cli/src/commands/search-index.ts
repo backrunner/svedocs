@@ -40,7 +40,7 @@ async function runCloudflareAiSearchIndex(
 ): Promise<CliResult> {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
-  const namespace = readOption(args, '--namespace');
+  const namespace = readOption(args, '--namespace') ?? manifest.config.cloudflare.aiSearch.namespace;
   const strategy = readOption(args, '--strategy') ?? 'append';
   if (!['append', 'replace'].includes(strategy)) {
     return fail('index', args, 'Invalid Cloudflare AI Search strategy. Use append or replace.');

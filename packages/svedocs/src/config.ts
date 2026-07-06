@@ -1,3 +1,4 @@
+import { access } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { z } from 'zod';
 import type { SvedocsResolvedConfig } from './core.js';
@@ -440,13 +441,14 @@ export async function loadSvedocsConfigFile(
   fallback: SvedocsConfig = {}
 ): Promise<SvedocsResolvedConfig> {
   try {
-    const module = await import(pathToFileURL(configFile).href);
-    return loadSvedocsConfig((module.default ?? module.config ?? fallback) as SvedocsConfig);
+    await access(configFile);
   } catch (error) {
     const code = typeof error === 'object' && error && 'code' in error ? error.code : undefined;
-    if (code === 'ERR_MODULE_NOT_FOUND' || code === 'MODULE_NOT_FOUND') {
+    if (code === 'ENOENT' || code === 'ENOTDIR') {
       return loadSvedocsConfig(fallback);
     }
     throw error;
   }
+  const module = await import(pathToFileURL(configFile).href);
+  return loadSvedocsConfig((module.default ?? module.config ?? fallback) as SvedocsConfig);
 }

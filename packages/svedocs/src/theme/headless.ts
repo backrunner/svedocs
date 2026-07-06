@@ -514,19 +514,26 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
       const { done, value } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
-      let boundary = buffer.indexOf('\n\n');
-      while (boundary >= 0) {
-        readAskEvent(buffer.slice(0, boundary), assistantId);
-        buffer = buffer.slice(boundary + 2);
-        boundary = buffer.indexOf('\n\n');
+      let boundary = findAskEventBoundary(buffer);
+      while (boundary) {
+        readAskEvent(buffer.slice(0, boundary.index), assistantId);
+        buffer = buffer.slice(boundary.index + boundary.length);
+        boundary = findAskEventBoundary(buffer);
       }
     }
+    buffer += decoder.decode();
     if (buffer.trim()) readAskEvent(buffer, assistantId);
   }
 
+  function findAskEventBoundary(value: string): { index: number; length: number } | undefined {
+    const match = /\r\n\r\n|\n\n|\r\r/.exec(value);
+    return match ? { index: match.index, length: match[0].length } : undefined;
+  }
+
   function readAskEvent(block: string, assistantId: number): void {
-    const event = /^event:\s*(.+)$/m.exec(block)?.[1] ?? 'message';
-    const data = block.split('\n').filter((line) => line.startsWith('data:')).map((line) => line.slice(5).trim()).join('\n');
+    const normalized = block.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    const event = /^event:\s*(.+)$/m.exec(normalized)?.[1] ?? 'message';
+    const data = normalized.split('\n').filter((line) => line.startsWith('data:')).map((line) => line.slice(5).trim()).join('\n');
     if (!data || data === '[DONE]') return;
     try {
       const payload = JSON.parse(data) as {
@@ -789,6 +796,7 @@ export function createPageToolsController(config: SvedocsResolvedConfig): Svedoc
   const aiCollapsed = derived(scrolled, ($scrolled) => aiEnabled && $scrolled);
 
   function openAskAi(): void {
+    if (!aiEnabled || typeof window === 'undefined') return;
     window.dispatchEvent(new CustomEvent('svedocs:open-ai'));
   }
 

@@ -317,6 +317,30 @@ describe('svedocs-cli Batch 0 shell', () => {
     expect(skipped.message).toContain('0 errors');
   });
 
+  it('accepts global config before the command name', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-global-config-'));
+    try {
+      await mkdir(path.join(tmp, 'custom-content', 'docs'), { recursive: true });
+      await writeFile(
+        path.join(tmp, 'custom.config.mjs'),
+        [
+          'export default {',
+          '  content: { root: "custom-content" }',
+          '};'
+        ].join('\n'),
+        'utf8'
+      );
+      await writeFile(path.join(tmp, 'custom-content', 'docs', 'index.md'), '# Configured Docs\n\nLoaded from the configured root.\n', 'utf8');
+
+      const result = await withCwd(tmp, () => runSvedocsCli(['--config', 'custom.config.mjs', 'check']));
+
+      expect(result.ok).toBe(true);
+      expect(result.message).toContain('1 pages');
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('writes jsonl search indexes', async () => {
     const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-cli-'));
     try {
@@ -342,6 +366,45 @@ describe('svedocs-cli Batch 0 shell', () => {
     expect(result.message).toContain('Cloudflare AI Search dry-run');
     expect(result.message).toContain('uploads');
     expect(result.message).toContain('Strategy: append');
+  });
+
+  it('uses configured Cloudflare AI Search namespace for indexing', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-ai-search-namespace-'));
+    const previousAccountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    const previousApiToken = process.env.CLOUDFLARE_API_TOKEN;
+    process.env.CLOUDFLARE_ACCOUNT_ID = 'account-id';
+    delete process.env.CLOUDFLARE_API_TOKEN;
+    try {
+      await mkdir(path.join(tmp, 'content', 'docs'), { recursive: true });
+      await writeFile(
+        path.join(tmp, 'svedocs.config.mjs'),
+        [
+          'export default {',
+          '  search: { provider: "cloudflare-ai-search" },',
+          '  cloudflare: { aiSearch: { instanceName: "configured-docs", namespace: "team-docs" } }',
+          '};'
+        ].join('\n'),
+        'utf8'
+      );
+      await writeFile(path.join(tmp, 'content', 'docs', 'index.md'), '# Deploy\n\nDeploy with Cloudflare AI Search.\n', 'utf8');
+
+      const result = await withCwd(tmp, () => runSvedocsCli(['index', '--provider', 'cloudflare-ai-search', '--dry-run']));
+
+      expect(result.ok).toBe(true);
+      expect(result.message).toContain('/ai-search/namespaces/team-docs/instances/configured-docs/items');
+    } finally {
+      if (previousAccountId === undefined) {
+        delete process.env.CLOUDFLARE_ACCOUNT_ID;
+      } else {
+        process.env.CLOUDFLARE_ACCOUNT_ID = previousAccountId;
+      }
+      if (previousApiToken === undefined) {
+        delete process.env.CLOUDFLARE_API_TOKEN;
+      } else {
+        process.env.CLOUDFLARE_API_TOKEN = previousApiToken;
+      }
+      await rm(tmp, { recursive: true, force: true });
+    }
   });
 
   it('dry-runs Cloudflare AI Search replace deletes', async () => {

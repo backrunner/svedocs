@@ -110,7 +110,7 @@ export async function createConfiguredSearchResponse(
   if (!config.search.enabled) {
     return jsonResponse({ query: readSearchQuery(request).query, results: [] });
   }
-  const providerName = options.provider ?? readProviderParam(request) ?? config.search.provider;
+  const providerName = options.provider ?? config.search.provider;
   const provider = createConfiguredSearchProvider({
     config,
     records,

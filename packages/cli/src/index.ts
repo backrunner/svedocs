@@ -46,17 +46,47 @@ export function renderSvedocsHelp(): string {
 }
 
 export async function runSvedocsCli(args: string[]): Promise<CliResult> {
-  const command = args[0] ?? 'help';
+  const { command, commandArgs } = normalizeGlobalOptions(args);
   if (command === 'help' || command === '--help' || command === '-h') return ok('help', args, renderSvedocsHelp());
-  if (command === 'create') return runCreateSvedocsCli(args.slice(1));
-  if (command === 'upgrade') return runUpgradeCommand(args.slice(1));
-  if (command === 'dev') return runViteCommand('dev', args.slice(1));
-  if (command === 'preview') return runViteCommand('preview', args.slice(1));
-  if (command === 'build') return runBuildCommand(args.slice(1));
-  if (command === 'ssg') return runBuildCommand(['--mode', 'static', ...args.slice(1)]);
-  if (command === 'check') return runCheckCommand(args.slice(1));
-  if (command === 'index') return runIndexCommand(args.slice(1));
-  if (command === 'og') return runOgCommand(args.slice(1));
-  if (command === 'deploy') return runDeployCommand(args.slice(1));
+  if (command === 'create') return runCreateSvedocsCli(commandArgs);
+  if (command === 'upgrade') return runUpgradeCommand(commandArgs);
+  if (command === 'dev') return runViteCommand('dev', commandArgs);
+  if (command === 'preview') return runViteCommand('preview', commandArgs);
+  if (command === 'build') return runBuildCommand(commandArgs);
+  if (command === 'ssg') return runBuildCommand(['--mode', 'static', ...commandArgs]);
+  if (command === 'check') return runCheckCommand(commandArgs);
+  if (command === 'index') return runIndexCommand(commandArgs);
+  if (command === 'og') return runOgCommand(commandArgs);
+  if (command === 'deploy') return runDeployCommand(commandArgs);
   return fail(command, args, `Unknown command "${command}".\n\n${renderSvedocsHelp()}`);
+}
+
+function normalizeGlobalOptions(args: string[]): { command: string; commandArgs: string[] } {
+  const globalOptions: string[] = [];
+  let index = 0;
+  while (index < args.length) {
+    const arg = args[index];
+    if (arg === '--config') {
+      globalOptions.push(arg);
+      if (index + 1 < args.length) globalOptions.push(args[index + 1]!);
+      index += index + 1 < args.length ? 2 : 1;
+      continue;
+    }
+    if (arg?.startsWith('--config=')) {
+      globalOptions.push(arg);
+      index += 1;
+      continue;
+    }
+    break;
+  }
+  const command = args[index] ?? 'help';
+  const commandArgs = args.slice(index + 1);
+  return {
+    command,
+    commandArgs: shouldApplyGlobalOptions(command) ? [...globalOptions, ...commandArgs] : commandArgs
+  };
+}
+
+function shouldApplyGlobalOptions(command: string): boolean {
+  return ['dev', 'preview', 'build', 'ssg', 'check', 'index', 'og', 'deploy'].includes(command);
 }

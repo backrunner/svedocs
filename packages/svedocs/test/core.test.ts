@@ -5,13 +5,13 @@ import { describe, expect, it } from 'vitest';
 import { get } from 'svelte/store';
 import { createAskResponse, createCloudflareAiSearchAiProvider, createCloudflareKvRateLimiter, createConfiguredAiProvider, createConfiguredAskResponse, createMemoryRateLimiter, createMockAiProvider, createOpenAiCompatibleProvider, createWorkersAiProvider } from '../src/ai';
 import { createCloudflareEnvDts, createWranglerJson, readSvedocsBuildMode, svedocsPagePrerender, svedocsSsr, svedocsTrailingSlash } from '../src/cloudflare';
-import { defineConfig } from '../src/config';
+import { defineConfig, loadSvedocsConfigFile } from '../src/config';
 import { checkPackagePublication, createPageTree, createSearchRecords, flattenPageTree, loadSvedocsContent, resolveSvedocsConfig } from '../src/core';
 import { createConfiguredOgImageFormat, createConfiguredOgImageTemplate, createConfiguredPageOgImageEntries, createJsonLdScript, createOgPng, createPageAlternates, createPageMetadata, createPageOgImagePath, createPageOgImageResponse, createRobotsResponse, createRobotsTxt, createSatoriOgSvg, createSitemapResponse, createSitemapXml, serializeJsonLd } from '../src/og';
 import { compileMarkdown, createDiffRows, createDiffSplitRows } from '../src/mdx/compile';
 import { createAlgoliaSearchProvider, createCloudflareAiSearchDocuments, createCloudflareAiSearchProvider, createConfiguredSearchProvider, createConfiguredSearchResponse, createSearchResponse, createTypesenseSearchProvider, searchRecords, syncCloudflareAiSearchIndex } from '../src/search';
 import { createFixturePage } from '../src/testing';
-import { createAskAiController, createSearchController, createThemeContext, createThemeModeController } from '../src/theme/headless';
+import { createAskAiController, createPageToolsController, createSearchController, createThemeContext, createThemeModeController } from '../src/theme/headless';
 import { svedocs } from '../src/vite';
 
 describe('svedocs Batch 0 skeleton', () => {
@@ -40,6 +40,18 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(config.ai.scope).toBe('current');
     expect(config.i18n.locales).toEqual([]);
     expect(config.checks.translations).toBe(false);
+  });
+
+  it('throws when an existing config imports a missing dependency', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-config-import-'));
+    try {
+      const configFile = path.join(tmp, 'svedocs.config.mjs');
+      await writeFile(configFile, 'import "missing-svedocs-config-package";\nexport default {};\n', 'utf8');
+
+      await expect(loadSvedocsConfigFile(configFile)).rejects.toThrow('missing-svedocs-config-package');
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
   });
 
   it('aligns SvelteKit route options across build modes', () => {
@@ -347,6 +359,70 @@ describe('svedocs Batch 0 skeleton', () => {
 
     expect(await controller.ensureRecords()).toEqual([]);
     expect(get(controller.messages).at(-1)?.content).toBe('I could not find a matching local source for that question.');
+  });
+
+  it('reads CRLF Ask AI event streams in the headless controller', async () => {
+    const config = resolveSvedocsConfig({
+      ai: {
+        enabled: true,
+        provider: 'mock'
+      }
+    });
+    const encoder = new TextEncoder();
+    const controller = createAskAiController({
+      config,
+      buildMode: 'edge',
+      async fetcher() {
+        return new Response(new ReadableStream({
+          start(streamController) {
+            for (const chunk of [
+              'event: answer\r',
+              '\ndata: {"answer":"Use pnpm."}\r\n\r',
+              '\nevent: citations\r\n',
+              'data: {"citations":[{"title":"Install","url":"/docs/install"}]}\r\n\r\n',
+              'event: done\r\ndata: {}\r\n\r\n'
+            ]) {
+              streamController.enqueue(encoder.encode(chunk));
+            }
+            streamController.close();
+          }
+        }), {
+          headers: {
+            'content-type': 'text/event-stream'
+          }
+        });
+      }
+    });
+
+    await controller.send('install');
+
+    const assistant = get(controller.messages).find((message) => message.role === 'assistant');
+    expect(assistant?.content).toBe('Use pnpm.');
+    expect(assistant?.citations?.[0]?.url).toBe('/docs/install');
+  });
+
+  it('keeps Ask AI page tools hidden and inert when AI is disabled', () => {
+    const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+    let dispatched = 0;
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: {
+        dispatchEvent() {
+          dispatched += 1;
+          return true;
+        }
+      }
+    });
+    try {
+      const controller = createPageToolsController(resolveSvedocsConfig());
+
+      expect(get(controller.visible)).toBe(false);
+      expect(get(controller.mode)).toBe('solo');
+      controller.openAskAi();
+      expect(dispatched).toBe(0);
+    } finally {
+      restoreGlobalProperty('window', originalWindow);
+    }
   });
 
   it('tracks theme mode system preference without persisting the resolved mode', () => {
@@ -1074,11 +1150,63 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(json.results.map((result) => result.id)).toEqual(['en-install']);
   });
 
+  it('searches CJK content without whitespace token boundaries', () => {
+    const records = [
+      {
+        id: 'zh-runtime',
+        pageId: 'zh-runtime',
+        url: '/docs/zh/runtime',
+        title: '运行环境',
+        content: '这里说明如何配置运行时凭据并回退到本地搜索。',
+        metadata: { locale: 'zh', kind: 'doc' }
+      },
+      {
+        id: 'en-runtime',
+        pageId: 'en-runtime',
+        url: '/docs/runtime',
+        title: 'Runtime',
+        content: 'Configure runtime credentials and local search fallback.',
+        metadata: { locale: 'en', kind: 'doc' }
+      }
+    ];
+
+    expect(searchRecords(records, { query: '凭据' }).map((result) => result.id)).toEqual(['zh-runtime']);
+    expect(searchRecords(records, { query: '本地搜索' }).map((result) => result.id)).toEqual(['zh-runtime']);
+    expect(searchRecords(records, { query: '运行时凭据', locale: 'zh' })[0]?.id).toBe('zh-runtime');
+  });
+
+  it('falls back to partial local matches when no record contains every query term', () => {
+    const records = [
+      {
+        id: 'local-search',
+        pageId: 'search',
+        url: '/docs/search',
+        title: 'Search',
+        content: 'Local search indexes pages and sections.',
+        metadata: { kind: 'doc' }
+      },
+      {
+        id: 'ask-ai',
+        pageId: 'ask',
+        url: '/docs/ask-ai',
+        title: 'Ask AI',
+        content: 'Answers questions with citations.',
+        metadata: { kind: 'doc' }
+      }
+    ];
+
+    const results = searchRecords(records, { query: 'search ai', limit: 2 });
+
+    expect(results.map((result) => result.id).sort()).toEqual(['ask-ai', 'local-search']);
+  });
+
   it('normalizes Cloudflare AI Search chunk results', async () => {
+    let scopedFilters: Record<string, unknown> | undefined;
     const provider = createCloudflareAiSearchProvider({
       binding: {
         async search(input) {
           expect(input.query).toBeUndefined();
+          scopedFilters = input.ai_search_options?.retrieval?.filters;
           return {
             response: `Matched ${input.messages?.[0]?.content ?? input.query}`,
             chunks: [
@@ -1125,6 +1253,7 @@ describe('svedocs Batch 0 skeleton', () => {
       score: 0.9
     });
     expect(results[0]?.excerpt).toContain('pnpm');
+    expect(scopedFilters).toEqual({ locale: 'zh' });
     expect(scoped.map((result) => result.url)).toEqual(['/docs/zh/install']);
   });
 
@@ -1271,6 +1400,24 @@ describe('svedocs Batch 0 skeleton', () => {
       }
     );
     const algoliaJson = await algoliaResponse.json() as { provider?: string; results: Array<{ id: string }> };
+    let overrideCalledRemote = false;
+    const localResponse = await createConfiguredSearchResponse(
+      resolveSvedocsConfig({ search: { provider: 'local' } }),
+      records,
+      new Request('https://example.test/api/search?q=svedocs&provider=algolia'),
+      {
+        env: {
+          ALGOLIA_APP_ID: 'APP',
+          ALGOLIA_SEARCH_KEY: 'key',
+          ALGOLIA_INDEX_NAME: 'docs'
+        },
+        async fetch() {
+          overrideCalledRemote = true;
+          return Response.json({ hits: [] });
+        }
+      }
+    );
+    const localJson = await localResponse.json() as { results: Array<{ id: string }> };
     const typesenseProvider = createConfiguredSearchProvider({
       config: resolveSvedocsConfig({ search: { provider: 'typesense' } }),
       records,
@@ -1280,6 +1427,8 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(algoliaBody?.filters).toBe('locale:en');
     expect(algoliaJson.provider).toBe('algolia');
     expect(algoliaJson.results[0]?.id).toBe('algolia-install');
+    expect(overrideCalledRemote).toBe(false);
+    expect(localJson.results[0]?.id).toBe('local-install');
     expect(typesenseProvider.name).toBe('local-json');
   });
 
@@ -1584,6 +1733,90 @@ describe('svedocs Batch 0 skeleton', () => {
       title: 'Install',
       url: '/docs/install'
     });
+  });
+
+  it('passes Ask AI scope into Cloudflare AI Search retrieval filters and citations', async () => {
+    let chatFilters: Record<string, unknown> | undefined;
+    const provider = createCloudflareAiSearchAiProvider({
+      binding: {
+        async search() {
+          return {
+            response: 'Search fallback answer.'
+          };
+        },
+        async chatCompletions(input) {
+          chatFilters = input.ai_search_options?.retrieval?.filters;
+          return {
+            choices: [
+              {
+                message: {
+                  content: 'Deploy with the localized guide.'
+                }
+              }
+            ],
+            citations: [
+              {
+                title: 'Native unscoped',
+                url: '/docs/deploy'
+              }
+            ],
+            chunks: [
+              {
+                text: 'Deploy to Cloudflare.',
+                item: {
+                  metadata: {
+                    title: 'Deploy',
+                    url: '/docs/deploy',
+                    locale: 'en'
+                  }
+                }
+              },
+              {
+                text: '部署到 Cloudflare。',
+                item: {
+                  metadata: {
+                    title: '部署',
+                    url: '/docs/zh/deploy',
+                    locale: 'zh'
+                  }
+                }
+              }
+            ]
+          };
+        }
+      }
+    });
+    let searchFilters: Record<string, unknown> | undefined;
+    const fallbackProvider = createCloudflareAiSearchAiProvider({
+      binding: {
+        async search(input) {
+          searchFilters = input.ai_search_options?.retrieval?.filters;
+          return {
+            response: 'Fallback answer.',
+            chunks: [
+              {
+                text: 'Deploy docs.',
+                item: {
+                  metadata: {
+                    title: 'Deploy',
+                    url: '/docs/deploy',
+                    kind: 'doc'
+                  }
+                }
+              }
+            ]
+          };
+        }
+      }
+    });
+
+    const result = await provider.ask({ question: 'deploy', scope: { locale: 'zh' } });
+    const fallback = await fallbackProvider.ask({ question: 'deploy', scope: { kind: 'doc' } });
+
+    expect(chatFilters).toEqual({ locale: 'zh' });
+    expect(result.citations.map((citation) => citation.url)).toEqual(['/docs/zh/deploy']);
+    expect(searchFilters).toEqual({ kind: 'doc' });
+    expect(fallback.citations.map((citation) => citation.url)).toEqual(['/docs/deploy']);
   });
 
   it('supports Workers AI providers and KV-backed rate limits', async () => {

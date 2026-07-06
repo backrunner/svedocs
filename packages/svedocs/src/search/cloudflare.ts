@@ -7,6 +7,7 @@ import type {
   CloudflareAiSearchOutput,
   CloudflareAiSearchNamespace,
   SearchResult,
+  SearchScope,
   SearchProvider
 } from './types.js';
 import { matchesSearchScope } from './local.js';
@@ -23,6 +24,7 @@ export function createCloudflareAiSearchProvider(input: {
     },
     async search(query) {
       const maxResults = query.limit ?? 10;
+      const filters = createCloudflareAiSearchScopeFilters(query);
       const result = await runCloudflareAiSearch(input.binding, input.instanceName, {
         messages: [
           {
@@ -33,7 +35,8 @@ export function createCloudflareAiSearchProvider(input: {
         ai_search_options: {
           retrieval: {
             retrieval_type: 'hybrid',
-            max_num_results: maxResults
+            max_num_results: maxResults,
+            ...(filters ? { filters } : {})
           }
         }
       });
@@ -70,6 +73,14 @@ export function resolveAiSearchInstance(
   instanceName = 'svedocs'
 ): CloudflareAiSearchInstance {
   return 'get' in binding ? binding.get(instanceName) : binding;
+}
+
+export function createCloudflareAiSearchScopeFilters(scope: SearchScope = {}): Record<string, unknown> | undefined {
+  const filters = {
+    ...(scope.locale ? { locale: scope.locale } : {}),
+    ...(scope.kind ? { kind: scope.kind } : {})
+  };
+  return Object.keys(filters).length > 0 ? filters : undefined;
 }
 
 function mergeRetrieval(

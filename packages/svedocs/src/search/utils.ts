@@ -20,6 +20,12 @@ export function normalizeSearchText(value: string): string {
     .trim();
 }
 
+export function tokenizeSearchText(value: string): string[] {
+  const normalized = normalizeSearchText(value);
+  if (!normalized) return [];
+  return normalized.split(/\s+/).flatMap(tokenizeSearchSegment);
+}
+
 export function tokenizeSearchQuery(query: string): string[] {
   return normalizeSearchText(query).split(/\s+/).filter(Boolean);
 }
@@ -60,4 +66,37 @@ export function chunkArray<T>(items: T[], size: number): T[][] {
 
 export function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function tokenizeSearchSegment(segment: string): string[] {
+  const tokens: string[] = [];
+  let run = '';
+  let runIsCjk: boolean | undefined;
+  for (const char of Array.from(segment)) {
+    const charIsCjk = isCjkSearchChar(char);
+    if (run && charIsCjk !== runIsCjk) {
+      tokens.push(...tokenizeSearchRun(run, runIsCjk === true));
+      run = '';
+    }
+    run += char;
+    runIsCjk = charIsCjk;
+  }
+  if (run) tokens.push(...tokenizeSearchRun(run, runIsCjk === true));
+  return tokens;
+}
+
+function tokenizeSearchRun(run: string, cjk: boolean): string[] {
+  if (!cjk) return [run];
+  const chars = Array.from(run);
+  const tokens = [...chars];
+  for (let size = 2; size <= Math.min(3, chars.length); size += 1) {
+    for (let index = 0; index <= chars.length - size; index += 1) {
+      tokens.push(chars.slice(index, index + size).join(''));
+    }
+  }
+  return tokens;
+}
+
+function isCjkSearchChar(value: string): boolean {
+  return /[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff\uac00-\ud7af]/u.test(value);
 }

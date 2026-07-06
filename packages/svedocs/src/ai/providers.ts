@@ -1,7 +1,7 @@
 import type { SvedocsSearchRecord } from '../core.js';
-import { normalizeCloudflareAiSearchResults } from '../search/cloudflare.js';
-import { searchRecords } from '../search.js';
-import type { CloudflareAiSearchChatOutput } from '../search.js';
+import { createCloudflareAiSearchScopeFilters, normalizeCloudflareAiSearchResults } from '../search/cloudflare.js';
+import { matchesSearchScope, searchRecords } from '../search.js';
+import type { CloudflareAiSearchChatOutput, CloudflareAiSearchInput } from '../search.js';
 import type {
   AiProvider,
   AiSearchBinding,
@@ -43,44 +43,24 @@ export function createCloudflareAiSearchAiProvider(input: {
       const result = await instance.search({
         messages: conversation,
         ai_search_options: {
-          retrieval: {
-            retrieval_type: 'hybrid',
-            max_num_results: maxResults
-          }
+          retrieval: createCloudflareAiSearchRetrieval(maxResults, question.scope)
         }
       });
       return {
         answer: result.response ?? result.answer ?? 'No answer was returned.',
-        citations: normalizeCloudflareAiSearchResults(result, question.question)
-          .slice(0, maxResults)
-          .map((result) => ({
-            title: result.title,
-            url: result.url,
-            ...(result.section ? { section: result.section } : {})
-          }))
+        citations: createCloudflareAiSearchCitations(result, question, maxResults)
       };
     }
     const result = await instance.chatCompletions({
       messages: conversation,
       ...(input.model ? { model: input.model } : {}),
       ai_search_options: {
-        retrieval: {
-          retrieval_type: 'hybrid',
-          max_num_results: maxResults
-        }
+        retrieval: createCloudflareAiSearchRetrieval(maxResults, question.scope)
       }
     }) as CloudflareAiSearchChatOutput;
     return {
       answer: readAiSearchAnswer(result),
-      citations: normalizeCitations(result.citations).length > 0
-        ? normalizeCitations(result.citations)
-        : normalizeCloudflareAiSearchResults(result, question.question)
-            .slice(0, maxResults)
-            .map((result) => ({
-              title: result.title,
-              url: result.url,
-              ...(result.section ? { section: result.section } : {})
-            }))
+      citations: readCloudflareAiSearchCitations(result, question, maxResults)
     };
   }
 
@@ -97,24 +77,13 @@ export function createCloudflareAiSearchAiProvider(input: {
         ...(input.model ? { model: input.model } : {}),
         stream: true,
         ai_search_options: {
-          retrieval: {
-            retrieval_type: 'hybrid',
-            max_num_results: maxResults
-          }
+          retrieval: createCloudflareAiSearchRetrieval(maxResults, question.scope)
         }
       });
       if (result instanceof Response || result instanceof ReadableStream) return result;
       return createSvedocsAnswerStream({
         answer: readAiSearchAnswer(result),
-        citations: normalizeCitations(result.citations).length > 0
-          ? normalizeCitations(result.citations)
-          : normalizeCloudflareAiSearchResults(result, question.question)
-              .slice(0, maxResults)
-              .map((result) => ({
-                title: result.title,
-                url: result.url,
-                ...(result.section ? { section: result.section } : {})
-              }))
+        citations: readCloudflareAiSearchCitations(result, question, maxResults)
       });
     }
   };
@@ -193,6 +162,48 @@ function normalizeCitations(citations: Array<{ title?: string; url?: string; sec
     url: citation.url ?? '#',
     ...(citation.section ? { section: citation.section } : {})
   }));
+}
+
+function createCloudflareAiSearchRetrieval(
+  maxResults: number,
+  scope: AskInput['scope']
+): NonNullable<NonNullable<CloudflareAiSearchInput['ai_search_options']>['retrieval']> {
+  const filters = createCloudflareAiSearchScopeFilters(scope);
+  return {
+    retrieval_type: 'hybrid',
+    max_num_results: maxResults,
+    ...(filters ? { filters } : {})
+  };
+}
+
+function readCloudflareAiSearchCitations(
+  result: CloudflareAiSearchChatOutput,
+  input: AskInput,
+  maxResults: number
+): AskCitation[] {
+  const scopedCitations = createCloudflareAiSearchCitations(result, input, maxResults);
+  if (hasSearchScope(input.scope)) return scopedCitations;
+  const citations = normalizeCitations(result.citations);
+  return citations.length > 0 ? citations.slice(0, maxResults) : scopedCitations;
+}
+
+function createCloudflareAiSearchCitations(
+  result: CloudflareAiSearchChatOutput,
+  input: AskInput,
+  maxResults: number
+): AskCitation[] {
+  return normalizeCloudflareAiSearchResults(result, input.question)
+    .filter((searchResult) => matchesSearchScope({ metadata: searchResult.metadata } as SvedocsSearchRecord, input.scope))
+    .slice(0, maxResults)
+    .map((searchResult) => ({
+      title: searchResult.title,
+      url: searchResult.url,
+      ...(searchResult.section ? { section: searchResult.section } : {})
+    }));
+}
+
+function hasSearchScope(scope: AskInput['scope']): boolean {
+  return Boolean(scope?.locale || scope?.kind);
 }
 
 function readAiSearchAnswer(result: CloudflareAiSearchChatOutput): string {
