@@ -182,8 +182,10 @@ function readCloudflareAiSearchCitations(
   maxResults: number
 ): AskCitation[] {
   const scopedCitations = createCloudflareAiSearchCitations(result, input, maxResults);
-  if (hasSearchScope(input.scope)) return scopedCitations;
   const citations = normalizeCitations(result.citations);
+  if (hasSearchScope(input.scope)) {
+    return scopedCitations.length > 0 ? scopedCitations : citations.slice(0, maxResults);
+  }
   return citations.length > 0 ? citations.slice(0, maxResults) : scopedCitations;
 }
 

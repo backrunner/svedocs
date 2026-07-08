@@ -23,6 +23,8 @@ export interface CreateConfiguredAiProviderOptions {
   config: Pick<SvedocsResolvedConfig, 'ai' | 'cloudflare'>;
   env?: SvedocsAiRuntimeEnv;
   provider?: string;
+  systemPrompt?: string;
+  maxResults?: number;
   fetch?: typeof fetch;
 }
 
@@ -35,8 +37,8 @@ export interface CreateConfiguredAskResponseOptions extends Omit<CreateAskRespon
 export function createConfiguredAiProvider(options: CreateConfiguredAiProviderOptions): AiProvider {
   const provider = normalizeProviderName(options.provider ?? options.config.ai.provider);
   if (!options.config.ai.enabled) return createMockAiProvider();
-  const systemPrompt = options.config.ai.systemPrompt;
-  const maxResults = options.config.ai.maxResults;
+  const systemPrompt = options.systemPrompt ?? options.config.ai.systemPrompt;
+  const maxResults = options.maxResults ?? options.config.ai.maxResults;
   if (provider === 'cloudflare-workers-ai') {
     const ai = readWorkersAiBinding(options.env);
     if (ai) return createWorkersAiProvider({
@@ -70,6 +72,7 @@ export function createConfiguredAiProvider(options: CreateConfiguredAiProviderOp
         ...(baseUrl ? { baseUrl } : {}),
         ...(typeof temperature === 'number' ? { temperature } : {}),
         ...(systemPrompt ? { systemPrompt } : {}),
+        ...(typeof maxResults === 'number' ? { citationLimit: maxResults } : {}),
         ...(options.fetch ? { fetch: options.fetch } : {})
       });
     }
@@ -87,6 +90,8 @@ export function createConfiguredAskResponse(
   const provider = createConfiguredAiProvider({
     config,
     ...(options.provider ? { provider: options.provider } : {}),
+    ...(options.systemPrompt ? { systemPrompt: options.systemPrompt } : {}),
+    ...(typeof options.maxResults === 'number' ? { maxResults: options.maxResults } : {}),
     ...(options.env ? { env: options.env } : {}),
     ...(options.fetch ? { fetch: options.fetch } : {})
   });
@@ -95,7 +100,9 @@ export function createConfiguredAskResponse(
     ...(typeof options.stream === 'boolean' ? { stream: options.stream } : {}),
     ...(options.scope ? { scope: options.scope } : {}),
     ...(options.rateLimiter ? { rateLimiter: options.rateLimiter } : {}),
-    ...(options.rateLimitKey ? { rateLimitKey: options.rateLimitKey } : {})
+    ...(options.rateLimitKey ? { rateLimitKey: options.rateLimitKey } : {}),
+    ...(options.systemPrompt ? { systemPrompt: options.systemPrompt } : {}),
+    ...(typeof options.maxResults === 'number' ? { maxResults: options.maxResults } : {})
   });
 }
 

@@ -1819,6 +1819,41 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(fallback.citations.map((citation) => citation.url)).toEqual(['/docs/deploy']);
   });
 
+  it('falls back to native Cloudflare AI Search citations for scoped Ask AI results without chunks', async () => {
+    let chatFilters: Record<string, unknown> | undefined;
+    const provider = createCloudflareAiSearchAiProvider({
+      binding: {
+        async search() {
+          return {
+            response: 'Search fallback answer.'
+          };
+        },
+        async chatCompletions(input) {
+          chatFilters = input.ai_search_options?.retrieval?.filters;
+          return {
+            answer: 'Use the localized deploy guide.',
+            citations: [
+              {
+                title: '部署',
+                url: '/docs/zh/deploy'
+              }
+            ]
+          };
+        }
+      }
+    });
+
+    const result = await provider.ask({ question: 'deploy', scope: { locale: 'zh' } });
+
+    expect(chatFilters).toEqual({ locale: 'zh' });
+    expect(result.citations).toEqual([
+      {
+        title: '部署',
+        url: '/docs/zh/deploy'
+      }
+    ]);
+  });
+
   it('supports Workers AI providers and KV-backed rate limits', async () => {
     const page = createFixturePage({
       search: [
@@ -1977,6 +2012,62 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(json.answer).toBe('Use the edge preset.');
     expect(json.citations[0]?.url).toBe('/docs/cloudflare');
     expect(workersProvider.name).toBe('cloudflare-workers-ai');
+  });
+
+  it('applies configured Ask AI response option overrides to hosted providers', async () => {
+    const config = resolveSvedocsConfig({
+      ai: {
+        provider: 'openai-compatible',
+        systemPrompt: 'Config prompt.',
+        maxResults: 5
+      }
+    });
+    let requestBody: {
+      messages?: Array<{ role: string; content: string }>;
+    } | undefined;
+    const response = await createConfiguredAskResponse(
+      config,
+      [
+        {
+          id: 'deploy',
+          pageId: 'deploy',
+          url: '/docs/deploy',
+          title: 'Deploy',
+          content: 'Deploy svedocs to Cloudflare Pages.',
+          metadata: {}
+        },
+        {
+          id: 'install',
+          pageId: 'install',
+          url: '/docs/install',
+          title: 'Install',
+          content: 'Install svedocs with pnpm.',
+          metadata: {}
+        }
+      ],
+      new Request('https://example.test/api/ask', {
+        method: 'POST',
+        body: JSON.stringify({ question: 'svedocs' })
+      }),
+      {
+        systemPrompt: 'Override prompt.',
+        maxResults: 1,
+        env: {
+          OPENAI_COMPATIBLE_API_KEY: 'key',
+          OPENAI_COMPATIBLE_BASE_URL: 'https://llm.example.test/v1',
+          OPENAI_COMPATIBLE_MODEL: 'provider/model'
+        },
+        async fetch(_input, init) {
+          requestBody = JSON.parse(String(init?.body));
+          return Response.json({ choices: [{ message: { content: 'Use the override.' } }] });
+        }
+      }
+    );
+    const json = await response.json() as { answer: string; citations: Array<{ url: string }> };
+
+    expect(requestBody?.messages?.[0]).toEqual({ role: 'system', content: 'Override prompt.' });
+    expect(json.answer).toBe('Use the override.');
+    expect(json.citations).toHaveLength(1);
   });
 
   it('falls back to mock Ask AI when configured provider env is missing', async () => {
