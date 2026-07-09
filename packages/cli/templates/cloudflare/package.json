@@ -12,7 +12,8 @@
     "build:spa": "svedocs build --mode spa",
     "preview": "svedocs preview",
     "preview:cloudflare": "wrangler pages dev .svelte-kit/cloudflare",
-    "deploy": "wrangler pages deploy .svelte-kit/cloudflare",
+    "deploy": "svedocs deploy cloudflare",
+    "deploy:setup": "svedocs deploy cloudflare setup --write",
     "check": "svelte-kit sync && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

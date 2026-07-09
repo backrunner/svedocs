@@ -28,7 +28,7 @@ export default {
 
 ## Wrangler
 
-`svedocs deploy cloudflare --write` creates a baseline `wrangler.toml` from your resolved config.
+`svedocs deploy cloudflare setup --write` creates a baseline `wrangler.toml` from your resolved config. The shorter `svedocs deploy cloudflare` command checks for `wrangler.toml` or `wrangler.jsonc`; when neither exists, it writes the setup files first, then builds and publishes with `wrangler pages deploy`.
 
 ```toml title="wrangler.toml"
 name = "my-docs"
@@ -41,6 +41,8 @@ instance_name = "svedocs"
 ```
 
 For AI Search namespaces, configure `cloudflare.aiSearch.namespace`; svedocs will emit `[[ai_search_namespaces]]` instead of `[[ai_search]]`.
+
+Use `--mode static` or `--mode spa` with either setup or deploy when the Cloudflare Pages output should be `build` instead of the default edge SSR output.
 
 `platformProxy.remoteBindings` is disabled in the local adapter config so edge builds and prerendering do not require a Cloudflare account. `platformProxy.persist` is disabled by default to avoid local Miniflare state locks during repeated dev-server restarts. `cloudflare.aiSearch.remote` defaults to `false`; set remote bindings intentionally only when you want local development to talk to Cloudflare resources.
 

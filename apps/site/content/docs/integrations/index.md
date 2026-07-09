@@ -56,10 +56,11 @@ Build-time integrations use CLI commands:
 svedocs check --strict
 svedocs index --provider cloudflare-ai-search --dry-run
 svedocs og --format svg --out static/og
-svedocs deploy cloudflare --write
+svedocs deploy cloudflare setup --write
+svedocs deploy cloudflare
 ```
 
-Use dry-runs in CI until credentials are ready. The commands print the generated output or planned operations so deployment changes stay reviewable.
+Use dry-runs in CI until credentials are ready. Setup commands print or write generated output so deployment changes stay reviewable; the deploy command then builds and publishes through Wrangler.
 
 ## Security and operations
 

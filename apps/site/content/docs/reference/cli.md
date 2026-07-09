@@ -1,6 +1,6 @@
 ---
 title: CLI
-description: Create, build, check, index, generate OG assets, and prepare Cloudflare deployment with the svedocs CLI.
+description: Create, build, check, index, generate OG assets, and deploy to Cloudflare with the svedocs CLI.
 order: 2
 ---
 
@@ -102,7 +102,10 @@ SVG output has no native runtime dependency. PNG output uses Resvg at generation
 
 ```sh
 svedocs deploy cloudflare
-svedocs deploy cloudflare --write
+svedocs deploy cloudflare setup
+svedocs deploy cloudflare setup --write
 ```
 
-The dry-run prints the generated `wrangler.toml` and platform type declarations. `--write` creates `wrangler.toml` and `src/app.cloudflare.d.ts`. Pass `--format jsonc` when you need `wrangler.jsonc`.
+`deploy cloudflare` builds the configured Cloudflare output and runs `wrangler pages deploy`. If the project does not have `wrangler.toml` or `wrangler.jsonc` yet, the command initializes Cloudflare Pages config and `src/app.cloudflare.d.ts` first.
+
+`deploy cloudflare setup` previews the generated `wrangler.toml` and platform type declarations. Add `--write` to create the files, or pass `--format jsonc` when you need `wrangler.jsonc`.

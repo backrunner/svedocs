@@ -25,7 +25,7 @@ export function renderSvedocsHelp(): string {
     '  check               Check project configuration and content',
     '  index               Print or write search index records',
     '  og                  Generate Open Graph assets',
-    '  deploy              Deploy helpers and provider checks',
+    '  deploy              Set up and deploy to a provider',
     '',
     'Global options:',
     '  --config <path>      Use a specific svedocs config file',

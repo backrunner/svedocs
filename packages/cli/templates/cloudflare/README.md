@@ -8,9 +8,12 @@ pnpm dev
 pnpm build
 pnpm build:ssg
 pnpm preview:cloudflare
+pnpm deploy
 ```
 
 The default build uses `@sveltejs/adapter-cloudflare` with local remote bindings disabled and local binding persistence off, so builds do not require a Cloudflare account or shared local emulator state. Static SSG builds are available with `pnpm build:ssg` or `svedocs build --mode static`; `pnpm build:spa` adds a static fallback for hosts that need one.
+
+`pnpm deploy` runs `svedocs deploy cloudflare`, which initializes Cloudflare Pages config when needed, builds the configured output, and publishes with Wrangler. Use `pnpm deploy:setup` when you only want to refresh `wrangler.toml` and Cloudflare platform types.
 
 ## Custom themes
 

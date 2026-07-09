@@ -559,10 +559,11 @@ describe('svedocs-cli Batch 0 shell', () => {
     }
   });
 
-  it('renders a Cloudflare deploy dry-run', async () => {
-    const result = await withCwd(fixtureRoot(), () => runSvedocsCli(['deploy', 'cloudflare']));
+  it('renders a Cloudflare deploy setup dry-run', async () => {
+    const result = await withCwd(fixtureRoot(), () => runSvedocsCli(['deploy', 'cloudflare', 'setup']));
 
     expect(result.ok).toBe(true);
+    expect(result.message).toContain('setup dry-run');
     expect(result.message).toContain('wrangler.toml');
     expect(result.message).toContain('compatibility_date');
   });
@@ -588,13 +589,79 @@ describe('svedocs-cli Batch 0 shell', () => {
         'utf8'
       );
 
-      const result = await withCwd(tmp, () => runSvedocsCli(['deploy', 'cloudflare']));
+      const result = await withCwd(tmp, () => runSvedocsCli(['deploy', 'cloudflare', 'setup']));
 
       expect(result.ok).toBe(true);
       expect(result.message).toContain('name = "configured-site"');
       expect(result.message).toContain('[[ai_search]]');
       expect(result.message).toContain('binding = "DOCS_SEARCH"');
     } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('initializes and deploys Cloudflare projects', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-cloudflare-deploy-'));
+    const previousPath = process.env.PATH;
+    const previousLog = process.env.SVEDOCS_DEPLOY_LOG;
+    const logPath = path.join(tmp, 'commands.log');
+    try {
+      await mkdir(path.join(tmp, 'content/docs'), { recursive: true });
+      await mkdir(path.join(tmp, 'content/pages'), { recursive: true });
+      await writeFile(path.join(tmp, 'content/docs/index.md'), '---\ndescription: Deploy docs.\n---\n# Deploy\n\nShip it.\n', 'utf8');
+      await writeFile(path.join(tmp, 'content/pages/index.md'), '---\ndescription: Home.\n---\n# Home\n\nWelcome.\n', 'utf8');
+      await writeFile(
+        path.join(tmp, 'svedocs.config.mjs'),
+        [
+          'export default {',
+          '  site: { name: "deploy-site" },',
+          '  content: { root: "content" }',
+          '};'
+        ].join('\n'),
+        'utf8'
+      );
+      const binDir = path.join(tmp, 'bin');
+      await mkdir(binDir, { recursive: true });
+      await writeFile(
+        path.join(binDir, 'vite'),
+        [
+          '#!/usr/bin/env node',
+          'const fs = require("node:fs");',
+          'fs.appendFileSync(process.env.SVEDOCS_DEPLOY_LOG, `vite ${process.argv.slice(2).join(" ")} mode=${process.env.SVEDOCS_BUILD_MODE}\\n`);'
+        ].join('\n'),
+        { mode: 0o755 }
+      );
+      await writeFile(
+        path.join(binDir, 'wrangler'),
+        [
+          '#!/usr/bin/env node',
+          'const fs = require("node:fs");',
+          'fs.appendFileSync(process.env.SVEDOCS_DEPLOY_LOG, `wrangler ${process.argv.slice(2).join(" ")}\\n`);'
+        ].join('\n'),
+        { mode: 0o755 }
+      );
+      process.env.PATH = `${binDir}${path.delimiter}${previousPath ?? ''}`;
+      process.env.SVEDOCS_DEPLOY_LOG = logPath;
+
+      const result = await withCwd(tmp, () => runSvedocsCli(['deploy', 'cloudflare', '--mode', 'static', '--no-og', '--', '--project-name', 'deploy-site']));
+      const wrangler = await readFile(path.join(tmp, 'wrangler.toml'), 'utf8');
+      const platformTypes = await readFile(path.join(tmp, 'src/app.cloudflare.d.ts'), 'utf8');
+      const log = await readFile(logPath, 'utf8');
+
+      expect(result.ok).toBe(true);
+      expect(result.message).toContain('Initialized Cloudflare Pages deployment');
+      expect(wrangler).toContain('name = "deploy-site"');
+      expect(wrangler).toContain('pages_build_output_dir = "build"');
+      expect(platformTypes).toContain('declare namespace App');
+      expect(log).toContain('vite build mode=static');
+      expect(log).toContain('wrangler pages deploy build --project-name deploy-site');
+    } finally {
+      process.env.PATH = previousPath;
+      if (previousLog === undefined) {
+        delete process.env.SVEDOCS_DEPLOY_LOG;
+      } else {
+        process.env.SVEDOCS_DEPLOY_LOG = previousLog;
+      }
       await rm(tmp, { recursive: true, force: true });
     }
   });

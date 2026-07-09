@@ -24,7 +24,8 @@ CLI package for `svedocs` and `create-svedocs`.
 - `svedocs index --provider cloudflare-ai-search --strategy replace --existing stale-id --delete manual-id`
 - `svedocs og --format svg|png --out static/og`
 - `svedocs og --renderer satori --font ./Inter-Regular.ttf --format png`
-- `svedocs deploy cloudflare --write`
+- `svedocs deploy cloudflare`
+- `svedocs deploy cloudflare setup --write`
 
 The CLI loads `svedocs.config.ts`, `svedocs.config.mts`, `svedocs.config.js`, or `svedocs.config.mjs` before running content-aware commands.
 

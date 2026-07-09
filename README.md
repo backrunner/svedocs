@@ -30,7 +30,7 @@ It is built for teams that want documentation to feel native to SvelteKit instea
 | Edge-first deployment | Cloudflare edge SSR is the default path, with static and SPA builds available when needed. |
 | Search and Ask AI | Local MiniSearch for development, plus Algolia, Typesense, Cloudflare AI Search, Workers AI, and OpenAI-compatible providers. |
 | Default theme | Tailwind CSS v4 theme with dark mode, command/search UI, Ask AI, ToC, locales, versions, code tools, and a pixel-style homepage. |
-| Production CLI | Create projects, run dev/build/preview/check, generate search indexes and OG images, and scaffold Cloudflare deployment. |
+| Production CLI | Create projects, run dev/build/preview/check, generate search indexes and OG images, and deploy to Cloudflare Pages. |
 
 ## Quick Start
 
@@ -128,6 +128,7 @@ svedocs check
 svedocs index
 svedocs og
 svedocs deploy cloudflare
+svedocs deploy cloudflare setup --write
 ```
 
 Content-aware commands load `svedocs.config.*` first, then apply command-line overrides.

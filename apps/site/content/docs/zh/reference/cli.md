@@ -101,7 +101,10 @@ SVG 输出没有运行时依赖。PNG 输出会在生成时使用 Resvg。
 
 ```sh
 svedocs deploy cloudflare
-svedocs deploy cloudflare --write
+svedocs deploy cloudflare setup
+svedocs deploy cloudflare setup --write
 ```
 
-dry-run 会打印生成的 `wrangler.toml` 和平台类型声明。`--write` 会创建 `wrangler.toml` 和 `src/app.cloudflare.d.ts`。需要 `wrangler.jsonc` 时加 `--format jsonc`。
+`deploy cloudflare` 会构建当前 Cloudflare 输出，并执行 `wrangler pages deploy`。如果项目里还没有 `wrangler.toml` 或 `wrangler.jsonc`，命令会先初始化 Cloudflare Pages 配置和 `src/app.cloudflare.d.ts`。
+
+`deploy cloudflare setup` 会预览生成的 `wrangler.toml` 和平台类型声明。加 `--write` 会创建文件；需要 `wrangler.jsonc` 时加 `--format jsonc`。

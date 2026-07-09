@@ -56,10 +56,11 @@ configured helpers 会读取 `svedocs.config.ts`，在凭据或 bindings 存在�
 svedocs check --strict
 svedocs index --provider cloudflare-ai-search --dry-run
 svedocs og --format svg --out static/og
-svedocs deploy cloudflare --write
+svedocs deploy cloudflare setup --write
+svedocs deploy cloudflare
 ```
 
-在凭据准备好之前，CI 里优先使用 dry-run。命令会打印生成结果或计划操作，让部署变更可以被 review。
+在凭据准备好之前，CI 里优先使用 dry-run。setup 命令会打印或写入生成结果，让部署配置可以被 review；deploy 命令随后会构建并通过 Wrangler 发布。
 
 ## 安全和运维
 

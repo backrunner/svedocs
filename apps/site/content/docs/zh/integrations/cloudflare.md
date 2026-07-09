@@ -28,7 +28,7 @@ export default {
 
 ## Wrangler
 
-执行 `svedocs deploy cloudflare --write` 会根据当前配置生成一个基础版 `wrangler.toml`。
+执行 `svedocs deploy cloudflare setup --write` 会根据当前配置生成一个基础版 `wrangler.toml`。更短的 `svedocs deploy cloudflare` 会先检查项目里是否已有 `wrangler.toml` 或 `wrangler.jsonc`；如果都没有，它会先写入初始化文件，再构建并通过 `wrangler pages deploy` 发布。
 
 ```toml title="wrangler.toml"
 name = "my-docs"
@@ -41,6 +41,8 @@ instance_name = "svedocs"
 ```
 
 如果你用的是 AI Search namespace，就把 `cloudflare.aiSearch.namespace` 配上，svedocs 会输出 `[[ai_search_namespaces]]`，而不是 `[[ai_search]]`。
+
+如果 Cloudflare Pages 输出应该是 `build`，可以在 setup 或 deploy 时传 `--mode static` 或 `--mode spa`；默认仍然是 edge SSR 输出。
 
 `platformProxy.remoteBindings` 在本地 adapter 配置里默认关闭，这样 edge 构建和预渲染就不需要 Cloudflare 账号。`platformProxy.persist` 默认也关闭，用来避免反复重启 dev server 时遇到本地 Miniflare state 锁。`cloudflare.aiSearch.remote` 默认是 `false`；只有在你确实想让本地开发直连 Cloudflare 资源时，才主动打开远端 bindings。
 
