@@ -14,11 +14,14 @@
   export let config: SvedocsResolvedConfig;
   export let loadSearch: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
   export let themeComponents: Partial<SvedocsThemeComponentMap> = {};
-  export let label = 'Rendering issue';
-  export let title = 'This page could not render';
-  export let message = 'A page component failed while rendering. The route is still loaded and the site shell is available.';
+  export let label: string | undefined = undefined;
+  export let title: string | undefined = undefined;
+  export let message: string | undefined = undefined;
 
   $: context = createThemeContext({ config, page, pages, tree, search, ...(loadSearch ? { loadSearch } : {}) });
+  $: resolvedLabel = label ?? context.t('render.page.label');
+  $: resolvedTitle = title ?? context.t('render.page.title');
+  $: resolvedMessage = message ?? context.t('render.page.message');
 </script>
 
 <svelte:component
@@ -42,9 +45,9 @@
       {context}
       tree={tree}
       variant="layout"
-      {label}
-      {title}
-      {message}
+      label={resolvedLabel}
+      title={resolvedTitle}
+      message={resolvedMessage}
     />
   </main>
 </svelte:component>

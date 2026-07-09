@@ -17,9 +17,12 @@ export type {
   SvedocsLink,
   SvedocsLinkReference,
   SvedocsLocale,
+  SvedocsMessageKey,
+  SvedocsMessages,
   SvedocsPage,
   SvedocsSearchRecord,
   SvedocsSeo,
+  SvedocsTranslate,
   SvedocsTreeItem
 } from './core.js';
 

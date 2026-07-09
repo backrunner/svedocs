@@ -251,14 +251,23 @@ export default defineConfig({
     defaultLocale: 'en',
     prefixDefaultLocale: false,
     locales: [
-      { code: 'en', label: 'English' },
-      { code: 'zh', label: '中文', path: 'zh' }
-    ]
+      { code: 'en', label: 'English', hreflang: 'en', dir: 'ltr' },
+      { code: 'zh', label: '中文', path: 'zh', hreflang: 'zh-CN', dir: 'ltr' }
+    ],
+    messages: {
+      zh: {
+        'search.placeholder': '搜索文档',
+        'ask.label': '问 AI',
+        'home.primaryAction': '阅读文档'
+      }
+    }
   }
 });
 ```
 
-Locales affect route generation, sidebars, search scopes, Ask AI citations, SEO alternates, and translation checks. Set `i18n: false` for a single-locale site.
+Locales affect route generation, sidebars, search scopes, Ask AI citations, SEO alternates, and translation checks. `hreflang` controls `<link rel="alternate">`, sitemap alternates, Open Graph locale tags, and JSON-LD `inLanguage`; `dir` lets the theme set text direction for RTL locales.
+
+`i18n.messages` localizes the site shell: landing actions and cards, navigation labels, search, Ask AI, table of contents, article footer controls, render fallback UI, code copy labels, and footer text. English messages are always available as defaults, including when `i18n: false`; locale messages only need to override the keys that differ.
 
 ## Markdown hooks
 

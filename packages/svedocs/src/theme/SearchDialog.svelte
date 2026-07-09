@@ -3,9 +3,9 @@
   import { onDestroy, onMount, tick } from 'svelte';
   import type { SvedocsSearchRecord } from '../core/types.js';
   import type { SearchResult, SearchScope } from '../search/types.js';
-  import { createSearchController } from './headless.js';
+  import { createSearchController, fallbackTranslate } from './headless.js';
   import { portal } from './portal.js';
-  import type { SvedocsSearchController } from './types.js';
+  import type { SvedocsSearchController, SvedocsThemeContext } from './types.js';
 
   export let records: SvedocsSearchRecord[] = [];
   export let loadRecords: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
@@ -14,6 +14,7 @@
   export let endpoint = '/api/search';
   export let buildMode = 'edge';
   export let controller: SvedocsSearchController | undefined = undefined;
+  export let context: SvedocsThemeContext | undefined = undefined;
 
   const internalController = createSearchController({ records, loadRecords, scope, provider, endpoint, buildMode });
   let activeController: SvedocsSearchController = internalController;
@@ -31,8 +32,9 @@
   let boundController: SvedocsSearchController | undefined;
   let unsubscribeController: (() => void) | undefined;
 
+  $: t = context?.t ?? fallbackTranslate;
   $: activeController = controller ?? internalController;
-  $: activeController.setOptions({ records, loadRecords, scope, provider, endpoint, buildMode });
+  $: activeController.setOptions({ records, loadRecords, scope, provider, endpoint, buildMode, t });
   $: bindController(activeController);
 
   function show() {
@@ -128,8 +130,8 @@
   }
 </script>
 
-<button bind:this={trigger} class="sd-search-trigger" type="button" aria-label="Search documentation" aria-haspopup="dialog" aria-expanded={open} on:click={show} data-theme-component="search-trigger">
-  <span>Search</span>
+<button bind:this={trigger} class="sd-search-trigger" type="button" aria-label={t('search.dialog')} aria-haspopup="dialog" aria-expanded={open} on:click={show} data-theme-component="search-trigger">
+  <span>{t('search.trigger')}</span>
   <kbd>⌘K</kbd>
 </button>
 
@@ -141,27 +143,27 @@
     class="sd-search-dialog"
     role="dialog"
     aria-modal="true"
-    aria-label="Search documentation"
+    aria-label={t('search.dialog')}
     tabindex="-1"
     on:keydown={handleDialogKeydown}
     data-theme-component="search"
   >
     <label class="sd-search-box">
-      <span class="sd-visually-hidden">Search query</span>
-      <input value={query} placeholder="Search docs" on:input={handleInput} bind:this={input} />
+      <span class="sd-visually-hidden">{t('search.query')}</span>
+      <input value={query} placeholder={t('search.placeholder')} on:input={handleInput} bind:this={input} />
     </label>
-    <div class="sd-search-results" role="listbox" aria-label="Search results">
+    <div class="sd-search-results" role="listbox" aria-label={t('search.results')}>
       {#if remoteStatus === 'loading'}
-        <p class="sd-empty-state">Searching...</p>
+        <p class="sd-empty-state">{t('search.loading')}</p>
       {/if}
       {#if recordsStatus === 'loading' && !(buildMode === 'edge' && provider !== 'local' && provider !== 'local-json')}
-        <p class="sd-empty-state">Loading search index...</p>
+        <p class="sd-empty-state">{t('search.loadingIndex')}</p>
       {/if}
       {#if recordsStatus === 'error' && !(buildMode === 'edge' && provider !== 'local' && provider !== 'local-json')}
-        <p class="sd-empty-state">Search index could not be loaded.</p>
+        <p class="sd-empty-state">{t('search.indexError')}</p>
       {/if}
       {#if remoteError}
-        <p class="sd-empty-state">{remoteError} Showing local results.</p>
+        <p class="sd-empty-state">{t('search.remoteFallback', { error: remoteError })}</p>
       {/if}
       {#if results.length > 0}
         {#each results as result, index}
@@ -181,7 +183,7 @@
           </a>
         {/each}
       {:else if remoteStatus !== 'loading' && recordsStatus !== 'loading'}
-        <p class="sd-empty-state">No matching docs yet.</p>
+        <p class="sd-empty-state">{t('search.empty')}</p>
       {/if}
     </div>
   </div>

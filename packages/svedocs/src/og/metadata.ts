@@ -17,6 +17,11 @@ export function createPageMetadata(config: SvedocsResolvedConfig, page: SvedocsP
   const type = page.seo.type ?? (page.kind === 'doc' ? 'article' : 'website');
   const author = page.seo.author ?? config.seo.defaultAuthor;
   const updatedTime = page.seo.updatedTime ?? page.lastUpdated;
+  const pageLanguage = getPageLanguage(config, page);
+  const ogLocale = toOpenGraphLocale(pageLanguage);
+  const alternateOgLocales = config.i18n.locales
+    .map((locale) => toOpenGraphLocale(locale.hreflang ?? locale.code))
+    .filter((locale) => locale !== ogLocale);
   return {
     title,
     description,
@@ -32,6 +37,8 @@ export function createPageMetadata(config: SvedocsResolvedConfig, page: SvedocsP
       ...(canonical ? { url: canonical } : {}),
       ...(image ? { image } : {}),
       siteName: config.site.name,
+      locale: ogLocale,
+      ...(alternateOgLocales.length > 0 ? { alternateLocales: [...new Set(alternateOgLocales)] } : {}),
       ...(author ? { author } : {}),
       ...(page.seo.publishedTime ? { publishedTime: page.seo.publishedTime } : {}),
       ...(updatedTime ? { updatedTime } : {})
@@ -58,15 +65,17 @@ export function createSitemapXml(config: SvedocsResolvedConfig, pages: SvedocsPa
     .map((page) => {
       const loc = page.seo.canonical ?? createAbsoluteRouteUrl(config, page.routePath) ?? formatRoutePathForBuildMode(page.routePath, config.build.mode);
       const lastmod = page.seo.updatedTime ?? page.lastUpdated;
+      const alternates = createPageAlternates(config, page, pages);
       return [
         '  <url>',
         `    <loc>${escapeXml(loc)}</loc>`,
         ...(lastmod ? [`    <lastmod>${escapeXml(lastmod)}</lastmod>`] : []),
+        ...alternates.map((alternate) => `    <xhtml:link rel="alternate" hreflang="${escapeXml(alternate.lang)}" href="${escapeXml(alternate.href)}" />`),
         '  </url>'
       ].join('\n');
     })
     .join('\n');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls}\n</urlset>\n`;
 }
 
 export function createPageAlternates(
@@ -83,8 +92,9 @@ export function createPageAlternates(
     if (!candidate.locale) continue;
     const href = candidate.seo.canonical ?? createAbsoluteRouteUrl(config, candidate.routePath);
     if (!href) continue;
+    const locale = config.i18n.locales.find((item) => item.code === candidate.locale);
     alternates.push({
-      lang: candidate.locale,
+      lang: locale?.hreflang ?? candidate.locale,
       href,
       locale: candidate.locale
     });
@@ -162,6 +172,7 @@ function createPageJsonLd(
     '@type': page.kind === 'doc' ? 'TechArticle' : 'WebPage',
     headline: metadata.title,
     description: metadata.description,
+    inLanguage: getPageLanguage(config, page),
     isPartOf: {
       '@type': 'WebSite',
       name: config.site.name,
@@ -185,6 +196,16 @@ function createPageJsonLd(
     graph.about = page.headings.map((heading) => heading.text);
   }
   return graph;
+}
+
+function getPageLanguage(config: SvedocsResolvedConfig, page: SvedocsPage): string {
+  const code = page.locale ?? config.i18n.defaultLocale ?? 'en';
+  const locale = config.i18n.locales.find((candidate) => candidate.code === code);
+  return locale?.hreflang ?? code;
+}
+
+function toOpenGraphLocale(language: string): string {
+  return language.replace('-', '_');
 }
 
 function createAbsoluteUrl(config: SvedocsResolvedConfig, value: string): string | undefined {

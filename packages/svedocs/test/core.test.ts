@@ -11,7 +11,7 @@ import { createConfiguredOgImageFormat, createConfiguredOgImageTemplate, createC
 import { compileMarkdown, createDiffRows, createDiffSplitRows } from '../src/mdx/compile';
 import { createAlgoliaSearchProvider, createCloudflareAiSearchDocuments, createCloudflareAiSearchProvider, createConfiguredSearchProvider, createConfiguredSearchResponse, createSearchResponse, createTypesenseSearchProvider, searchRecords, syncCloudflareAiSearchIndex } from '../src/search';
 import { createFixturePage } from '../src/testing';
-import { createAskAiController, createPageToolsController, createSearchController, createThemeContext, createThemeModeController } from '../src/theme/headless';
+import { createAskAiController, createPageToolsController, createSearchController, createThemeContext, createThemeInitScript, createThemeModeController } from '../src/theme/headless';
 import { svedocs } from '../src/vite';
 
 describe('svedocs Batch 0 skeleton', () => {
@@ -39,7 +39,88 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(config.ai.enabled).toBe(false);
     expect(config.ai.scope).toBe('current');
     expect(config.i18n.locales).toEqual([]);
+    expect(config.i18n.messages.en!['search.placeholder']).toBe('Search docs');
+    expect(config.i18n.messages.en!['home.primaryAction']).toBe('Read docs');
     expect(config.checks.translations).toBe(false);
+  });
+
+  it('resolves localized shell messages with defaults, overrides, fallback, and interpolation', () => {
+    const singleLocale = resolveSvedocsConfig({ i18n: false });
+    expect(singleLocale.i18n.messages.en!['ask.label']).toBe('Ask AI');
+
+    const config = resolveSvedocsConfig({
+      theme: {
+        nav: [
+          { label: 'Docs', href: '/docs' },
+          { label: 'Configuration', href: '/docs/configuration' }
+        ],
+        footer: {
+          text: 'Built by {site}'
+        }
+      },
+      ai: {
+        label: 'Ask docs',
+        placeholder: 'Ask the docs',
+        welcomeMessage: 'Welcome to {site}',
+        suggestions: ['Install', 'Deploy']
+      },
+      i18n: {
+        defaultLocale: 'en',
+        locales: [
+          { code: 'en', label: 'English' },
+          { code: 'zh', label: '中文', hreflang: 'zh-CN', dir: 'ltr' }
+        ],
+        messages: {
+          en: {
+            'search.placeholder': 'Search everything'
+          },
+          zh: {
+            'search.placeholder': '搜索文档',
+            'article.updated': '更新于 {date}',
+            'ask.label': '问 AI'
+          }
+        }
+      }
+    });
+    const context = createThemeContext({
+      config,
+      page: createFixturePage({ routePath: '/docs/zh', locale: 'zh', kind: 'doc' })
+    });
+
+    expect(config.i18n.messages.en!['search.placeholder']).toBe('Search everything');
+    expect(config.i18n.messages.en!['ask.label']).toBe('Ask docs');
+    expect(context.locale?.hreflang).toBe('zh-CN');
+    expect(context.localeCode).toBe('zh');
+    expect(context.t('search.placeholder')).toBe('搜索文档');
+    expect(context.t('search.trigger')).toBe('Search');
+    expect(context.t('article.updated', { date: '2026-05-18' })).toBe('更新于 2026-05-18');
+    expect(context.t('footer.text', { site: 'Fixture' })).toBe('Built by Fixture');
+    expect(createThemeInitScript('system', context.localeCode, context.locale?.dir)).toContain('document.documentElement.lang=l');
+
+    const localizedNavContext = createThemeContext({
+      config,
+      page: createFixturePage({
+        routePath: '/docs/zh/configuration/theme',
+        scopePath: '/docs/configuration/theme',
+        locale: 'zh',
+        kind: 'doc'
+      }),
+      pages: [
+        createFixturePage({
+          routePath: '/docs/configuration',
+          scopePath: '/docs/configuration',
+          locale: 'en',
+          kind: 'doc'
+        }),
+        createFixturePage({
+          routePath: '/docs/zh/configuration',
+          scopePath: '/docs/configuration',
+          locale: 'zh',
+          kind: 'doc'
+        })
+      ]
+    });
+    expect(localizedNavContext.activeNavHref).toBe('/docs/zh/configuration');
   });
 
   it('throws when an existing config imports a missing dependency', async () => {
@@ -359,6 +440,87 @@ describe('svedocs Batch 0 skeleton', () => {
 
     expect(await controller.ensureRecords()).toEqual([]);
     expect(get(controller.messages).at(-1)?.content).toBe('I could not find a matching local source for that question.');
+  });
+
+  it('localizes headless search and Ask AI fallback messages', async () => {
+    const config = resolveSvedocsConfig({
+      ai: {
+        enabled: true,
+        provider: 'mock'
+      },
+      i18n: {
+        defaultLocale: 'en',
+        locales: [
+          { code: 'en', label: 'English' },
+          { code: 'zh', label: '中文' }
+        ],
+        messages: {
+          zh: {
+            'search.requestError': '搜索请求返回 {status}。',
+            'ask.localEmpty': '没有找到本地来源。',
+            'ask.localSources': '找到 {count} 个本地来源。'
+          }
+        }
+      }
+    });
+    const context = createThemeContext({
+      config,
+      page: createFixturePage({ routePath: '/docs/zh/search', locale: 'zh', kind: 'doc' })
+    });
+    const searchController = createSearchController({
+      provider: 'algolia',
+      buildMode: 'edge',
+      t: context.t,
+      async fetcher() {
+        return new Response('unavailable', { status: 503 });
+      }
+    });
+    searchController.show();
+    searchController.setQuery('anything');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(get(searchController.remoteError)).toBe('搜索请求返回 503。');
+
+    const askController = createAskAiController({
+      config,
+      buildMode: 'static',
+      t: context.t
+    });
+    await askController.send('anything');
+
+    expect(get(askController.messages).at(-1)?.content).toBe('没有找到本地来源。');
+
+    const emptyWelcomeConfig = resolveSvedocsConfig({
+      ai: {
+        enabled: true,
+        provider: 'mock',
+        welcomeMessage: 'Global welcome'
+      },
+      i18n: {
+        defaultLocale: 'en',
+        locales: [
+          { code: 'en', label: 'English' },
+          { code: 'zh', label: '中文' }
+        ],
+        messages: {
+          zh: {
+            'ask.welcome': ''
+          }
+        }
+      }
+    });
+    const emptyWelcomeContext = createThemeContext({
+      config: emptyWelcomeConfig,
+      page: createFixturePage({ routePath: '/docs/zh/ask', locale: 'zh', kind: 'doc' })
+    });
+    const emptyWelcomeController = createAskAiController({
+      config: emptyWelcomeConfig,
+      buildMode: 'static',
+      welcomeMessage: emptyWelcomeContext.t('ask.welcome'),
+      t: emptyWelcomeContext.t
+    });
+    emptyWelcomeController.show();
+    expect(get(emptyWelcomeController.messages)).toEqual([]);
   });
 
   it('reads CRLF Ask AI event streams in the headless controller', async () => {
@@ -748,9 +910,14 @@ describe('svedocs Batch 0 skeleton', () => {
         i18n: {
           defaultLocale: 'en',
           locales: [
-            { code: 'en', label: 'English' },
-            { code: 'zh', label: '中文' }
-          ]
+            { code: 'en', label: 'English', hreflang: 'en' },
+            { code: 'zh', label: '中文', hreflang: 'zh-CN' }
+          ],
+          messages: {
+            zh: {
+              'code.copy': '复制代码'
+            }
+          }
         },
       }
     });
@@ -764,6 +931,7 @@ describe('svedocs Batch 0 skeleton', () => {
       locale: 'zh',
       kind: 'doc'
     });
+    expect(manifest.pages.find((page) => page.routePath === '/docs/zh')?.html).toContain('aria-label="复制代码"');
     expect(createPageTree(manifest.pages.filter((page) => page.locale === 'zh'))).toEqual([
       {
         id: 'content-docs-zh-index',
@@ -778,7 +946,7 @@ describe('svedocs Batch 0 skeleton', () => {
       manifest.pages
     ).map((alternate) => [alternate.lang, alternate.href])).toEqual([
       ['en', 'https://fixture.test/docs'],
-      ['zh', 'https://fixture.test/docs/zh'],
+      ['zh-CN', 'https://fixture.test/docs/zh'],
       ['x-default', 'https://fixture.test/docs']
     ]);
     expect(manifest.issues).toEqual([]);
@@ -959,9 +1127,11 @@ describe('svedocs Batch 0 skeleton', () => {
       expect(metadata.title).toBe('Guide | Fixture');
       expect(metadata.openGraph.type).toBe('article');
       expect(metadata.openGraph.author).toBe('Docs Team');
-      expect(metadata.openGraph.publishedTime).toBe('2026-05-17T00:00:00.000Z');
-      expect(metadata.jsonLd.dateModified).toBe('2026-05-18T00:00:00.000Z');
-      expect(metadata.openGraph.image).toBe('https://fixture.test/og/docs-guide.svg');
+    expect(metadata.openGraph.publishedTime).toBe('2026-05-17T00:00:00.000Z');
+    expect(metadata.openGraph.locale).toBe('en');
+    expect(metadata.jsonLd.dateModified).toBe('2026-05-18T00:00:00.000Z');
+    expect(metadata.jsonLd.inLanguage).toBe('en');
+    expect(metadata.openGraph.image).toBe('https://fixture.test/og/docs-guide.svg');
       expect(metadata.keywords).toEqual(['docs', 'guide']);
       expect(metadata.robots).toBe('index,follow');
       expect(metadata.head.meta).toEqual([
@@ -979,6 +1149,7 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(createPageOgImagePath(page)).toBe('/og/docs-guide.svg');
     expect((await createPageOgImageResponse(config, page)).headers.get('content-type')).toContain('image/svg+xml');
     expect(createSitemapXml(config, [page])).toContain('<loc>https://fixture.test/docs/guide</loc>');
+    expect(createSitemapXml(config, [page])).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
     expect(createRobotsTxt(config)).toContain('Sitemap: https://fixture.test/sitemap.xml');
     expect(await (createSitemapResponse(resolveSvedocsConfig({ seo: { sitemap: false } }), [page])).text()).toBe('Sitemap is disabled.');
     expect(createSitemapResponse(resolveSvedocsConfig({ seo: { sitemap: false } }), [page]).status).toBe(404);
@@ -1000,6 +1171,57 @@ describe('svedocs Batch 0 skeleton', () => {
     );
     expect(satoriSvg).toContain('<svg');
     expect(satoriSvg).toContain('#11130f');
+  });
+
+  it('creates locale-aware SEO metadata and sitemap alternates', () => {
+    const config = resolveSvedocsConfig({
+      site: {
+        name: 'Fixture',
+        url: 'https://fixture.test'
+      },
+      i18n: {
+        defaultLocale: 'en',
+        locales: [
+          { code: 'en', label: 'English', hreflang: 'en' },
+          { code: 'zh', label: '中文', hreflang: 'zh-CN' }
+        ]
+      }
+    });
+    const enPage = createFixturePage({
+      id: 'guide-en',
+      routePath: '/docs/guide',
+      scopePath: '/docs/guide',
+      locale: 'en',
+      kind: 'doc',
+      title: 'Guide',
+      seo: { title: 'Guide' }
+    });
+    const zhPage = createFixturePage({
+      id: 'guide-zh',
+      routePath: '/docs/zh/guide',
+      scopePath: '/docs/guide',
+      locale: 'zh',
+      kind: 'doc',
+      title: '指南',
+      seo: { title: '指南' }
+    });
+
+    const metadata = createPageMetadata(config, zhPage);
+    const alternates = createPageAlternates(config, zhPage, [enPage, zhPage]);
+    const sitemap = createSitemapXml(config, [enPage, zhPage]);
+
+    expect(metadata.canonical).toBe('https://fixture.test/docs/zh/guide');
+    expect(metadata.openGraph.locale).toBe('zh_CN');
+    expect(metadata.openGraph.alternateLocales).toEqual(['en']);
+    expect(metadata.jsonLd.inLanguage).toBe('zh-CN');
+    expect(alternates.map((alternate) => [alternate.lang, alternate.href])).toEqual([
+      ['en', 'https://fixture.test/docs/guide'],
+      ['zh-CN', 'https://fixture.test/docs/zh/guide'],
+      ['x-default', 'https://fixture.test/docs/guide']
+    ]);
+    expect(sitemap).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
+    expect(sitemap).toContain('<xhtml:link rel="alternate" hreflang="zh-CN" href="https://fixture.test/docs/zh/guide" />');
+    expect(sitemap).toContain('<xhtml:link rel="alternate" hreflang="x-default" href="https://fixture.test/docs/guide" />');
   });
 
   it('normalizes generated SEO URLs for static output and serializes JSON-LD safely', async () => {
@@ -1577,6 +1799,25 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(compiled.html).toContain('sd-diff-scroll');
     expect(compiled.html).toContain('data-side="old"');
     expect(compiled.html).toContain('data-side="new"');
+  });
+
+  it('renders localized markdown code and diff labels', async () => {
+    const compiled = await compileMarkdown('```diff split title="更新.patch"\n@@ -1 +1 @@\n-old\n+new\n```', {
+      messages: {
+        'code.copy': '复制代码',
+        'code.copyDiff': '复制 diff',
+        'diff.label': '差异',
+        'diff.aria': '{title} 差异',
+        'diff.before': '之前',
+        'diff.after': '之后'
+      }
+    });
+
+    expect(compiled.html).toContain('aria-label="复制 diff"');
+    expect(compiled.html).toContain('aria-label="更新.patch 差异"');
+    expect(compiled.html).toContain('aria-label="之前"');
+    expect(compiled.html).toContain('aria-label="之后"');
+    expect(compiled.html).toContain('>差异</span>');
   });
 
   it('preserves blank lines in highlighted code blocks', async () => {

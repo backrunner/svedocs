@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { SvedocsPage } from '../core/types.js';
+  import { fallbackTranslate } from './headless.js';
   import type { SvedocsContentComponent, SvedocsPageShellAction, SvedocsPageShellVariant } from './types.js';
   import SafeRenderError from './SafeRenderError.svelte';
   import type { SvedocsThemeComponentMap, SvedocsThemeContext } from './types.js';
@@ -21,6 +22,7 @@
   $: resolvedDescription = description || page?.description || '';
   $: resolvedKicker = kicker;
   $: ErrorComponent = SafeRenderError;
+  $: t = context?.t ?? fallbackTranslate;
 </script>
 
 {#if variant === 'error'}
@@ -29,7 +31,7 @@
       {#if status}
         <p class="sd-kicker">
           <span class="sd-kicker-mark" aria-hidden="true"></span>
-          Error {status}
+          {t('error.status', { status: status ?? '' })}
         </p>
       {/if}
       <h1>{resolvedTitle}</h1>
@@ -85,9 +87,9 @@
             {page}
             {context}
             variant="content"
-            label="Page rendering issue"
-            title="This page could not render"
-            message="The page content failed while rendering. You can retry this section or reload the page."
+            label={t('render.page.label')}
+            title={t('render.page.title')}
+            message={t('render.page.message')}
           />
         {/snippet}
       </svelte:boundary>

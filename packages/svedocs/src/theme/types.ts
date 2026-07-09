@@ -1,6 +1,14 @@
 import type { Component } from 'svelte';
 import type { Readable, Writable } from 'svelte/store';
-import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
+import type {
+  SvedocsLocale,
+  SvedocsMessages,
+  SvedocsPage,
+  SvedocsResolvedConfig,
+  SvedocsSearchRecord,
+  SvedocsTranslate,
+  SvedocsTreeItem
+} from '../core/types.js';
 import type { SearchResult, SearchScope } from '../search/types.js';
 
 export type SvedocsContentComponent = Component | undefined;
@@ -27,6 +35,10 @@ export interface SvedocsThemeContext {
   surface: SvedocsThemeSurface;
   isDocsPage: boolean;
   activeNavHref: string;
+  locale?: SvedocsLocale;
+  localeCode: string;
+  messages: SvedocsMessages;
+  t: SvedocsTranslate;
 }
 
 export interface SvedocsAppProps {
@@ -176,6 +188,7 @@ export interface SvedocsSocialNavProps {
 export interface SvedocsMobileNavProps {
   items?: SvedocsTreeItem[];
   currentPath?: string;
+  context?: SvedocsThemeContext;
   themeComponents?: Partial<SvedocsThemeComponentMap>;
 }
 
@@ -208,6 +221,7 @@ export interface SvedocsRenderErrorProps {
 export interface SvedocsTocProps {
   page: SvedocsPage;
   controller?: SvedocsTocController;
+  context?: SvedocsThemeContext;
 }
 
 export interface SvedocsSearchProps {
@@ -218,6 +232,7 @@ export interface SvedocsSearchProps {
   endpoint?: string;
   buildMode?: SvedocsResolvedConfig['build']['mode'] | string;
   controller?: SvedocsSearchController;
+  context?: SvedocsThemeContext;
 }
 
 export interface SvedocsAskAiProps {
@@ -228,6 +243,7 @@ export interface SvedocsAskAiProps {
   endpoint?: string;
   buildMode?: SvedocsResolvedConfig['build']['mode'];
   controller?: SvedocsAskAiController;
+  context?: SvedocsThemeContext;
 }
 
 export interface SvedocsFooterProps {
@@ -241,11 +257,13 @@ export interface SvedocsFooterLinksProps {
 
 export interface SvedocsThemeToggleProps {
   defaultMode?: SvedocsResolvedConfig['theme']['defaultMode'];
+  context?: SvedocsThemeContext;
 }
 
 export interface SvedocsPageToolsProps {
   config: SvedocsResolvedConfig;
   controller?: SvedocsPageToolsController;
+  context?: SvedocsThemeContext;
 }
 
 export interface SvedocsThemeComponentMap {
@@ -302,6 +320,7 @@ export interface SvedocsSearchControllerOptions {
   buildMode?: string;
   fetcher?: typeof fetch;
   origin?: string;
+  t?: SvedocsTranslate;
 }
 
 export type SvedocsAskAiCitation = { title: string; url: string; section?: string };
@@ -337,7 +356,9 @@ export interface SvedocsAskAiControllerOptions {
   scope?: SearchScope;
   endpoint?: string;
   buildMode?: SvedocsResolvedConfig['build']['mode'];
+  welcomeMessage?: string;
   fetcher?: typeof fetch;
+  t?: SvedocsTranslate;
 }
 
 export interface SvedocsTocController {

@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import type { Component } from 'svelte';
   import type { SvedocsPage } from '../core/types.js';
-  import { copyCodeToClipboard } from './headless.js';
+  import { copyCodeToClipboard, fallbackTranslate } from './headless.js';
   import SafeRenderError from './SafeRenderError.svelte';
   import type { SvedocsThemeComponentMap, SvedocsThemeContext } from './types.js';
 
@@ -13,9 +13,10 @@
   export let themeComponents: Partial<SvedocsThemeComponentMap> = {};
 
   $: ErrorComponent = SafeRenderError;
+  $: t = context?.t ?? fallbackTranslate;
   $: breadcrumbs = createBreadcrumbs(page);
-  $: kind = page.kind === 'doc' ? 'Documentation' : 'Page';
-  $: eyebrow = breadcrumbs.length > 0 ? breadcrumbs : [{ label: kind, path: page.kind === 'doc' ? '/docs' : '/' }];
+  $: kind = page.kind === 'doc' ? t('article.kind.doc') : t('article.kind.page');
+  $: eyebrow = breadcrumbs.length > 0 ? breadcrumbs : [{ label: kind, path: page.kind === 'doc' ? findDocsRoot(page) : '/' }];
   $: showDocHeaderSlot = hasDocHeaderSlot ?? Boolean($$slots['doc-header']);
 
   onMount(() => {
@@ -33,7 +34,7 @@
         ?? block.querySelector('code')?.textContent
         ?? block.textContent
         ?? '';
-      void copyCodeToClipboard(button, source);
+      void copyCodeToClipboard(button, source, t('code.copied'), button.getAttribute('aria-label') ?? t('code.copy'));
     }
     root.addEventListener('click', handleClick);
     return () => root.removeEventListener('click', handleClick);
@@ -53,6 +54,13 @@
       .replace(/[-_]+/g, ' ')
       .replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
+
+  function findDocsRoot(page: SvedocsPage): string {
+    const parts = page.routePath.split('/').filter(Boolean);
+    if (parts[0] !== 'docs') return '/docs';
+    if (page.locale && parts[1]) return `/${parts.slice(0, 2).join('/')}`;
+    return '/docs';
+  }
 </script>
 
 <article class="sd-doc" data-theme-component="article" data-site={context?.config.site.name}>
@@ -62,7 +70,7 @@
     <slot name="doc-header" {page} breadcrumbs={eyebrow} />
   {:else}
     <header class="sd-doc-header">
-      <nav class="sd-doc-eyebrow" aria-label="Breadcrumb">
+      <nav class="sd-doc-eyebrow" aria-label={t('article.breadcrumb')}>
         <span class="sd-doc-eyebrow-mark" aria-hidden="true"></span>
         {#each eyebrow as item, i}
           {#if i > 0}<span class="sd-doc-eyebrow-sep" aria-hidden="true">/</span>{/if}
@@ -90,9 +98,9 @@
           {page}
           {context}
           variant="content"
-          label="Article rendering issue"
-          title="This article could not render"
-          message="The article content failed while rendering. Navigation and page tools are still available."
+          label={t('render.article.label')}
+          title={t('render.article.title')}
+          message={t('render.article.message')}
         />
       {/snippet}
     </svelte:boundary>
@@ -100,22 +108,22 @@
   <footer class="sd-doc-footer">
     <div class="sd-doc-meta">
       {#if page.lastUpdated}
-        <span>Updated {new Date(page.lastUpdated).toLocaleDateString()}</span>
+        <span>{t('article.updated', { date: new Date(page.lastUpdated).toLocaleDateString(context?.localeCode) })}</span>
       {/if}
       {#if page.editUrl}
-        <a href={page.editUrl}>Edit this page</a>
+        <a href={page.editUrl}>{t('article.edit')}</a>
       {/if}
     </div>
     {#if page.prev}
       <a class="sd-prev-next" data-direction="prev" href={page.prev.path}>
-        <span><i aria-hidden="true"></i>Previous</span>
+        <span><i aria-hidden="true"></i>{t('article.previous')}</span>
         <strong>{page.prev.title}</strong>
         <em class="sd-prev-next-arrow" aria-hidden="true">←</em>
       </a>
     {/if}
     {#if page.next}
       <a class="sd-prev-next" data-direction="next" href={page.next.path}>
-        <span>Next<i aria-hidden="true"></i></span>
+        <span>{t('article.next')}<i aria-hidden="true"></i></span>
         <strong>{page.next.title}</strong>
         <em class="sd-prev-next-arrow" aria-hidden="true">→</em>
       </a>

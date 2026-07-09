@@ -39,18 +39,19 @@
           scope={context.searchScope}
           provider={context.config.search.provider}
           buildMode={context.config.build.mode}
+          {context}
         />
       {/if}
-      <ScopeSwitcher page={context.page} pages={context.pages} locales={context.config.i18n.locales} />
+      <ScopeSwitcher page={context.page} pages={context.pages} locales={context.config.i18n.locales} {context} />
     </div>
     <svelte:component this={Social} {context} />
-    <svelte:component this={Toggle} defaultMode={context.config.theme.defaultMode} />
-    <svelte:component this={Mobile} items={mobileTree} currentPath={mobileCurrentPath} {themeComponents} />
+    <svelte:component this={Toggle} defaultMode={context.config.theme.defaultMode} {context} />
+    <svelte:component this={Mobile} items={mobileTree} currentPath={mobileCurrentPath} {themeComponents} {context} />
   </div>
   <button
     class="sd-menu-button"
     type="button"
-    aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+    aria-label={mobileMenuOpen ? context.t('nav.mobile.close') : context.t('nav.mobile.open')}
     aria-expanded={mobileMenuOpen}
     aria-controls={mobileMenuId}
     on:click={onToggleMobileMenu}

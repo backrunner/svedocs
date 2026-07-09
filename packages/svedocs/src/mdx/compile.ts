@@ -10,7 +10,7 @@ import remarkRehype from 'remark-rehype';
 import { unified } from 'unified';
 import type { SvedocsCodeBlock, SvedocsHeading } from '../core/types.js';
 import { extractMarkdownOutline, markdownAstToPlainText } from './ast.js';
-import { extractCodeBlocks, rehypeCodeBlocks, remarkSvedocsCodeBlocks } from './code.js';
+import { extractCodeBlocks, rehypeCodeBlocks, remarkSvedocsCodeBlocks, type SvedocsMarkdownMessages } from './code.js';
 import { createDiffRows, createDiffSplitRows } from './diff.js';
 import { rehypeSvedocsLinks } from './links.js';
 import { markdownToPlainText } from './utils.js';
@@ -32,6 +32,7 @@ export interface CompileMarkdownOptions {
   codeLineNumbers?: boolean;
   codeWrap?: boolean;
   codeCopyButton?: boolean;
+  messages?: SvedocsMarkdownMessages;
 }
 
 export async function compileMarkdown(
@@ -59,7 +60,8 @@ export async function compileMarkdown(
         ...(options.shikiTransformers ? { transformers: options.shikiTransformers } : {}),
         ...(typeof options.codeLineNumbers === 'boolean' ? { lineNumbers: options.codeLineNumbers } : {}),
         ...(typeof options.codeWrap === 'boolean' ? { wrap: options.codeWrap } : {}),
-        ...(typeof options.codeCopyButton === 'boolean' ? { copyButton: options.codeCopyButton } : {})
+        ...(typeof options.codeCopyButton === 'boolean' ? { copyButton: options.codeCopyButton } : {}),
+        ...(options.messages ? { messages: options.messages } : {})
       }
     )
     .use(remarkRehype, { allowDangerousHtml: true })

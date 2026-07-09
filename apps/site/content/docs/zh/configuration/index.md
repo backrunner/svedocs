@@ -251,14 +251,23 @@ export default defineConfig({
     defaultLocale: 'en',
     prefixDefaultLocale: false,
     locales: [
-      { code: 'en', label: 'English' },
-      { code: 'zh', label: '中文', path: 'zh' }
-    ]
+      { code: 'en', label: 'English', hreflang: 'en', dir: 'ltr' },
+      { code: 'zh', label: '中文', path: 'zh', hreflang: 'zh-CN', dir: 'ltr' }
+    ],
+    messages: {
+      zh: {
+        'search.placeholder': '搜索文档',
+        'ask.label': '问 AI',
+        'home.primaryAction': '阅读文档'
+      }
+    }
   }
 });
 ```
 
-Locale 会影响路由生成、侧栏、搜索作用域、Ask AI 引用、SEO alternates 和翻译检查。单语言站点可以设置 `i18n: false`。
+Locale 会影响路由生成、侧栏、搜索作用域、Ask AI 引用、SEO alternates 和翻译检查。`hreflang` 会用于 `<link rel="alternate">`、sitemap alternates、Open Graph locale 标签和 JSON-LD `inLanguage`；`dir` 让主题能为 RTL locale 设置文本方向。
+
+`i18n.messages` 用来本地化站点外壳：landing action 和卡片、导航标签、搜索、Ask AI、目录、文章页脚工具、渲染 fallback UI、代码复制标签和页脚文本。英文 messages 会始终作为默认值存在，包括 `i18n: false` 的单语言站点；各 locale 只需要覆盖不同的 key。
 
 ## Markdown 钩子
 

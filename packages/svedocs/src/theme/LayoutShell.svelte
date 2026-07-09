@@ -26,7 +26,7 @@
 </script>
 
 <div class:sd-has-background-slot={hasBackgroundSlot} class="sd-root" data-surface={context.surface} style={themeStyle} data-theme-component="layout">
-  <a class="sd-skip" href="#content">Skip to content</a>
+  <a class="sd-skip" href="#content">{context.t('nav.skipToContent')}</a>
   {#if hasBackgroundSlot}
     <div class="sd-background-slot" aria-hidden="true">
       <slot name="background" />
@@ -52,9 +52,9 @@
         {context}
         tree={context.tree}
         variant="layout"
-        label="Header issue"
-        title="Header could not render"
-        message="The page is still available below. You can retry the header or use links inside the content."
+        label={context.t('render.header.label')}
+        title={context.t('render.header.title')}
+        message={context.t('render.header.message')}
       />
     {/snippet}
   </svelte:boundary>
@@ -69,6 +69,7 @@
           loadRecords={context.loadSearch}
           scope={context.aiScope}
           buildMode={context.config.build.mode}
+          {context}
         />
         {#snippet failed(error, reset)}
           <svelte:component
@@ -77,15 +78,15 @@
             {reset}
             {context}
             variant="tools"
-            label="Ask AI issue"
-            title="Ask AI could not render"
-            message="The article is still available. Retry Ask AI when you need it."
+            label={context.t('render.ask.label')}
+            title={context.t('render.ask.title')}
+            message={context.t('render.ask.message')}
           />
         {/snippet}
       </svelte:boundary>
     {/if}
     <svelte:boundary>
-      <svelte:component this={PageToolsComponent} config={context.config} />
+      <svelte:component this={PageToolsComponent} config={context.config} {context} />
       {#snippet failed(error, reset)}
         <svelte:component
           this={ErrorComponent} component={themeComponents.RenderError}
@@ -93,9 +94,9 @@
           {reset}
           {context}
           variant="tools"
-          label="Page tools issue"
-          title="Page tools could not render"
-          message="The page tools failed to render. The document content is unaffected."
+          label={context.t('render.tools.label')}
+          title={context.t('render.tools.title')}
+          message={context.t('render.tools.message')}
         />
       {/snippet}
     </svelte:boundary>
@@ -109,9 +110,9 @@
         {reset}
         {context}
         variant="layout"
-        label="Footer issue"
-        title="Footer could not render"
-        message="Footer links failed to render. The page content above is still available."
+        label={context.t('render.footer.label')}
+        title={context.t('render.footer.title')}
+        message={context.t('render.footer.message')}
       />
     {/snippet}
   </svelte:boundary>

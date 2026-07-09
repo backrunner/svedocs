@@ -12,7 +12,7 @@
 </script>
 
 {#if footer !== false && footer.links.length > 0}
-  <nav aria-label="Footer" data-theme-component="footer-links">
+  <nav aria-label={context.t('nav.footer')} data-theme-component="footer-links">
     {#each footer.links as item}
       {#if isGithubFooterLink(item)}
         <a

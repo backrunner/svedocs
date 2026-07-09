@@ -173,7 +173,8 @@ Homepage-specific slots let you replace smaller regions:
 >
   <div slot="home-hero-visual" class="product-orbit" aria-hidden="true"></div>
 
-  <section slot="home-features" let:cards class="feature-strip">
+  <section slot="home-features" let:cards let:context class="feature-strip">
+    <h2>{context.t('home.features')}</h2>
     {#each cards as card}
       <a href={card.href}>{card.title}</a>
     {/each}
@@ -181,7 +182,7 @@ Homepage-specific slots let you replace smaller regions:
 </DocsApp>
 ```
 
-Use `home-hero-visual` to replace the pixel hero effect or configured hero image. Use `home-features` to replace the default feature blocks. The slot receives the generated `cards` array so custom blocks can reuse the same documentation links.
+Use `home-hero-visual` to replace the pixel hero effect or configured hero image. Use `home-features` to replace the default feature blocks. The slot receives the generated `cards` array so custom blocks can reuse the same documentation links. It also receives `context`, so custom UI can call `context.t(...)`, read `context.localeCode`, or use `context.messages`.
 
 To replace the entire landing content while preserving the svedocs header and footer, use `landing`:
 
@@ -196,14 +197,19 @@ To replace the entire landing content while preserving the svedocs header and fo
   {layouts}
   {loadSearch}
 >
-  <section slot="landing" let:page class="custom-landing">
+  <section slot="landing" let:page let:context class="custom-landing">
     <h1>{page.title}</h1>
     <p>{page.description}</p>
+    <a href={context.localeCode === 'zh' ? '/docs/zh' : '/docs'}>
+      {context.t('home.primaryAction')}
+    </a>
   </section>
 </DocsApp>
 ```
 
 The theme still provides the `main#content` wrapper for the `landing` slot, so the skip link and page semantics remain intact.
+
+For custom landing pages and replacement components, prefer `context.t('message.key')` over hard-coded UI text. Project authors can add locale-specific overrides in `i18n.messages`, and custom components automatically receive the same locale-aware messages as the default theme.
 
 Documentation articles also expose `doc-header` when you only need to replace the title and breadcrumb area:
 

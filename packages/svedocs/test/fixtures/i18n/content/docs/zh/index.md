@@ -9,3 +9,7 @@ order: 1
 ## 开始
 
 非默认语言会自动带上语言路径前缀。
+
+```ts
+export const locale = 'zh';
+```

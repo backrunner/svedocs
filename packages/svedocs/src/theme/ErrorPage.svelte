@@ -22,17 +22,17 @@
   $: Root = themeComponents.Root ?? RootLayout;
   $: fallbackComponents = { ...themeComponents, Root: RootLayout, Layout: LayoutShell, PageShell };
   $: code = status ?? 500;
-  $: title = code === 404 ? 'Page not found' : 'Something went wrong';
+  $: context = createThemeContext({ config, pages, tree, search, ...(loadSearch ? { loadSearch } : {}) });
+  $: title = code === 404 ? context.t('error.notFound.title') : context.t('error.generic.title');
   $: detail = message || error?.message || (code === 404
-    ? 'The page you are looking for is not in this documentation set.'
-    : 'The docs shell is still available while this page recovers.');
+    ? context.t('error.notFound.description')
+    : context.t('error.generic.description'));
   $: docsEntry = pages.find((page) => page.kind === 'doc' && page.routePath === '/docs')
     ?? pages.find((page) => page.kind === 'doc');
   $: Shell = themeComponents.PageShell ?? PageShell;
-  $: context = createThemeContext({ config, pages, tree, search, ...(loadSearch ? { loadSearch } : {}) });
   $: actions = [
-    { label: 'Home', href: '/', primary: true },
-    ...(docsEntry ? [{ label: 'Docs', href: docsEntry.routePath }] : [])
+    { label: context.t('error.home'), href: '/', primary: true },
+    ...(docsEntry ? [{ label: context.t('error.docs'), href: docsEntry.routePath }] : [])
   ] as SvedocsPageShellAction[];
 </script>
 
@@ -85,9 +85,9 @@
           {context}
           tree={tree}
           variant="layout"
-          label="Error page issue"
-          title="The error page could not render"
-          message="A custom error page component failed while rendering. The default site shell is still available."
+          label={context.t('render.error.label')}
+          title={context.t('render.error.title')}
+          message={context.t('render.error.message')}
         />
       </main>
     </RootLayout>

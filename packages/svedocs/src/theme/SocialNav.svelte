@@ -6,7 +6,7 @@
 </script>
 
 {#if context.config.theme.social.length > 0}
-  <nav class="sd-socialnav" aria-label="Social links" data-theme-component="social-nav">
+  <nav class="sd-socialnav" aria-label={context.t('nav.social')} data-theme-component="social-nav">
     {#each context.config.theme.social as item}
       <a href={item.href} rel={linkRel(item)} target={item.external ? '_blank' : undefined}>
         {item.label}

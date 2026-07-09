@@ -101,6 +101,10 @@ svedocs({
 | `surface` | `home` 或 `reading`。 |
 | `isDocsPage` | 当前页面是否是文档文章。 |
 | `activeNavHref` | 归一化后的当前 top-nav href。 |
+| `locale` | 当前解析后的 locale 配置，包含已配置的 `hreflang` 和 `dir`。 |
+| `localeCode` | 当前 locale code。 |
+| `messages` | 当前 locale 合并后的完整 messages。 |
+| `t` | 支持 `{value}` 插值的 locale-aware 翻译函数。 |
 
 自定义 shell 可以用 `createThemeContext` 创建同样的对象。
 

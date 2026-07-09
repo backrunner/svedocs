@@ -12,7 +12,7 @@
 
 {#if footer !== false && !context.isDocsPage}
   <footer class="sd-footer" data-theme-component="footer">
-    <span>{footer.text}</span>
+    <span>{context.t('footer.text', { site: context.config.site.name })}</span>
     <svelte:component this={Links} {context} />
   </footer>
 {/if}

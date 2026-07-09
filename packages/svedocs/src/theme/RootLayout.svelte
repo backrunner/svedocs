@@ -33,7 +33,6 @@
     createJsonLdScript(metadata.jsonLd),
     ...metadata.head.jsonLd.map((entry) => createJsonLdScript(entry))
   ] : [];
-  $: themeStyle = createThemeStyle(config);
   $: context = createThemeContext({
     config,
     ...(page ? { page } : {}),
@@ -42,6 +41,8 @@
     search,
     ...(loadSearch ? { loadSearch } : {})
   });
+  $: themeInitScript = createThemeInitScript(config.theme.defaultMode, context.localeCode, context.locale?.dir ?? 'ltr');
+  $: themeStyle = createThemeStyle(config);
   $: mobileMenuId = `sd-mobile-menu-${createDomId(page?.id ?? page?.routePath ?? 'site')}`;
   $: mobileTreePath = mobileCurrentPath || page?.routePath || '';
   $: showBackgroundSlot = hasBackgroundSlot ?? Boolean($$slots.background);
@@ -71,7 +72,8 @@
 
   function markHydratedRoute() {
     document.documentElement.dataset.svedocsRoute = page?.routePath ?? '';
-    document.documentElement.lang = page?.locale ?? config.i18n.defaultLocale ?? 'en';
+    document.documentElement.lang = context.localeCode;
+    document.documentElement.dir = context.locale?.dir ?? 'ltr';
   }
 
   function cleanupSubscriptions() {
@@ -136,7 +138,7 @@
 <svelte:window on:keydown={mobileNav.handleWindowKeydown} />
 
 <svelte:head>
-  {@html createThemeInitScript(config.theme.defaultMode)}
+  {@html themeInitScript}
   <title>{title}</title>
   <meta name="description" content={description} />
   {#if robots}
@@ -156,6 +158,12 @@
     <meta property="og:description" content={metadata.openGraph.description} />
     <meta property="og:type" content={metadata.openGraph.type} />
     <meta property="og:site_name" content={metadata.openGraph.siteName} />
+    {#if metadata.openGraph.locale}
+      <meta property="og:locale" content={metadata.openGraph.locale} />
+    {/if}
+    {#each metadata.openGraph.alternateLocales ?? [] as locale}
+      <meta property="og:locale:alternate" content={locale} />
+    {/each}
     {#if metadata.openGraph.url}
       <meta property="og:url" content={metadata.openGraph.url} />
     {/if}
@@ -249,9 +257,9 @@
           {context}
           tree={context.tree}
           variant="layout"
-          label="Layout issue"
-          title="The page layout could not render"
-          message="The default site shell is still available. Retry after checking the replacement Layout component."
+          label={context.t('render.layout.label')}
+          title={context.t('render.layout.title')}
+          message={context.t('render.layout.message')}
         />
       </main>
     </svelte:component>

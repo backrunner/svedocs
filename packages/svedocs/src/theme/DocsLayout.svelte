@@ -80,9 +80,9 @@
           {context}
           tree={navigationTree}
           variant="layout"
-          label="Documentation layout issue"
-          title="This documentation layout could not render"
-          message="A layout component failed while rendering. Retry the section, or use the top navigation to continue."
+          label={context.t('render.docs.label')}
+          title={context.t('render.docs.title')}
+          message={context.t('render.docs.message')}
         />
       </main>
     {/snippet}

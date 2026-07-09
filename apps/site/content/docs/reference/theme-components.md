@@ -101,6 +101,10 @@ Most shell components receive `SvedocsThemeContext`.
 | `surface` | `home` or `reading`. |
 | `isDocsPage` | Whether the current page is a docs article. |
 | `activeNavHref` | Normalized active top-nav href. |
+| `locale` | Current resolved locale config, including `hreflang` and `dir` when configured. |
+| `localeCode` | Current locale code. |
+| `messages` | Fully merged messages for the current locale. |
+| `t` | Locale-aware translator with `{value}` interpolation. |
 
 Create the same object in custom shells with `createThemeContext`.
 

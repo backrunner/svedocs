@@ -1,5 +1,5 @@
 import { visit } from 'unist-util-visit';
-import type { SvedocsCodeBlock } from '../core/types.js';
+import type { SvedocsCodeBlock, SvedocsMessages } from '../core/types.js';
 import { createDiffRows, createDiffSplitRows, renderSplitDiffHtml } from './diff.js';
 import {
   escapeAttribute,
@@ -10,6 +10,11 @@ import {
   parseLineSet,
   readQuotedMeta
 } from './utils.js';
+
+export type SvedocsMarkdownMessages = Pick<
+  SvedocsMessages,
+  'code.copy' | 'code.copyDiff' | 'diff.label' | 'diff.aria' | 'diff.before' | 'diff.after'
+>;
 
 export function extractCodeBlocks(markdown: string): SvedocsCodeBlock[] {
   const blocks: SvedocsCodeBlock[] = [];
@@ -71,7 +76,7 @@ export function rehypeCodeBlocks(codeBlocks: SvedocsCodeBlock[] = []) {
 
 export function remarkSvedocsCodeBlocks(
   codeBlocks: SvedocsCodeBlock[] = [],
-  options: { theme?: string; themes?: { light?: string; dark?: string }; transformers?: unknown[]; lineNumbers?: boolean; wrap?: boolean; copyButton?: boolean } = {}
+  options: { theme?: string; themes?: { light?: string; dark?: string }; transformers?: unknown[]; lineNumbers?: boolean; wrap?: boolean; copyButton?: boolean; messages?: SvedocsMarkdownMessages | undefined } = {}
 ) {
   return async (tree: unknown) => {
     let index = 0;
@@ -87,7 +92,7 @@ export function remarkSvedocsCodeBlocks(
       if (block.diff && block.diffMode === 'split') {
         parent.children[childIndex] = {
           type: 'html',
-          value: renderSplitDiffHtml(block, { copyButton: options.copyButton !== false })
+          value: renderSplitDiffHtml(block, { copyButton: options.copyButton !== false, messages: options.messages })
         };
         return;
       }
@@ -115,7 +120,8 @@ export function remarkSvedocsCodeBlocks(
               value: decorateHighlightedCode(html, block, {
                 showLineNumbers: renderLineNumbers,
                 wrap: wrapLines,
-                copyButton: options.copyButton !== false
+                copyButton: options.copyButton !== false,
+                messages: options.messages
               })
             };
           })
@@ -180,12 +186,12 @@ function createCodeProperties(block: SvedocsCodeBlock, showLineNumbers: boolean 
   };
 }
 
-function decorateHighlightedCode(html: string, block: SvedocsCodeBlock, options: { showLineNumbers: boolean; wrap: boolean; copyButton?: boolean }): string {
+function decorateHighlightedCode(html: string, block: SvedocsCodeBlock, options: { showLineNumbers: boolean; wrap: boolean; copyButton?: boolean; messages?: SvedocsMarkdownMessages | undefined }): string {
   const showLineNumbers = options.showLineNumbers;
   const wrap = options.wrap;
   const trimmed = stripTrailingEmptyLine(html);
   const withDecoratedLines = decorateCodeLines(trimmed, block, showLineNumbers);
-  const header = renderCodeHeader(block, { copyButton: options.copyButton !== false });
+  const header = renderCodeHeader(block, { copyButton: options.copyButton !== false, messages: options.messages });
   return withDecoratedLines.replace(
     /<pre([^>]*)>/,
     (_match, attrs: string) => {
@@ -263,9 +269,9 @@ function findClosingSpan(source: string, offset: number): number {
   return -1;
 }
 
-function renderCodeHeader(block: SvedocsCodeBlock, options: { copyButton: boolean }): string {
+function renderCodeHeader(block: SvedocsCodeBlock, options: { copyButton: boolean; messages?: SvedocsMarkdownMessages | undefined }): string {
   const language = block.language || 'text';
-  const languageLabel = displayLanguage(language);
+  const languageLabel = displayLanguage(language, options.messages);
   const parts: string[] = [];
   parts.push(`<span class="sd-code-language" data-language="${escapeAttribute(language)}">${escapeHtml(languageLabel)}</span>`);
   if (block.title) {
@@ -282,7 +288,8 @@ function renderCodeHeader(block: SvedocsCodeBlock, options: { copyButton: boolea
     parts.push(`<span class="sd-code-stats">${stats.join('')}</span>`);
   }
   if (options.copyButton) {
-    parts.push(`<button type="button" class="sd-code-copy" data-sd-copy="" aria-label="Copy code" title="Copy code"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h9v14H9zM6 8v12h10"/></svg></button>`);
+    const label = options.messages?.['code.copy'] ?? 'Copy code';
+    parts.push(`<button type="button" class="sd-code-copy" data-sd-copy="" aria-label="${escapeAttribute(label)}" title="${escapeAttribute(label)}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h9v14H9zM6 8v12h10"/></svg></button>`);
   }
   return `<div class="sd-code-header">${parts.join('')}</div>`;
 }
@@ -331,7 +338,8 @@ const LANGUAGE_DISPLAY_NAMES: Record<string, string> = {
   plaintext: 'Text'
 };
 
-function displayLanguage(language: string): string {
+function displayLanguage(language: string, messages?: SvedocsMarkdownMessages): string {
+  if (language === 'diff') return messages?.['diff.label'] ?? LANGUAGE_DISPLAY_NAMES.diff ?? 'Diff';
   return LANGUAGE_DISPLAY_NAMES[language] ?? language.toUpperCase();
 }
 

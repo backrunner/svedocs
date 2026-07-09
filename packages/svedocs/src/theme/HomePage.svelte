@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Component } from 'svelte';
-  import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
+  import type { SvedocsMessageKey, SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
   import { createThemeContext } from './headless.js';
   import SafeRenderError from './SafeRenderError.svelte';
   import RootLayout from './RootLayout.svelte';
@@ -34,40 +34,39 @@
     glyph: string;
   }
 
+  type HomePillarKey = 'start' | 'install' | 'write' | 'integrate';
+
   const homePillars = [
     {
-      label: 'Start',
-      title: 'Quick Start',
-      description: 'Get a site running, open the docs route, and move straight into the installed docs tree.',
+      key: 'start',
       glyph: '1011\n1101\n0110\n1011',
       match: /quick\s*start|getting-started|index/i,
       fallback: '/docs'
     },
     {
-      label: 'Install',
-      title: 'Manual Installation',
-      description: 'Add svedocs to an existing SvelteKit app and wire the Vite plugin plus theme styles.',
+      key: 'install',
       glyph: '0110\n1111\n1001\n0110',
       match: /installation/i,
       fallback: '/docs/installation'
     },
     {
-      label: 'Write',
-      title: 'Writing',
-      description: 'Use Markdown, frontmatter, and Svelte components in one content tree.',
+      key: 'write',
       glyph: '1010\n0101\n1010\n0101',
       match: /writing|content|components/i,
       fallback: '/docs/writing'
     },
     {
-      label: 'Integrate',
-      title: 'Integrations',
-      description: 'Add search, Ask AI, Cloudflare deployment, SEO, and OG assets when the content is ready.',
+      key: 'integrate',
       glyph: '1111\n1001\n1001\n1111',
       match: /integrations|search|ai|cloudflare|seo|og/i,
       fallback: '/docs/integrations'
     }
-  ] as const;
+  ] satisfies Array<{
+    key: HomePillarKey;
+    glyph: string;
+    match: RegExp;
+    fallback: string;
+  }>;
 
   // Hand-tuned bitmap (14 cols × 9 rows) — pixel-art glyph forming a soft "S" mark
   // with scattered ambient cells. 1 = on, 2 = accent-2 hot, 0 = ambient.
@@ -103,13 +102,15 @@
     });
     return result;
   })();
-  $: docPages = pages.filter((item) => item.kind === 'doc');
-  $: docs = docPages.slice(0, 4);
-  $: homeCards = createHomeCards(pages);
+  $: context = createThemeContext({ config, page, pages, tree, search, ...(loadSearch ? { loadSearch } : {}) });
+  $: docPages = pages.filter((item) => item.kind === 'doc' && isCurrentLocalePage(item));
+  $: homeCards = createHomeCards(docPages);
   $: primaryDoc = docPages[0];
   $: secondaryDoc = docPages.find((doc) => /configuration|config/i.test(doc.routePath)) ?? docPages[1];
   $: primaryAction = config.theme.home.primaryAction ?? (
-    primaryDoc ? { label: 'Read docs', href: primaryDoc.routePath } : { label: 'Read docs', href: page.routePath }
+    primaryDoc
+      ? { label: context.t('home.primaryAction'), href: primaryDoc.routePath }
+      : { label: context.t('home.primaryAction'), href: page.routePath }
   );
   $: secondaryAction = config.theme.home.secondaryAction ?? (
     secondaryDoc ? { label: secondaryDoc.title, href: secondaryDoc.routePath } : undefined
@@ -120,10 +121,8 @@
   $: showHomeFeaturesSlot = hasHomeFeaturesSlot ?? Boolean($$slots['home-features']);
   $: Root = themeComponents.Root ?? RootLayout;
   $: ErrorComponent = SafeRenderError;
-  $: context = createThemeContext({ config, page, pages, tree, search, ...(loadSearch ? { loadSearch } : {}) });
 
-  function createHomeCards(pages: SvedocsPage[]): HomeCard[] {
-    const docs = pages.filter((candidate) => candidate.kind === 'doc');
+  function createHomeCards(docs: SvedocsPage[]): HomeCard[] {
     const fallbackDoc = docs[0];
 
     return homePillars.map((pillar) => {
@@ -131,13 +130,22 @@
       const fallbackTarget = docs.find((candidate) => candidate.routePath === pillar.fallback);
 
       return {
-        label: pillar.label,
-        title: pillar.title,
-        description: pillar.description,
+        label: context.t(homeMessageKey(pillar.key, 'label')),
+        title: context.t(homeMessageKey(pillar.key, 'title')),
+        description: context.t(homeMessageKey(pillar.key, 'description')),
         glyph: pillar.glyph,
         href: target?.routePath ?? fallbackTarget?.routePath ?? fallbackDoc?.routePath ?? page.routePath
       };
     });
+  }
+
+  function homeMessageKey(key: HomePillarKey, field: 'label' | 'title' | 'description'): SvedocsMessageKey {
+    return `home.card.${key}.${field}` as SvedocsMessageKey;
+  }
+
+  function isCurrentLocalePage(candidate: SvedocsPage): boolean {
+    const candidateLocale = candidate.locale ?? config.i18n.defaultLocale ?? 'en';
+    return candidateLocale === context.localeCode;
   }
 
   function glyphRows(glyph: string): string[][] {
@@ -151,7 +159,7 @@
   </svelte:fragment>
   {#if showLandingSlot}
     <main id="content" class="sd-home">
-      <slot name="landing" {page} {pages} {tree} {search} {config} {content} />
+      <slot name="landing" {page} {pages} {tree} {search} {config} {content} {context} />
     </main>
   {:else}
     <main id="content" class="sd-home">
@@ -161,7 +169,7 @@
           {#if config.theme.home.kicker}
             <p class="sd-kicker">
               <span class="sd-kicker-mark" aria-hidden="true"></span>
-              {config.theme.home.kicker}
+              {config.theme.home.kicker === 'SvelteKit-native docs' ? context.t('home.kicker') : config.theme.home.kicker}
             </p>
           {/if}
           <h1>{page.title}</h1>
@@ -179,7 +187,7 @@
           </div>
         </div>
         {#if showHomeHeroVisualSlot}
-          <slot name="home-hero-visual" {page} {pages} {config} />
+          <slot name="home-hero-visual" {page} {pages} {config} {context} />
         {:else if config.theme.home.visual.type === 'image' && config.theme.home.visual.src}
           <img class="sd-home-visual" src={config.theme.home.visual.src} alt={config.theme.home.visual.alt} draggable="false" />
         {:else}
@@ -201,9 +209,9 @@
         {/if}
       </section>
       {#if showHomeFeaturesSlot}
-        <slot name="home-features" {page} {pages} {config} cards={homeCards} />
+        <slot name="home-features" {page} {pages} {config} cards={homeCards} {context} />
       {:else}
-        <section class="sd-home-grid" aria-label="Documentation entry points">
+        <section class="sd-home-grid" aria-label={context.t('home.features')}>
           {#each homeCards as card, i}
             <a href={card.href} style={`--card-index:${i};`}>
               <span class="sd-home-card-tag">
@@ -241,9 +249,9 @@
               {page}
               {context}
               variant="content"
-              label="Home content issue"
-              title="Home content could not render"
-              message="The home page content failed while rendering. The rest of the site is still available."
+              label={context.t('render.home.label')}
+              title={context.t('render.home.title')}
+              message={context.t('render.home.message')}
             />
           {/snippet}
         </svelte:boundary>

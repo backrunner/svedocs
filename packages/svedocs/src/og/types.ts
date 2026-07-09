@@ -51,6 +51,8 @@ export interface SvedocsPageMetadata {
     url?: string;
     image?: string;
     siteName: string;
+    locale?: string;
+    alternateLocales?: string[];
     author?: string;
     publishedTime?: string;
     updatedTime?: string;

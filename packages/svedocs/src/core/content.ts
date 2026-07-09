@@ -5,7 +5,7 @@ import matter from 'gray-matter';
 import type { SvedocsConfig } from '../config.js';
 import { compileMarkdown, type CompileMarkdownOptions } from '../mdx/compile.js';
 import { checkSvedocsContent } from './checks.js';
-import { isResolvedConfig, resolveSvedocsConfig } from './config.js';
+import { defaultSvedocsMessages, isResolvedConfig, resolveSvedocsConfig } from './config.js';
 import { extractMarkdownLinks } from './links.js';
 import { createPageTree, wirePrevNext } from './navigation.js';
 import { createPageSearchRecords, createSearchRecords } from './search.js';
@@ -76,10 +76,13 @@ async function loadContentFile(
   const discoveredTitle = extractFirstMarkdownTitle(markdown);
   const titleFromFrontmatter = stringFrontmatter(frontmatter.title);
   const renderMarkdown = stripLeadingTitleHeading(markdown, titleFromFrontmatter ?? discoveredTitle);
-  const compiled = await compileMarkdown(renderMarkdown, markdownOptions);
   const kind = inferKind(file, config);
   const route = createRouteInfo(file, kind, config);
   const routePath = route.routePath;
+  const compiled = await compileMarkdown(renderMarkdown, {
+    ...markdownOptions,
+    messages: createMarkdownMessages(config, route.locale)
+  });
   const title = titleFromFrontmatter ?? discoveredTitle ?? compiled.title ?? titleFromRoute(routePath);
   const navTitle = stringFrontmatter(frontmatter.navTitle) ?? stringFrontmatter(frontmatter.nav_title);
   const description = stringFrontmatter(frontmatter.description);
@@ -220,6 +223,21 @@ function createMarkdownCompileOptions(
     codeLineNumbers: resolvedConfig.theme.code.lineNumbers,
     codeWrap: resolvedConfig.theme.code.wrap,
     codeCopyButton: resolvedConfig.theme.code.copyButton
+  };
+}
+
+function createMarkdownMessages(config: SvedocsResolvedConfig, locale: string | undefined): NonNullable<CompileMarkdownOptions['messages']> {
+  const messages = config.i18n.messages[locale ?? config.i18n.defaultLocale ?? 'en']
+    ?? config.i18n.messages[config.i18n.defaultLocale ?? 'en']
+    ?? config.i18n.messages.en
+    ?? defaultSvedocsMessages;
+  return {
+    'code.copy': messages['code.copy'],
+    'code.copyDiff': messages['code.copyDiff'],
+    'diff.label': messages['diff.label'],
+    'diff.aria': messages['diff.aria'],
+    'diff.before': messages['diff.before'],
+    'diff.after': messages['diff.after']
   };
 }
 

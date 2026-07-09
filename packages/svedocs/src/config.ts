@@ -3,7 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { z } from 'zod';
 import type { SvedocsResolvedConfig } from './core.js';
 import { resolveSvedocsConfig } from './core.js';
-import type { SvedocsSeoHead } from './core/types.js';
+import type { SvedocsMessages, SvedocsSeoHead } from './core/types.js';
 import type { OgTemplate } from './og/types.js';
 
 export interface SvedocsNavItem {
@@ -156,8 +156,11 @@ export interface SvedocsConfig {
       code: string;
       label?: string;
       path?: string;
+      hreflang?: string;
+      dir?: 'ltr' | 'rtl';
     }>;
     prefixDefaultLocale?: boolean;
+    messages?: Record<string, Partial<SvedocsMessages>>;
   };
 }
 
@@ -413,12 +416,15 @@ export const svedocsConfigSchema = z.object({
               z.object({
                 code: z.string(),
                 label: z.string().optional(),
-                path: z.string().optional()
+                path: z.string().optional(),
+                hreflang: z.string().optional(),
+                dir: z.enum(['ltr', 'rtl']).optional()
               })
             ])
           )
           .optional(),
-        prefixDefaultLocale: z.boolean().optional()
+        prefixDefaultLocale: z.boolean().optional(),
+        messages: z.record(z.string(), z.record(z.string(), z.string())).optional()
       })
     ])
     .optional()

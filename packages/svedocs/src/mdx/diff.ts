@@ -1,4 +1,5 @@
 import type { SvedocsCodeBlock, SvedocsDiffRow, SvedocsDiffSplitRow } from '../core/types.js';
+import type { SvedocsMarkdownMessages } from './code.js';
 import { escapeAttribute, escapeHtml } from './utils.js';
 
 export function createDiffRows(raw: string): SvedocsDiffRow[] {
@@ -93,8 +94,8 @@ export function createDiffSplitRows(rows: SvedocsDiffRow[]): SvedocsDiffSplitRow
   return splitRows;
 }
 
-export function renderSplitDiffHtml(block: SvedocsCodeBlock, options: { copyButton?: boolean } = {}): string {
-  const title = block.title ?? 'Diff';
+export function renderSplitDiffHtml(block: SvedocsCodeBlock, options: { copyButton?: boolean; messages?: SvedocsMarkdownMessages | undefined } = {}): string {
+  const title = block.title ?? options.messages?.['diff.label'] ?? 'Diff';
   const rows = block.splitRows.length > 0 ? block.splitRows : createDiffSplitRows(block.diffRows);
   const counts = [
     block.addedLines > 0 ? `+${block.addedLines}` : '',
@@ -102,10 +103,10 @@ export function renderSplitDiffHtml(block: SvedocsCodeBlock, options: { copyButt
   ].filter(Boolean).join(' ');
 
   return `<div class="sd-diff sd-diff-split sd-code" data-language="${escapeAttribute(block.language)}"${block.title ? ` data-title="${escapeAttribute(block.title)}"` : ''} data-diff="true" data-diff-mode="split"${block.addedLines > 0 ? ` data-added-lines="${block.addedLines}"` : ''}${block.removedLines > 0 ? ` data-removed-lines="${block.removedLines}"` : ''} data-copy="${escapeAttribute(block.raw)}">
-  ${renderDiffHeader(title, counts, { copyButton: options.copyButton !== false })}
-  <div class="sd-diff-panes" role="table" aria-label="${escapeAttribute(title)} diff">
-    ${renderPane(rows, 'old', 'Before')}
-    ${renderPane(rows, 'new', 'After')}
+  ${renderDiffHeader(title, counts, { copyButton: options.copyButton !== false, messages: options.messages })}
+  <div class="sd-diff-panes" role="table" aria-label="${escapeAttribute(formatMessage(options.messages?.['diff.aria'] ?? '{title} diff', { title }))}">
+    ${renderPane(rows, 'old', options.messages?.['diff.before'] ?? 'Before')}
+    ${renderPane(rows, 'new', options.messages?.['diff.after'] ?? 'After')}
   </div>
 </div>`;
 }
@@ -125,19 +126,28 @@ function pushPairedChangeRows(
   }
 }
 
-function renderDiffHeader(title: string, counts: string, options: { copyButton: boolean }): string {
+function renderDiffHeader(title: string, counts: string, options: { copyButton: boolean; messages?: SvedocsMarkdownMessages | undefined }): string {
   const stats = counts
     ? `<span class="sd-code-stats">${counts.split(' ').map(renderDiffStat).join('')}</span>`
     : '';
+  const copyLabel = options.messages?.['code.copyDiff'] ?? 'Copy diff';
+  const diffLabel = options.messages?.['diff.label'] ?? 'Diff';
   const copyButton = options.copyButton
-    ? '<button type="button" class="sd-code-copy" data-sd-copy="" aria-label="Copy diff" title="Copy diff"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h9v14H9zM6 8v12h10"/></svg></button>'
+    ? `<button type="button" class="sd-code-copy" data-sd-copy="" aria-label="${escapeAttribute(copyLabel)}" title="${escapeAttribute(copyLabel)}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h9v14H9zM6 8v12h10"/></svg></button>`
     : '';
   return `<div class="sd-code-header">
-    <span class="sd-code-language" data-language="diff">Diff</span>
+    <span class="sd-code-language" data-language="diff">${escapeHtml(diffLabel)}</span>
     <span class="sd-code-title">${escapeHtml(title)}</span>
     ${stats}
     ${copyButton}
   </div>`;
+}
+
+function formatMessage(message: string, values: Record<string, string | number>): string {
+  return message.replace(/\{([A-Za-z0-9_.-]+)\}/g, (match, key: string) => {
+    const value = values[key];
+    return value === undefined ? match : String(value);
+  });
 }
 
 function renderDiffStat(count: string): string {

@@ -173,7 +173,8 @@ export default defineConfig({
 >
   <div slot="home-hero-visual" class="product-orbit" aria-hidden="true"></div>
 
-  <section slot="home-features" let:cards class="feature-strip">
+  <section slot="home-features" let:cards let:context class="feature-strip">
+    <h2>{context.t('home.features')}</h2>
     {#each cards as card}
       <a href={card.href}>{card.title}</a>
     {/each}
@@ -181,7 +182,7 @@ export default defineConfig({
 </DocsApp>
 ```
 
-用 `home-hero-visual` 替换 pixel hero 特效或配置的 hero 图片；用 `home-features` 替换默认 feature blocks。`home-features` 会收到生成后的 `cards` 数组，方便自定义块复用同一组文档链接。
+用 `home-hero-visual` 替换 pixel hero 特效或配置的 hero 图片；用 `home-features` 替换默认 feature blocks。`home-features` 会收到生成后的 `cards` 数组，方便自定义块复用同一组文档链接。它也会收到 `context`，所以自定义 UI 可以调用 `context.t(...)`、读取 `context.localeCode`，或使用 `context.messages`。
 
 如果要替换整个 landing 内容，但保留 svedocs header 和 footer，可以使用 `landing`：
 
@@ -196,14 +197,19 @@ export default defineConfig({
   {layouts}
   {loadSearch}
 >
-  <section slot="landing" let:page class="custom-landing">
+  <section slot="landing" let:page let:context class="custom-landing">
     <h1>{page.title}</h1>
     <p>{page.description}</p>
+    <a href={context.localeCode === 'zh' ? '/docs/zh' : '/docs'}>
+      {context.t('home.primaryAction')}
+    </a>
   </section>
 </DocsApp>
 ```
 
 `landing` 插槽外层仍由主题提供 `main#content`，所以跳过链接和页面语义会保留下来。
+
+自定义 landing 和主题替换组件里，建议用 `context.t('message.key')`，不要把 UI 文案写死。项目作者可以在 `i18n.messages` 里按 locale 覆盖文案，自定义组件会和默认主题一样拿到当前 locale 的 messages。
 
 文档文章也提供 `doc-header`，适合只替换标题和面包屑区域：
 

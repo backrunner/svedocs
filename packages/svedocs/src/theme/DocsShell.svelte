@@ -26,7 +26,7 @@
 </script>
 
 <div class="sd-doc-shell" data-theme-component="docs-shell">
-  <aside class="sd-sidebar" aria-label="Documentation">
+  <aside class="sd-sidebar" aria-label={context.t('nav.documentation')}>
     <nav>
       <svelte:boundary>
         <svelte:component this={Sidebar} items={navigationTree} currentPath={page.routePath} />
@@ -39,9 +39,9 @@
             {context}
             tree={navigationTree}
             variant="navigation"
-            label="Navigation issue"
-            title="Navigation could not render"
-            message="The page content is still available. You can retry the navigation area or use the top navigation."
+            label={context.t('render.navigation.label')}
+            title={context.t('render.navigation.title')}
+            message={context.t('render.navigation.message')}
           />
         {/snippet}
       </svelte:boundary>
@@ -63,17 +63,17 @@
           {context}
           tree={navigationTree}
           variant="article"
-          label="Article issue"
-          title="This article could not render"
-          message="Something in this article failed while rendering. The rest of the documentation shell is still available."
+          label={context.t('render.article.label')}
+          title={context.t('render.article.title')}
+          message={context.t('render.article.message')}
         />
       {/snippet}
     </svelte:boundary>
   </main>
   <svelte:boundary>
-    <svelte:component this={Toc} {page} controller={tocController} />
+    <svelte:component this={Toc} {page} controller={tocController} {context} />
     {#snippet failed(error, reset)}
-      <aside class="sd-toc" aria-label="On this page">
+      <aside class="sd-toc" aria-label={context.t('toc.label')}>
         <svelte:component
           this={ErrorComponent} component={themeComponents.RenderError}
           {error}
@@ -81,9 +81,9 @@
           {page}
           {context}
           variant="navigation"
-          label="Outline issue"
-          title="Outline could not render"
-          message="The table of contents failed to render, but the article is still available."
+          label={context.t('render.outline.label')}
+          title={context.t('render.outline.title')}
+          message={context.t('render.outline.message')}
         />
       </aside>
     {/snippet}

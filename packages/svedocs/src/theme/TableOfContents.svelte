@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import type { SvedocsPage } from '../core/types.js';
-  import { createTocController } from './headless.js';
-  import type { SvedocsTocController } from './types.js';
+  import { createTocController, fallbackTranslate } from './headless.js';
+  import type { SvedocsThemeContext, SvedocsTocController } from './types.js';
 
   export let page: SvedocsPage;
   export let controller: SvedocsTocController | undefined = undefined;
+  export let context: SvedocsThemeContext | undefined = undefined;
 
   const internalController = createTocController({ page });
   let activeController: SvedocsTocController = internalController;
@@ -18,6 +19,7 @@
   let unsubscribeController: (() => void) | undefined;
 
   $: activeController = controller ?? internalController;
+  $: t = context?.t ?? fallbackTranslate;
   $: activeController.setPage(page);
   $: activeController.setContainer(tocEl);
   $: bindController(activeController);
@@ -51,12 +53,12 @@
   bind:this={tocEl}
   class="sd-toc"
   class:sd-toc-ready={indicatorReady}
-  aria-label="On this page"
+  aria-label={t('toc.label')}
   style={`--toc-indicator-top:${indicatorTop}px;--toc-indicator-height:${indicatorHeight}px;`}
   data-theme-component="toc"
 >
   {#if page.headings.length > 0}
-    <div class="sd-toc-title">On this page</div>
+    <div class="sd-toc-title">{t('toc.label')}</div>
     {#each page.headings as heading}
       <a
         class:sd-active={heading.id === activeHeading}

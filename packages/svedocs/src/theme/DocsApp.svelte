@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Component } from 'svelte';
   import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
+  import { createThemeContext } from './headless.js';
   import DocsLayout from './DocsLayout.svelte';
   import HomePage from './HomePage.svelte';
   import PageLayout from './PageLayout.svelte';
@@ -27,6 +28,7 @@
   $: hasHomeHeroVisualSlot = Boolean($$slots['home-hero-visual']);
   $: hasHomeFeaturesSlot = Boolean($$slots['home-features']);
   $: hasDocHeaderSlot = Boolean($$slots['doc-header']);
+  $: appContext = createThemeContext({ config, page, pages, tree, search, ...(loadSearch ? { loadSearch } : {}) });
 </script>
 
 {#if customLayout}
@@ -41,6 +43,7 @@
       {loadSearch}
       {themeComponents}
       content={components[page.id]}
+      context={appContext}
     />
     {#snippet failed(error, reset)}
       <svelte:component
@@ -54,9 +57,9 @@
         {config}
         {loadSearch}
         {themeComponents}
-        label="Custom layout issue"
-        title="The custom layout could not render"
-        message="A custom page layout failed while rendering. The route is still loaded; retry after fixing the component."
+        label={appContext.t('render.custom.label')}
+        title={appContext.t('render.custom.title')}
+        message={appContext.t('render.custom.message')}
       />
     {/snippet}
   </svelte:boundary>
@@ -80,14 +83,14 @@
         <svelte:fragment slot="background">
           <slot name="background" />
         </svelte:fragment>
-        <svelte:fragment slot="landing" let:page let:pages let:tree let:search let:config let:content>
-          <slot name="landing" {page} {pages} {tree} {search} {config} {content} />
+        <svelte:fragment slot="landing" let:page let:pages let:tree let:search let:config let:content let:context>
+          <slot name="landing" {page} {pages} {tree} {search} {config} {content} {context} />
         </svelte:fragment>
-        <svelte:fragment slot="home-hero-visual" let:page let:pages let:config>
-          <slot name="home-hero-visual" {page} {pages} {config} />
+        <svelte:fragment slot="home-hero-visual" let:page let:pages let:config let:context>
+          <slot name="home-hero-visual" {page} {pages} {config} {context} />
         </svelte:fragment>
-        <svelte:fragment slot="home-features" let:page let:pages let:config let:cards>
-          <slot name="home-features" {page} {pages} {config} {cards} />
+        <svelte:fragment slot="home-features" let:page let:pages let:config let:cards let:context>
+          <slot name="home-features" {page} {pages} {config} {cards} {context} />
         </svelte:fragment>
       </svelte:component>
       {#snippet failed(error, reset)}
@@ -102,9 +105,9 @@
           {config}
           {loadSearch}
           {themeComponents}
-          label="Home layout issue"
-          title="The home page could not render"
-          message="The home layout failed while rendering. Retry after checking the home component or slot."
+          label={appContext.t('render.home.label')}
+          title={appContext.t('render.home.title')}
+          message={appContext.t('render.home.message')}
         />
       {/snippet}
     </svelte:boundary>
@@ -127,9 +130,9 @@
           {config}
           {loadSearch}
           {themeComponents}
-          label="Page layout issue"
-          title="This page could not render"
-          message="The page layout failed while rendering. Retry this route or inspect the replacement component."
+          label={appContext.t('render.page.label')}
+          title={appContext.t('render.page.title')}
+          message={appContext.t('render.page.message')}
         />
       {/snippet}
     </svelte:boundary>
@@ -155,9 +158,9 @@
           {config}
           {loadSearch}
           {themeComponents}
-          label="Documentation layout issue"
-          title="This documentation page could not render"
-          message="The documentation layout failed while rendering. Retry this route or inspect the replacement component."
+          label={appContext.t('render.docs.label')}
+          title={appContext.t('render.docs.title')}
+          message={appContext.t('render.docs.message')}
         />
       {/snippet}
     </svelte:boundary>

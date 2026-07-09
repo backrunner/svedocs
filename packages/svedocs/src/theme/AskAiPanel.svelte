@@ -2,9 +2,9 @@
   import { onDestroy, onMount, tick } from 'svelte';
   import type { SvedocsResolvedConfig, SvedocsSearchRecord } from '../core/types.js';
   import type { SearchScope } from '../search/types.js';
-  import { createAskAiController } from './headless.js';
+  import { createAskAiController, fallbackTranslate } from './headless.js';
   import { portal } from './portal.js';
-  import type { SvedocsAskAiController, SvedocsAskAiMessage } from './types.js';
+  import type { SvedocsAskAiController, SvedocsAskAiMessage, SvedocsThemeContext } from './types.js';
 
   export let config: SvedocsResolvedConfig;
   export let records: SvedocsSearchRecord[] = [];
@@ -13,6 +13,7 @@
   export let buildMode: SvedocsResolvedConfig['build']['mode'] = 'edge';
   export let endpoint = '/api/ask';
   export let controller: SvedocsAskAiController | undefined = undefined;
+  export let context: SvedocsThemeContext | undefined = undefined;
 
   const internalController = createAskAiController({ config, records, loadRecords, scope, buildMode, endpoint });
   let activeController: SvedocsAskAiController = internalController;
@@ -27,12 +28,17 @@
   let boundController: SvedocsAskAiController | undefined;
   let unsubscribeController: (() => void) | undefined;
 
+  $: t = context?.t ?? fallbackTranslate;
   $: activeController = controller ?? internalController;
-  $: activeController.setOptions({ config, records, loadRecords, scope, buildMode, endpoint });
+  $: activeController.setOptions({ config, records, loadRecords, scope, buildMode, endpoint, welcomeMessage: t('ask.welcome'), t });
   $: enabled = config.ai.enabled;
-  $: label = config.ai.label ?? 'Ask AI';
-  $: placeholder = config.ai.placeholder ?? 'Ask about the docs';
-  $: suggestions = config.ai.suggestions ?? [];
+  $: label = t('ask.label');
+  $: placeholder = t('ask.placeholder');
+  $: suggestions = [
+    t('ask.suggestion.1'),
+    t('ask.suggestion.2'),
+    t('ask.suggestion.3')
+  ].filter(Boolean);
   $: showSuggestions = suggestions.length > 0
     && !loading
     && messages.filter((message) => !message.welcome).length === 0;
@@ -152,13 +158,13 @@
         </div>
         <div class="sd-chat-actions">
           {#if messages.filter((message) => !message.welcome).length > 0}
-            <button type="button" class="sd-chat-icon-button" aria-label="New chat" title="New chat" on:click={reset}>
+            <button type="button" class="sd-chat-icon-button" aria-label={t('ask.newChat')} title={t('ask.newChat')} on:click={reset}>
               <svg aria-hidden="true" viewBox="0 0 24 24">
                 <path d="M4 12h8m4 0h4M12 4v8m0 4v4" />
               </svg>
             </button>
           {/if}
-          <button type="button" class="sd-chat-icon-button" aria-label="Close" title="Close" on:click={hide}>
+          <button type="button" class="sd-chat-icon-button" aria-label={t('ask.close')} title={t('ask.close')} on:click={hide}>
             <svg aria-hidden="true" viewBox="0 0 24 24">
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
@@ -169,14 +175,14 @@
       <div bind:this={scrollEl} class="sd-chat-messages" role="log" aria-live="polite">
         {#if messages.length === 0}
           <div class="sd-chat-empty">
-            <p>Ask anything about these docs.</p>
+            <p>{t('ask.empty')}</p>
           </div>
         {/if}
         {#each messages as message (message.id)}
           <div class="sd-chat-bubble" data-role={message.role}>
             <div class="sd-chat-bubble-body">
               {#if message.role === 'assistant' && !message.content && loading && message.id === messages[messages.length - 1]?.id}
-                <span class="sd-chat-typing" aria-label="Thinking">
+                <span class="sd-chat-typing" aria-label={t('ask.thinking')}>
                   <span></span><span></span><span></span>
                 </span>
               {:else}
@@ -219,8 +225,8 @@
         <button
           class="sd-chat-send"
           type="submit"
-          aria-label="Send"
-          title="Send"
+          aria-label={t('ask.send')}
+          title={t('ask.send')}
           disabled={!input.trim() || loading}
         >
           <svg aria-hidden="true" viewBox="0 0 24 24">

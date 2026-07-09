@@ -1,10 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { SvedocsLocale, SvedocsPage } from '../core/types.js';
+  import { fallbackTranslate } from './headless.js';
+  import type { SvedocsThemeContext } from './types.js';
 
   export let page: SvedocsPage | undefined = undefined;
   export let pages: SvedocsPage[] = [];
   export let locales: SvedocsLocale[] = [];
+  export let context: SvedocsThemeContext | undefined = undefined;
 
   let openMenu: 'locale' | undefined;
   let root: HTMLDivElement;
@@ -17,10 +20,11 @@
     (locale) => findScopedPage({ locale: locale.code })?.routePath
   );
   $: activeLocaleOption = localeOptions.find((option) => option.current);
-  $: activeLocaleLabel = activeLocaleOption?.label ?? 'Locale';
+  $: t = context?.t ?? fallbackTranslate;
+  $: activeLocaleLabel = activeLocaleOption?.label ?? t('scope.locale');
   $: activeLocaleShortLabel = activeLocaleOption
     ? createShortLocaleLabel(activeLocaleOption.value, activeLocaleOption.label)
-    : 'Lang';
+    : t('scope.langShort');
 
   function findScopedPage(scope: { locale?: string }): SvedocsPage | undefined {
     if (!page) return undefined;
@@ -81,14 +85,14 @@
 </script>
 
 {#if localeOptions.length > 1}
-  <div bind:this={root} class="sd-scope-switcher" role="group" aria-label="Documentation scope">
+  <div bind:this={root} class="sd-scope-switcher" role="group" aria-label={t('scope.group')}>
     <div class:sd-open={openMenu === 'locale'} class="sd-scope-menu">
-      <button type="button" class="sd-scope-trigger" aria-label="Locale" aria-haspopup="menu" aria-expanded={openMenu === 'locale'} on:click={() => toggleMenu('locale')}>
+      <button type="button" class="sd-scope-trigger" aria-label={t('scope.locale')} aria-haspopup="menu" aria-expanded={openMenu === 'locale'} on:click={() => toggleMenu('locale')}>
         <span class="sd-scope-label-full">{activeLocaleLabel}</span>
         <span aria-hidden="true" class="sd-scope-label-short">{activeLocaleShortLabel}</span>
       </button>
       {#if openMenu === 'locale'}
-        <div class="sd-scope-options" role="menu" aria-label="Locale options">
+        <div class="sd-scope-options" role="menu" aria-label={t('scope.localeOptions')}>
           {#each localeOptions as option}
             {#if option.path}
               <a href={option.path} role="menuitemradio" aria-checked={option.current} aria-current={option.current ? 'page' : undefined} on:click={closeMenu}>{option.label}</a>

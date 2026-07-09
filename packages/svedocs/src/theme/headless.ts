@@ -1,6 +1,7 @@
 import { tick } from 'svelte';
 import { derived, get, writable } from 'svelte/store';
-import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord } from '../core/types.js';
+import { defaultSvedocsMessages } from '../core/config.js';
+import type { SvedocsMessageKey, SvedocsMessages, SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTranslate } from '../core/types.js';
 import { filterSearchRecords, searchRecords } from '../search/local.js';
 import type { SearchResult, SearchScope } from '../search/types.js';
 import type {
@@ -36,8 +37,20 @@ export function createThemeContext(input: {
   tree?: SvedocsThemeContext['tree'];
   search?: SvedocsSearchRecord[];
   loadSearch?: SvedocsThemeContext['loadSearch'];
+  localeCode?: string;
 }): SvedocsThemeContext {
   const page = input.page;
+  const localeCode = input.localeCode ?? page?.locale ?? input.config.i18n.defaultLocale ?? 'en';
+  const locale = input.config.i18n.locales.find((candidate) => candidate.code === localeCode);
+  const messages = resolveMessages(input.config, localeCode);
+  const t = createTranslate(messages);
+  const activeNavHref = resolveLocalizedActiveNavHref(
+    input.config.theme.nav,
+    page?.routePath ?? '/',
+    input.config,
+    input.pages ?? [],
+    localeCode
+  );
   return {
     config: input.config,
     ...(page ? { page } : {}),
@@ -49,8 +62,35 @@ export function createThemeContext(input: {
     aiScope: createRuntimeScope(input.config.ai.scope, page),
     surface: page?.frontmatter.layout === 'home' || page?.routePath === '/' ? 'home' : 'reading',
     isDocsPage: page?.kind === 'doc',
-    activeNavHref: resolveActiveNavHref(input.config.theme.nav, page?.routePath ?? '/')
+    activeNavHref,
+    ...(locale ? { locale } : {}),
+    localeCode,
+    messages,
+    t
   };
+}
+
+export function resolveMessages(config: SvedocsResolvedConfig, localeCode?: string): SvedocsMessages {
+  return config.i18n.messages[localeCode ?? config.i18n.defaultLocale ?? 'en']
+    ?? config.i18n.messages[config.i18n.defaultLocale ?? 'en']
+    ?? config.i18n.messages.en
+    ?? defaultSvedocsMessages;
+}
+
+export function createTranslate(messages: SvedocsMessages): SvedocsThemeContext['t'] {
+  return (key, values) => formatMessage(messages[key] ?? defaultSvedocsMessages[key] ?? key, values);
+}
+
+export function formatMessage(message: string, values: Record<string, string | number> | undefined): string {
+  if (!values) return message;
+  return message.replace(/\{([A-Za-z0-9_.-]+)\}/g, (match, key: string) => {
+    const value = values[key];
+    return value === undefined ? match : String(value);
+  });
+}
+
+export function fallbackTranslate(key: SvedocsMessageKey, values?: Record<string, string | number>): string {
+  return formatMessage(defaultSvedocsMessages[key] ?? key, values);
 }
 
 export function createRuntimeScope(mode: 'current' | 'all', page: SvedocsPage | undefined): SearchScope {
@@ -71,8 +111,8 @@ export function createThemeStyle(config: SvedocsResolvedConfig): string {
   ].join(';');
 }
 
-export function createThemeInitScript(defaultMode: 'light' | 'dark' | 'system'): string {
-  return `<script>(function(){try{var d=${JSON.stringify(defaultMode)};var s=localStorage.getItem('svedocs-theme');var p=s==='dark'||s==='light'||s==='system'?s:d;var t=p==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;}catch(e){}})();<\/script>`;
+export function createThemeInitScript(defaultMode: 'light' | 'dark' | 'system', localeCode = 'en', dir: 'ltr' | 'rtl' = 'ltr'): string {
+  return `<script>(function(){try{var d=${JSON.stringify(defaultMode)};var l=${JSON.stringify(localeCode)};var r=${JSON.stringify(dir)};var s=localStorage.getItem('svedocs-theme');var p=s==='dark'||s==='light'||s==='system'?s:d;var t=p==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;document.documentElement.lang=l;document.documentElement.dir=r;}catch(e){}})();<\/script>`;
 }
 
 export function resolveColor(value: string, fallback: string): string {
@@ -82,6 +122,62 @@ export function resolveColor(value: string, fallback: string): string {
 
 export function linkRel(item: { external?: boolean; rel?: string }): string | undefined {
   return item.external ? 'noreferrer' : item.rel;
+}
+
+export function resolveLocalizedNavItem(item: { label: string; href: string; external?: boolean }, context: SvedocsThemeContext): { label: string; href: string; external?: boolean } {
+  if (item.external) return item;
+  const href = resolveLocalizedHref(item.href, context);
+  return {
+    ...item,
+    href,
+    label: resolveLocalizedNavLabel(item, context)
+  };
+}
+
+function resolveLocalizedNavLabel(item: { label: string; href: string }, context: SvedocsThemeContext): string {
+  const href = normalizePath(item.href);
+  if (href === '/docs' && item.label === 'Docs') return context.t('nav.docs');
+  if (href === '/docs/configuration' && item.label === 'Configuration') return context.t('nav.configuration');
+  if (href === '/docs/reference/api' && item.label === 'API') return context.t('nav.api');
+  return item.label;
+}
+
+export function resolveLocalizedHref(href: string, context: SvedocsThemeContext): string {
+  return resolveLocalizedHrefForLocale(href, context.config, context.pages, context.localeCode);
+}
+
+function resolveLocalizedActiveNavHref(
+  nav: Array<{ href: string; external?: boolean }>,
+  currentPath: string,
+  config: SvedocsResolvedConfig,
+  pages: SvedocsPage[],
+  localeCode: string
+): string {
+  const localizedNav = nav.map((item) => (
+    item.external
+      ? item
+      : {
+          ...item,
+          href: resolveLocalizedHrefForLocale(item.href, config, pages, localeCode)
+        }
+  ));
+  return resolveActiveNavHref(localizedNav, currentPath);
+}
+
+function resolveLocalizedHrefForLocale(
+  href: string,
+  config: SvedocsResolvedConfig,
+  pages: SvedocsPage[],
+  localeCode: string
+): string {
+  const hrefPath = normalizePath(href);
+  const target = pages.find((candidate) => (
+    candidate.scopePath === hrefPath
+    && (candidate.locale ?? config.i18n.defaultLocale ?? 'en') === localeCode
+  ));
+  if (!target) return href;
+  const suffix = href.match(/[?#].*$/)?.[0] ?? '';
+  return `${target.routePath}${suffix}`;
 }
 
 export function isActiveNavItem(item: { href: string; external?: boolean }, activeNavHref: string): boolean {
@@ -264,9 +360,9 @@ export function createSearchController(initial: SvedocsSearchControllerOptions =
     remoteError.set('');
     try {
       const fetcher = currentOptions.fetcher ?? globalThis.fetch;
-      if (!fetcher) throw new Error('Fetch is not available.');
+      if (!fetcher) throw new Error(currentOptions.t('search.fetchUnavailable'));
       const response = await fetcher(createSearchUrl(currentOptions.endpoint, currentQuery, scope, currentOptions.provider, currentOptions.origin));
-      if (!response.ok) throw new Error(`Search returned ${response.status}.`);
+      if (!response.ok) throw new Error(currentOptions.t('search.requestError', { status: response.status }));
       const payload = await response.json() as { results?: SearchResult[] };
       if (requestId !== remoteRequestId) return;
       remoteResults.set(payload.results ?? []);
@@ -274,7 +370,7 @@ export function createSearchController(initial: SvedocsSearchControllerOptions =
     } catch (error) {
       if (requestId !== remoteRequestId) return;
       remoteResults.set([]);
-      remoteError.set(error instanceof Error ? error.message : 'Search failed.');
+      remoteError.set(error instanceof Error ? error.message : currentOptions.t('search.failed'));
       remoteStatus.set('error');
     }
   }
@@ -347,8 +443,9 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
     const currentOptions = get(options);
     if (!currentOptions.config.ai.enabled || get(open)) return;
     open.set(true);
-    if (get(messages).length === 0 && currentOptions.config.ai.welcomeMessage) {
-      messages.set([{ id: nextId(), role: 'assistant', content: currentOptions.config.ai.welcomeMessage, welcome: true }]);
+    const welcomeMessage = currentOptions.welcomeMessage ?? currentOptions.config.ai.welcomeMessage;
+    if (get(messages).length === 0 && welcomeMessage) {
+      messages.set([{ id: nextId(), role: 'assistant', content: welcomeMessage, welcome: true }]);
     }
   }
 
@@ -357,7 +454,8 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
   }
 
   function reset(): void {
-    const welcomeMessage = get(options).config.ai.welcomeMessage;
+    const currentOptions = get(options);
+    const welcomeMessage = currentOptions.welcomeMessage ?? currentOptions.config.ai.welcomeMessage;
     messages.set(welcomeMessage ? [{ id: nextId(), role: 'assistant', content: welcomeMessage, welcome: true }] : []);
     input.set('');
   }
@@ -382,14 +480,14 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
 
     if (currentOptions.buildMode !== 'edge') {
       const sourceRecords = await ensureRecords();
-      updateAssistant(assistantMsg.id, createLocalAskDraft(value, sourceRecords, currentOptions.scope));
+      updateAssistant(assistantMsg.id, createLocalAskDraft(value, sourceRecords, currentOptions.scope, currentOptions.t));
       loading.set(false);
       return;
     }
 
     try {
       const fetcher = currentOptions.fetcher ?? globalThis.fetch;
-      if (!fetcher) throw new Error('Fetch is not available.');
+      if (!fetcher) throw new Error(currentOptions.t('ask.fetchUnavailable'));
       const response = await fetcher(currentOptions.endpoint, {
         method: 'POST',
         headers: {
@@ -404,15 +502,15 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
       });
 
       if (response.headers.get('content-type')?.includes('text/event-stream')) {
-        await readAskStream(response, assistantMsg.id);
+        await readAskStream(response, assistantMsg.id, currentOptions.t);
         if (!response.ok && !findMessage(assistantMsg.id)?.error) {
-          throw new Error(`Ask AI returned ${response.status}.`);
+          throw new Error(currentOptions.t('ask.requestError', { status: response.status }));
         }
         return;
       }
       if (!response.ok) {
         const failure = await response.json().catch(() => ({})) as { error?: string };
-        throw new Error(failure.error ?? `Ask AI returned ${response.status}.`);
+        throw new Error(failure.error ?? currentOptions.t('ask.requestError', { status: response.status }));
       }
       const result = await response.json() as {
         answer?: string;
@@ -430,12 +528,15 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
         ...(result.section ? { section: result.section } : {})
       }));
       const fallback = fallbackCitations.length > 0
-        ? `I found ${fallbackCitations.length} relevant source${fallbackCitations.length === 1 ? '' : 's'}. Connect the ${currentOptions.config.ai.provider} provider to replace this local draft with a hosted Ask AI response.`
-        : `Ask AI is ready. Connect ${currentOptions.config.ai.provider} and index your docs to answer this question with citations.`;
+        ? currentOptions.t(fallbackCitations.length === 1 ? 'ask.fallbackSource' : 'ask.fallbackSources', {
+            count: fallbackCitations.length,
+            provider: currentOptions.config.ai.provider
+          })
+        : currentOptions.t('ask.fallbackReady', { provider: currentOptions.config.ai.provider });
       updateAssistant(assistantMsg.id, {
         content: fallback,
         citations: fallbackCitations,
-        error: requestError instanceof Error ? requestError.message : 'Ask AI failed.'
+        error: requestError instanceof Error ? requestError.message : currentOptions.t('ask.failed')
       });
     } finally {
       loading.set(false);
@@ -466,7 +567,7 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
     }
   }
 
-  function createLocalAskDraft(question: string, records: SvedocsSearchRecord[], scope: SearchScope): Partial<SvedocsAskAiMessage> {
+  function createLocalAskDraft(question: string, records: SvedocsSearchRecord[], scope: SearchScope, t: SvedocsTranslate): Partial<SvedocsAskAiMessage> {
     const citations = rankRecords(records, question.toLowerCase(), scope).slice(0, 3).map((result) => ({
       title: result.title,
       url: result.url,
@@ -474,8 +575,8 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
     }));
     return {
       content: citations.length > 0
-        ? `I found ${citations.length} relevant source${citations.length === 1 ? '' : 's'} in this documentation.`
-        : 'I could not find a matching local source for that question.',
+        ? t(citations.length === 1 ? 'ask.localSource' : 'ask.localSources', { count: citations.length })
+        : t('ask.localEmpty'),
       citations
     };
   }
@@ -505,7 +606,7 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
     return searchRecords(records, { query, limit: 5, ...scope });
   }
 
-  async function readAskStream(response: Response, assistantId: number): Promise<void> {
+  async function readAskStream(response: Response, assistantId: number, t: SvedocsTranslate): Promise<void> {
     const reader = response.body?.getReader();
     if (!reader) return;
     const decoder = new TextDecoder();
@@ -516,13 +617,13 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
       buffer += decoder.decode(value, { stream: true });
       let boundary = findAskEventBoundary(buffer);
       while (boundary) {
-        readAskEvent(buffer.slice(0, boundary.index), assistantId);
+        readAskEvent(buffer.slice(0, boundary.index), assistantId, t);
         buffer = buffer.slice(boundary.index + boundary.length);
         boundary = findAskEventBoundary(buffer);
       }
     }
     buffer += decoder.decode();
-    if (buffer.trim()) readAskEvent(buffer, assistantId);
+    if (buffer.trim()) readAskEvent(buffer, assistantId, t);
   }
 
   function findAskEventBoundary(value: string): { index: number; length: number } | undefined {
@@ -530,7 +631,7 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
     return match ? { index: match.index, length: match[0].length } : undefined;
   }
 
-  function readAskEvent(block: string, assistantId: number): void {
+  function readAskEvent(block: string, assistantId: number, t: SvedocsTranslate): void {
     const normalized = block.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
     const event = /^event:\s*(.+)$/m.exec(normalized)?.[1] ?? 'message';
     const data = normalized.split('\n').filter((line) => line.startsWith('data:')).map((line) => line.slice(5).trim()).join('\n');
@@ -557,11 +658,11 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
             ?? ''
         );
       }
-      if (event === 'chunks') setCitations(assistantId, normalizeChunkCitations(payload.chunks ?? []));
+      if (event === 'chunks') setCitations(assistantId, normalizeChunkCitations(payload.chunks ?? [], t));
       if (event === 'citations') setCitations(assistantId, payload.citations ?? []);
-      if (event === 'error') setError(assistantId, payload.error ?? 'Ask AI failed.');
+      if (event === 'error') setError(assistantId, payload.error ?? t('ask.failed'));
     } catch {
-      setError(assistantId, 'Ask AI returned an unreadable stream event.');
+      setError(assistantId, t('ask.streamUnreadable'));
     }
   }
 
@@ -880,20 +981,23 @@ function normalizeSearchOptions(options: SvedocsSearchControllerOptions): Requir
     provider: options.provider ?? 'local',
     endpoint: options.endpoint ?? '/api/search',
     buildMode: options.buildMode ?? 'edge',
+    t: options.t ?? fallbackTranslate,
     ...(options.loadRecords ? { loadRecords: options.loadRecords } : {}),
     ...(options.fetcher ? { fetcher: options.fetcher } : {}),
     ...(options.origin ? { origin: options.origin } : {})
   };
 }
 
-function normalizeAskOptions(options: SvedocsAskAiControllerOptions): Required<Omit<SvedocsAskAiControllerOptions, 'loadRecords' | 'fetcher'>> & Pick<SvedocsAskAiControllerOptions, 'loadRecords' | 'fetcher'> {
+function normalizeAskOptions(options: SvedocsAskAiControllerOptions): Required<Omit<SvedocsAskAiControllerOptions, 'loadRecords' | 'fetcher' | 'welcomeMessage'>> & Pick<SvedocsAskAiControllerOptions, 'loadRecords' | 'fetcher' | 'welcomeMessage'> {
   return {
     config: options.config,
     records: options.records ?? [],
     scope: options.scope ?? {},
     endpoint: options.endpoint ?? '/api/ask',
     buildMode: options.buildMode ?? 'edge',
+    t: options.t ?? fallbackTranslate,
     ...(options.loadRecords ? { loadRecords: options.loadRecords } : {}),
+    ...(Object.hasOwn(options, 'welcomeMessage') && options.welcomeMessage !== undefined ? { welcomeMessage: options.welcomeMessage } : {}),
     ...(options.fetcher ? { fetcher: options.fetcher } : {})
   };
 }
@@ -902,12 +1006,12 @@ function createRemoteKey(provider: string, endpoint: string, query: string, scop
   return JSON.stringify([provider, endpoint, query.trim(), scope.locale, scope.kind]);
 }
 
-function normalizeChunkCitations(chunks: Array<{ title?: string; url?: string; metadata?: Record<string, unknown>; item?: { title?: string; metadata?: Record<string, unknown> } }>): SvedocsAskAiCitation[] {
+function normalizeChunkCitations(chunks: Array<{ title?: string; url?: string; metadata?: Record<string, unknown>; item?: { title?: string; metadata?: Record<string, unknown> } }>, t: SvedocsTranslate): SvedocsAskAiCitation[] {
   return chunks.slice(0, 5).map((chunk, index) => {
     const metadata = normalizeSvedocsMetadata({ ...(chunk.item?.metadata ?? {}), ...(chunk.metadata ?? {}) });
     const section = stringValue(metadata.section);
     return {
-      title: stringValue(chunk.title) ?? stringValue(chunk.item?.title) ?? stringValue(metadata.title) ?? `Source ${index + 1}`,
+      title: stringValue(chunk.title) ?? stringValue(chunk.item?.title) ?? stringValue(metadata.title) ?? t('ask.sourceTitle', { index: index + 1 }),
       url: stringValue(chunk.url) ?? stringValue(metadata.url) ?? stringValue(metadata.source_url) ?? '#',
       ...(section ? { section } : {})
     };
