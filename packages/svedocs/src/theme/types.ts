@@ -37,6 +37,7 @@ export interface SvedocsThemeContext {
   activeNavHref: string;
   locale?: SvedocsLocale;
   localeCode: string;
+  languageTag: string;
   messages: SvedocsMessages;
   t: SvedocsTranslate;
 }
@@ -109,6 +110,7 @@ export interface SvedocsErrorProps {
 export interface SvedocsRootProps {
   config: SvedocsResolvedConfig;
   page?: SvedocsPage;
+  localeCode?: string;
   pages?: SvedocsPage[];
   tree?: SvedocsTreeItem[];
   search?: SvedocsSearchRecord[];

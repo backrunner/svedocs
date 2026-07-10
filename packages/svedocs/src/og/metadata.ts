@@ -3,7 +3,11 @@ import { formatRoutePathForBuildMode } from '../core/utils.js';
 import { createConfiguredOgImageFormat, createPageOgImagePath } from './image.js';
 import type { SvedocsPageAlternate, SvedocsPageMetadata } from './types.js';
 
-export function createPageMetadata(config: SvedocsResolvedConfig, page: SvedocsPage): SvedocsPageMetadata {
+export function createPageMetadata(
+  config: SvedocsResolvedConfig,
+  page: SvedocsPage,
+  pages: SvedocsPage[] = []
+): SvedocsPageMetadata {
   const title = page.routePath === '/' ? page.seo.title : `${page.seo.title} | ${config.site.name}`;
   const description = page.seo.description ?? config.site.description;
   const canonical = page.seo.canonical ?? createAbsoluteRouteUrl(config, page.routePath);
@@ -19,9 +23,9 @@ export function createPageMetadata(config: SvedocsResolvedConfig, page: SvedocsP
   const updatedTime = page.seo.updatedTime ?? page.lastUpdated;
   const pageLanguage = getPageLanguage(config, page);
   const ogLocale = toOpenGraphLocale(pageLanguage);
-  const alternateOgLocales = config.i18n.locales
-    .map((locale) => toOpenGraphLocale(locale.hreflang ?? locale.code))
-    .filter((locale) => locale !== ogLocale);
+  const alternateOgLocales = createPageAlternates(config, page, pages)
+    .filter((alternate) => alternate.lang !== 'x-default' && alternate.locale !== page.locale)
+    .map((alternate) => toOpenGraphLocale(alternate.lang));
   return {
     title,
     description,
@@ -86,6 +90,7 @@ export function createPageAlternates(
   if (config.i18n.locales.length === 0) return [];
   const candidates = pages
     .filter((candidate) => !candidate.hidden)
+    .filter((candidate) => candidate.kind === page.kind)
     .filter((candidate) => candidate.scopePath === page.scopePath);
   const alternates: SvedocsPageAlternate[] = [];
   for (const candidate of candidates) {
@@ -205,7 +210,7 @@ function getPageLanguage(config: SvedocsResolvedConfig, page: SvedocsPage): stri
 }
 
 function toOpenGraphLocale(language: string): string {
-  return language.replace('-', '_');
+  return language.replaceAll('-', '_');
 }
 
 function createAbsoluteUrl(config: SvedocsResolvedConfig, value: string): string | undefined {

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
-  import { createThemeContext } from './headless.js';
+  import { createPageTree } from '../core/navigation.js';
+  import { createThemeContext, resolveLocaleCodeFromPath, resolveLocalizedHref } from './headless.js';
   import LayoutShell from './LayoutShell.svelte';
   import PageShell from './PageShell.svelte';
   import RootLayout from './RootLayout.svelte';
@@ -22,16 +23,22 @@
   $: Root = themeComponents.Root ?? RootLayout;
   $: fallbackComponents = { ...themeComponents, Root: RootLayout, Layout: LayoutShell, PageShell };
   $: code = status ?? 500;
-  $: context = createThemeContext({ config, pages, tree, search, ...(loadSearch ? { loadSearch } : {}) });
+  $: localeCode = resolveLocaleCodeFromPath(path, config);
+  $: localePages = pages.filter((page) => (page.locale ?? config.i18n.defaultLocale ?? 'en') === localeCode);
+  $: localeTree = createPageTree(localePages);
+  $: navigationTree = localeTree.length > 0 ? localeTree : tree;
+  $: context = createThemeContext({ config, pages, tree: navigationTree, search, localeCode, ...(loadSearch ? { loadSearch } : {}) });
   $: title = code === 404 ? context.t('error.notFound.title') : context.t('error.generic.title');
-  $: detail = message || error?.message || (code === 404
+  $: detail = code === 404
     ? context.t('error.notFound.description')
-    : context.t('error.generic.description'));
-  $: docsEntry = pages.find((page) => page.kind === 'doc' && page.routePath === '/docs')
-    ?? pages.find((page) => page.kind === 'doc');
+    : message || error?.message || context.t('error.generic.description');
+  $: homeHref = resolveLocalizedHref('/', context);
+  $: docsHref = resolveLocalizedHref('/docs', context);
+  $: docsEntry = localePages.find((page) => page.kind === 'doc' && page.routePath === docsHref)
+    ?? localePages.find((page) => page.kind === 'doc');
   $: Shell = themeComponents.PageShell ?? PageShell;
   $: actions = [
-    { label: context.t('error.home'), href: '/', primary: true },
+    { label: context.t('error.home'), href: homeHref, primary: true },
     ...(docsEntry ? [{ label: context.t('error.docs'), href: docsEntry.routePath }] : [])
   ] as SvedocsPageShellAction[];
 </script>
@@ -40,15 +47,16 @@
   <svelte:component
     this={Root}
     {config}
+    {localeCode}
     {pages}
-    {tree}
+    tree={navigationTree}
     {search}
     {loadSearch}
     {themeComponents}
     headTitle={`${code} ${title} - ${config.site.title}`}
     headDescription={detail}
     headRobots="noindex"
-    mobileTree={tree}
+    mobileTree={navigationTree}
     mobileCurrentPath={path}
   >
     <svelte:component
@@ -66,15 +74,16 @@
   {#snippet failed(fallbackError, reset)}
     <RootLayout
       {config}
+      {localeCode}
       {pages}
-      {tree}
+      tree={navigationTree}
       {search}
       {loadSearch}
       themeComponents={fallbackComponents}
       headTitle={`${code} ${title} - ${config.site.title}`}
       headDescription={detail}
       headRobots="noindex"
-      mobileTree={tree}
+      mobileTree={navigationTree}
       mobileCurrentPath={path}
     >
       <main id="content" class="sd-route-render-error" data-theme-component="route-render-error">
@@ -83,7 +92,7 @@
           error={fallbackError}
           {reset}
           {context}
-          tree={tree}
+          tree={navigationTree}
           variant="layout"
           label={context.t('render.error.label')}
           title={context.t('render.error.title')}

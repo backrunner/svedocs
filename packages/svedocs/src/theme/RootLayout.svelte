@@ -9,6 +9,7 @@
 
   export let config: SvedocsResolvedConfig;
   export let page: SvedocsPage | undefined = undefined;
+  export let localeCode: string | undefined = undefined;
   export let pages: SvedocsPage[] = [];
   export let tree: SvedocsTreeItem[] = [];
   export let search: SvedocsSearchRecord[] = [];
@@ -27,7 +28,7 @@
   let unsubscribeMobileMenu: (() => void) | undefined;
   let stopScrollbarVisibility: (() => void) | undefined;
 
-  $: metadata = page ? createPageMetadata(config, page) : undefined;
+  $: metadata = page ? createPageMetadata(config, page, pages) : undefined;
   $: alternates = page ? createPageAlternates(config, page, pages) : [];
   $: jsonLdScripts = metadata ? [
     createJsonLdScript(metadata.jsonLd),
@@ -39,9 +40,10 @@
     pages,
     tree: tree.length > 0 ? tree : mobileTree,
     search,
-    ...(loadSearch ? { loadSearch } : {})
+    ...(loadSearch ? { loadSearch } : {}),
+    ...(localeCode ? { localeCode } : {})
   });
-  $: themeInitScript = createThemeInitScript(config.theme.defaultMode, context.localeCode, context.locale?.dir ?? 'ltr');
+  $: themeInitScript = createThemeInitScript(config.theme.defaultMode, context.languageTag, context.locale?.dir ?? 'ltr');
   $: themeStyle = createThemeStyle(config);
   $: mobileMenuId = `sd-mobile-menu-${createDomId(page?.id ?? page?.routePath ?? 'site')}`;
   $: mobileTreePath = mobileCurrentPath || page?.routePath || '';
@@ -72,7 +74,7 @@
 
   function markHydratedRoute() {
     document.documentElement.dataset.svedocsRoute = page?.routePath ?? '';
-    document.documentElement.lang = context.localeCode;
+    document.documentElement.lang = context.languageTag;
     document.documentElement.dir = context.locale?.dir ?? 'ltr';
   }
 

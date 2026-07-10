@@ -38,7 +38,7 @@ export function renderSvedocsHelp(): string {
     '  --strict             Treat warnings as failures',
     '  --external-links     Verify http(s) links with HEAD requests',
     '  --no-assets          Skip local asset existence checks',
-    '  --translations       Warn when configured locales are missing doc pages',
+    '  --translations       Warn when configured locales are missing pages',
     '  --package            Validate package files and exports',
     '',
     'Use --help on a command for more details.'

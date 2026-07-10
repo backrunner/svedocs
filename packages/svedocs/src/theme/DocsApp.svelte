@@ -63,7 +63,7 @@
       />
     {/snippet}
   </svelte:boundary>
-  {:else if page.routePath === '/' || page.frontmatter.layout === 'home'}
+  {:else if page.scopePath === '/' || page.frontmatter.layout === 'home'}
     <svelte:boundary>
       <svelte:component
         this={Home}

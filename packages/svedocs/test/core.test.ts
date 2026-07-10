@@ -5,13 +5,13 @@ import { describe, expect, it } from 'vitest';
 import { get } from 'svelte/store';
 import { createAskResponse, createCloudflareAiSearchAiProvider, createCloudflareKvRateLimiter, createConfiguredAiProvider, createConfiguredAskResponse, createMemoryRateLimiter, createMockAiProvider, createOpenAiCompatibleProvider, createWorkersAiProvider } from '../src/ai';
 import { createCloudflareEnvDts, createWranglerJson, readSvedocsBuildMode, svedocsPagePrerender, svedocsSsr, svedocsTrailingSlash } from '../src/cloudflare';
-import { defineConfig, loadSvedocsConfigFile } from '../src/config';
+import { defineConfig, loadSvedocsConfigFile, validateSvedocsConfig } from '../src/config';
 import { checkPackagePublication, createPageTree, createSearchRecords, flattenPageTree, loadSvedocsContent, resolveSvedocsConfig } from '../src/core';
 import { createConfiguredOgImageFormat, createConfiguredOgImageTemplate, createConfiguredPageOgImageEntries, createJsonLdScript, createOgPng, createPageAlternates, createPageMetadata, createPageOgImagePath, createPageOgImageResponse, createRobotsResponse, createRobotsTxt, createSatoriOgSvg, createSitemapResponse, createSitemapXml, serializeJsonLd } from '../src/og';
 import { compileMarkdown, createDiffRows, createDiffSplitRows } from '../src/mdx/compile';
 import { createAlgoliaSearchProvider, createCloudflareAiSearchDocuments, createCloudflareAiSearchProvider, createConfiguredSearchProvider, createConfiguredSearchResponse, createSearchResponse, createTypesenseSearchProvider, searchRecords, syncCloudflareAiSearchIndex } from '../src/search';
 import { createFixturePage } from '../src/testing';
-import { createAskAiController, createPageToolsController, createSearchController, createThemeContext, createThemeInitScript, createThemeModeController } from '../src/theme/headless';
+import { createAskAiController, createPageToolsController, createSearchController, createThemeContext, createThemeInitScript, createThemeModeController, resolveLocaleCodeFromPath, resolveLocalizedHref, resolveLocalizedNavItem } from '../src/theme/headless';
 import { svedocs } from '../src/vite';
 
 describe('svedocs Batch 0 skeleton', () => {
@@ -91,11 +91,12 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(config.i18n.messages.en!['ask.label']).toBe('Ask docs');
     expect(context.locale?.hreflang).toBe('zh-CN');
     expect(context.localeCode).toBe('zh');
+    expect(context.languageTag).toBe('zh-CN');
     expect(context.t('search.placeholder')).toBe('搜索文档');
     expect(context.t('search.trigger')).toBe('Search');
     expect(context.t('article.updated', { date: '2026-05-18' })).toBe('更新于 2026-05-18');
     expect(context.t('footer.text', { site: 'Fixture' })).toBe('Built by Fixture');
-    expect(createThemeInitScript('system', context.localeCode, context.locale?.dir)).toContain('document.documentElement.lang=l');
+    expect(createThemeInitScript('system', context.languageTag, context.locale?.dir)).toContain('var l="zh-CN"');
 
     const localizedNavContext = createThemeContext({
       config,
@@ -121,6 +122,136 @@ describe('svedocs Batch 0 skeleton', () => {
       ]
     });
     expect(localizedNavContext.activeNavHref).toBe('/docs/zh/configuration');
+  });
+
+  it('localizes project-defined labels and internal links without path-specific rules', () => {
+    const config = resolveSvedocsConfig({
+      theme: {
+        nav: [
+          { label: 'Guides', labelKey: 'nav.guides', href: '/docs/guides' }
+        ]
+      },
+      i18n: {
+        defaultLocale: 'en',
+        locales: [
+          { code: 'en', label: 'English' },
+          { code: 'zh', label: '中文', hreflang: 'zh-CN' }
+        ],
+        messages: {
+          zh: {
+            'nav.guides': '指南'
+          }
+        }
+      }
+    });
+    const pages = [
+      createFixturePage({ routePath: '/', scopePath: '/', locale: 'en', kind: 'page' }),
+      createFixturePage({ routePath: '/zh', scopePath: '/', locale: 'zh', kind: 'page' }),
+      createFixturePage({ routePath: '/docs/guides', scopePath: '/docs/guides', locale: 'en', kind: 'doc' }),
+      createFixturePage({ routePath: '/docs/zh/guides', scopePath: '/docs/guides', locale: 'zh', kind: 'doc' })
+    ];
+    const context = createThemeContext({
+      config,
+      page: pages[3]!,
+      pages
+    });
+
+    expect(resolveLocalizedNavItem(config.theme.nav[0]!, context)).toMatchObject({
+      label: '指南',
+      href: '/docs/zh/guides'
+    });
+    const englishContext = createThemeContext({
+      config,
+      page: pages[2]!,
+      pages
+    });
+    expect(resolveLocalizedNavItem(config.theme.nav[0]!, englishContext)).toMatchObject({
+      label: 'Guides',
+      href: '/docs/guides'
+    });
+    expect(createThemeContext({
+      config,
+      page: createFixturePage({
+        routePath: '/zh',
+        scopePath: '/',
+        locale: 'zh',
+        kind: 'page',
+        frontmatter: {}
+      })
+    }).surface).toBe('home');
+    expect(resolveLocalizedHref('/', context)).toBe('/zh');
+    expect(resolveLocaleCodeFromPath('/docs/zh/missing', config)).toBe('zh');
+    expect(resolveLocaleCodeFromPath('/missing', config)).toBe('en');
+  });
+
+  it('rejects ambiguous locale configuration before content discovery', () => {
+    expect(() => resolveSvedocsConfig({
+      i18n: {
+        defaultLocale: 'fr',
+        locales: ['en', 'zh']
+      }
+    })).toThrow('must match a configured locale code');
+    expect(() => resolveSvedocsConfig({
+      i18n: {
+        defaultLocale: 'en'
+      }
+    })).toThrow('requires at least one configured locale');
+    expect(() => resolveSvedocsConfig({
+      i18n: {
+        locales: [
+          { code: 'en', path: 'docs' },
+          { code: 'zh', path: 'zh' }
+        ]
+      }
+    })).toThrow('reserved /docs route');
+    expect(() => resolveSvedocsConfig({
+      i18n: {
+        locales: [
+          { code: 'en', path: 'en' },
+          { code: 'zh', path: 'EN' }
+        ]
+      }
+    })).toThrow('locale path "EN" is shared');
+    expect(() => resolveSvedocsConfig({
+      i18n: {
+        locales: [
+          { code: 'en', path: 'en%2Fdocs' }
+        ]
+      }
+    })).toThrow('one non-empty URL-safe segment');
+    expect(() => resolveSvedocsConfig({
+      i18n: {
+        locales: [
+          { code: 'en', hreflang: 'en' },
+          { code: 'english', hreflang: 'en' }
+        ]
+      }
+    })).toThrow('language tag "en" is shared');
+    expect(() => resolveSvedocsConfig({
+      i18n: {
+        locales: [
+          { code: 'en-abcdefghi' }
+        ]
+      }
+    })).toThrow('must be a valid BCP 47 language tag');
+    expect(resolveSvedocsConfig({
+      i18n: {
+        locales: [
+          { code: 'en-abcdefghi', hreflang: 'en' }
+        ]
+      }
+    }).i18n.locales[0]).toMatchObject({
+      code: 'en-abcdefghi',
+      hreflang: 'en'
+    });
+    expect(() => validateSvedocsConfig({
+      i18n: {
+        locales: ['en'],
+        messages: {
+          zh: { 'search.placeholder': '搜索' }
+        }
+      }
+    })).toThrow('unknown locale "zh"');
   });
 
   it('throws when an existing config imports a missing dependency', async () => {
@@ -952,6 +1083,28 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(manifest.issues).toEqual([]);
   });
 
+  it('keeps locale codes separate from source and route paths', async () => {
+    const manifest = await loadSvedocsContent({
+      projectRoot: new URL('fixtures/i18n', import.meta.url).pathname,
+      config: {
+        i18n: {
+          defaultLocale: 'en-US',
+          prefixDefaultLocale: true,
+          locales: [
+            { code: 'en-US', path: 'en', label: 'English', hreflang: 'en-US' },
+            { code: 'zh-Hans', path: 'zh', label: '中文', hreflang: 'zh-CN' }
+          ]
+        }
+      }
+    });
+
+    expect(manifest.pages.map((page) => [page.routePath, page.scopePath, page.locale])).toEqual([
+      ['/docs/en', '/docs', 'en-US'],
+      ['/docs/zh', '/docs', 'zh-Hans']
+    ]);
+    expect(manifest.search.map((record) => record.metadata.locale)).toContain('zh-Hans');
+  });
+
   it('keeps mirrored locale docs free of translation issues', async () => {
     const manifest = await loadSvedocsContent({
       projectRoot: new URL('fixtures/i18n', import.meta.url).pathname,
@@ -970,6 +1123,37 @@ describe('svedocs Batch 0 skeleton', () => {
     });
 
     expect(manifest.issues).toEqual([]);
+  });
+
+  it('reports missing translations for public non-doc pages', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-i18n-pages-'));
+    try {
+      await mkdir(path.join(tmp, 'content/pages/en'), { recursive: true });
+      await writeFile(
+        path.join(tmp, 'content/pages/en/index.md'),
+        '---\ntitle: Home\ndescription: Localized home.\n---\n\n# Home\n',
+        'utf8'
+      );
+      const manifest = await loadSvedocsContent({
+        projectRoot: tmp,
+        config: {
+          i18n: {
+            defaultLocale: 'en',
+            locales: ['en', 'zh']
+          },
+          checks: {
+            translations: true
+          }
+        }
+      });
+
+      expect(manifest.issues).toContainEqual(expect.objectContaining({
+        code: 'missing-translation',
+        message: '/ is missing locale zh.'
+      }));
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
   });
 
   it('checks local asset references and package exports', async () => {
@@ -1205,14 +1389,24 @@ describe('svedocs Batch 0 skeleton', () => {
       title: '指南',
       seo: { title: '指南' }
     });
+    const standalonePage = createFixturePage({
+      id: 'guide-page-en',
+      routePath: '/guide',
+      scopePath: '/docs/guide',
+      locale: 'en',
+      kind: 'page',
+      title: 'Standalone guide',
+      seo: { title: 'Standalone guide' }
+    });
 
-    const metadata = createPageMetadata(config, zhPage);
-    const alternates = createPageAlternates(config, zhPage, [enPage, zhPage]);
-    const sitemap = createSitemapXml(config, [enPage, zhPage]);
+    const metadata = createPageMetadata(config, zhPage, [enPage, zhPage, standalonePage]);
+    const alternates = createPageAlternates(config, zhPage, [enPage, zhPage, standalonePage]);
+    const sitemap = createSitemapXml(config, [enPage, zhPage, standalonePage]);
 
     expect(metadata.canonical).toBe('https://fixture.test/docs/zh/guide');
     expect(metadata.openGraph.locale).toBe('zh_CN');
     expect(metadata.openGraph.alternateLocales).toEqual(['en']);
+    expect(createPageMetadata(config, zhPage, [zhPage]).openGraph.alternateLocales).toBeUndefined();
     expect(metadata.jsonLd.inLanguage).toBe('zh-CN');
     expect(alternates.map((alternate) => [alternate.lang, alternate.href])).toEqual([
       ['en', 'https://fixture.test/docs/guide'],
@@ -1222,6 +1416,21 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(sitemap).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
     expect(sitemap).toContain('<xhtml:link rel="alternate" hreflang="zh-CN" href="https://fixture.test/docs/zh/guide" />');
     expect(sitemap).toContain('<xhtml:link rel="alternate" hreflang="x-default" href="https://fixture.test/docs/guide" />');
+  });
+
+  it('normalizes every Open Graph locale separator', () => {
+    const config = resolveSvedocsConfig({
+      i18n: {
+        defaultLocale: 'zh-Hans-CN',
+        locales: ['zh-Hans-CN']
+      }
+    });
+    const page = createFixturePage({
+      locale: 'zh-Hans-CN',
+      seo: { title: 'Guide' }
+    });
+
+    expect(createPageMetadata(config, page).openGraph.locale).toBe('zh_Hans_CN');
   });
 
   it('normalizes generated SEO URLs for static output and serializes JSON-LD safely', async () => {
@@ -1818,6 +2027,25 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(compiled.html).toContain('aria-label="之前"');
     expect(compiled.html).toContain('aria-label="之后"');
     expect(compiled.html).toContain('>差异</span>');
+  });
+
+  it('escapes localized diff labels before rendering HTML', async () => {
+    const compiled = await compileMarkdown('```diff split\n-old\n+new\n```', {
+      messages: {
+        'code.copy': 'Copy code',
+        'code.copyDiff': 'Copy diff',
+        'diff.label': 'Diff',
+        'diff.aria': '{title} diff',
+        'diff.before': 'Before <unsafe>',
+        'diff.after': 'After "unsafe"'
+      }
+    });
+
+    expect(compiled.html).toContain('aria-label="Before <unsafe>"');
+    expect(compiled.html).toContain('>Before &#x3C;unsafe></div>');
+    expect(compiled.html).toContain('aria-label="After &#x22;unsafe&#x22;"');
+    expect(compiled.html).toContain('>After "unsafe"</div>');
+    expect(compiled.html).not.toContain('<unsafe></');
   });
 
   it('preserves blank lines in highlighted code blocks', async () => {

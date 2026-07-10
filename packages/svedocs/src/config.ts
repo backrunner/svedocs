@@ -8,12 +8,14 @@ import type { OgTemplate } from './og/types.js';
 
 export interface SvedocsNavItem {
   label: string;
+  labelKey?: string;
   href: string;
   external?: boolean;
 }
 
 export interface SvedocsThemeBrand {
   label?: string;
+  labelKey?: string;
   href?: string;
   logo?: string;
   mark?: 'pixel' | false;
@@ -47,6 +49,7 @@ export interface SvedocsShikiOptions {
 
 export interface SvedocsThemeHomeAction {
   label: string;
+  labelKey?: string;
   href: string;
 }
 
@@ -54,10 +57,12 @@ export interface SvedocsThemeHomeVisual {
   type?: 'pixel' | 'image';
   src?: string;
   alt?: string;
+  altKey?: string;
 }
 
 export interface SvedocsThemeHome {
   kicker?: string;
+  kickerKey?: string;
   primaryAction?: SvedocsThemeHomeAction;
   secondaryAction?: SvedocsThemeHomeAction;
   visual?: SvedocsThemeHomeVisual;
@@ -225,6 +230,7 @@ export const svedocsConfigSchema = z.object({
       brand: z
         .object({
           label: z.string().optional(),
+          labelKey: z.string().optional(),
           href: z.string().optional(),
           logo: z.string().optional(),
           mark: z.union([z.literal('pixel'), z.literal(false)]).optional()
@@ -234,6 +240,7 @@ export const svedocsConfigSchema = z.object({
         .array(
           z.object({
             label: z.string(),
+            labelKey: z.string().optional(),
             href: z.string(),
             external: z.boolean().optional()
           })
@@ -243,6 +250,7 @@ export const svedocsConfigSchema = z.object({
         .array(
           z.object({
             label: z.string(),
+            labelKey: z.string().optional(),
             href: z.string(),
             external: z.boolean().optional()
           })
@@ -257,6 +265,7 @@ export const svedocsConfigSchema = z.object({
               .array(
                 z.object({
                   label: z.string(),
+                  labelKey: z.string().optional(),
                   href: z.string(),
                   external: z.boolean().optional()
                 })
@@ -268,15 +277,18 @@ export const svedocsConfigSchema = z.object({
       home: z
         .object({
           kicker: z.string().optional(),
+          kickerKey: z.string().optional(),
           primaryAction: z
             .object({
               label: z.string(),
+              labelKey: z.string().optional(),
               href: z.string()
             })
             .optional(),
           secondaryAction: z
             .object({
               label: z.string(),
+              labelKey: z.string().optional(),
               href: z.string()
             })
             .optional(),
@@ -284,7 +296,8 @@ export const svedocsConfigSchema = z.object({
             .object({
               type: z.enum(['pixel', 'image']).optional(),
               src: z.string().optional(),
-              alt: z.string().optional()
+              alt: z.string().optional(),
+              altKey: z.string().optional()
             })
             .optional()
         })
@@ -439,7 +452,9 @@ export function loadSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolvedCo
 }
 
 export function validateSvedocsConfig(config: SvedocsConfig): SvedocsConfig {
-  return svedocsConfigSchema.parse(config) as SvedocsConfig;
+  const validated = svedocsConfigSchema.parse(config) as SvedocsConfig;
+  resolveSvedocsConfig(validated);
+  return validated;
 }
 
 export async function loadSvedocsConfigFile(

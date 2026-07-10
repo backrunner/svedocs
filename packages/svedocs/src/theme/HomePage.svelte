@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Component } from 'svelte';
   import type { SvedocsMessageKey, SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
-  import { createThemeContext } from './headless.js';
+  import { createThemeContext, resolveLocalizedHref, resolveLocalizedText } from './headless.js';
   import SafeRenderError from './SafeRenderError.svelte';
   import RootLayout from './RootLayout.svelte';
   import type { SvedocsThemeComponentMap } from './types.js';
@@ -107,14 +107,20 @@
   $: homeCards = createHomeCards(docPages);
   $: primaryDoc = docPages[0];
   $: secondaryDoc = docPages.find((doc) => /configuration|config/i.test(doc.routePath)) ?? docPages[1];
-  $: primaryAction = config.theme.home.primaryAction ?? (
+  $: primaryAction = resolveHomeAction(config.theme.home.primaryAction ?? (
     primaryDoc
       ? { label: context.t('home.primaryAction'), href: primaryDoc.routePath }
       : { label: context.t('home.primaryAction'), href: page.routePath }
-  );
-  $: secondaryAction = config.theme.home.secondaryAction ?? (
+  ));
+  $: secondaryAction = resolveHomeAction(config.theme.home.secondaryAction ?? (
     secondaryDoc ? { label: secondaryDoc.title, href: secondaryDoc.routePath } : undefined
+  ));
+  $: kicker = resolveLocalizedText(
+    config.theme.home.kicker,
+    config.theme.home.kickerKey ?? (config.theme.home.kicker === 'SvelteKit-native docs' ? 'home.kicker' : undefined),
+    context
   );
+  $: visualAlt = resolveLocalizedText(config.theme.home.visual.alt, config.theme.home.visual.altKey, context);
   $: showBackgroundSlot = hasBackgroundSlot ?? Boolean($$slots.background);
   $: showLandingSlot = hasLandingSlot ?? Boolean($$slots.landing);
   $: showHomeHeroVisualSlot = hasHomeHeroVisualSlot ?? Boolean($$slots['home-hero-visual']);
@@ -126,8 +132,8 @@
     const fallbackDoc = docs[0];
 
     return homePillars.map((pillar) => {
-      const target = docs.find((candidate) => pillar.match.test(`${candidate.title} ${candidate.routePath}`));
-      const fallbackTarget = docs.find((candidate) => candidate.routePath === pillar.fallback);
+      const target = docs.find((candidate) => pillar.match.test(`${candidate.title} ${candidate.scopePath}`));
+      const fallbackTarget = docs.find((candidate) => candidate.scopePath === pillar.fallback);
 
       return {
         label: context.t(homeMessageKey(pillar.key, 'label')),
@@ -141,6 +147,14 @@
 
   function homeMessageKey(key: HomePillarKey, field: 'label' | 'title' | 'description'): SvedocsMessageKey {
     return `home.card.${key}.${field}` as SvedocsMessageKey;
+  }
+
+  function resolveHomeAction(action: { label: string; labelKey?: string; href: string } | undefined) {
+    if (!action) return undefined;
+    return {
+      label: resolveLocalizedText(action.label, action.labelKey, context),
+      href: resolveLocalizedHref(action.href, context)
+    };
   }
 
   function isCurrentLocalePage(candidate: SvedocsPage): boolean {
@@ -166,10 +180,10 @@
       <section class="sd-home-hero">
         <span class="sd-home-hero-tape" aria-hidden="true"></span>
         <div class="sd-home-copy">
-          {#if config.theme.home.kicker}
+          {#if kicker}
             <p class="sd-kicker">
               <span class="sd-kicker-mark" aria-hidden="true"></span>
-              {config.theme.home.kicker === 'SvelteKit-native docs' ? context.t('home.kicker') : config.theme.home.kicker}
+              {kicker}
             </p>
           {/if}
           <h1>{page.title}</h1>
@@ -189,7 +203,7 @@
         {#if showHomeHeroVisualSlot}
           <slot name="home-hero-visual" {page} {pages} {config} {context} />
         {:else if config.theme.home.visual.type === 'image' && config.theme.home.visual.src}
-          <img class="sd-home-visual" src={config.theme.home.visual.src} alt={config.theme.home.visual.alt} draggable="false" />
+          <img class="sd-home-visual" src={config.theme.home.visual.src} alt={visualAlt} draggable="false" />
         {:else}
           <div class="sd-pixel-stage" aria-hidden="true">
             <span class="sd-pixel-frame" data-corner="tl"></span>

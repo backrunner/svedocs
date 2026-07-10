@@ -42,6 +42,7 @@ export function createThemeContext(input: {
   const page = input.page;
   const localeCode = input.localeCode ?? page?.locale ?? input.config.i18n.defaultLocale ?? 'en';
   const locale = input.config.i18n.locales.find((candidate) => candidate.code === localeCode);
+  const languageTag = locale?.hreflang ?? localeCode;
   const messages = resolveMessages(input.config, localeCode);
   const t = createTranslate(messages);
   const activeNavHref = resolveLocalizedActiveNavHref(
@@ -60,11 +61,12 @@ export function createThemeContext(input: {
     ...(input.loadSearch ? { loadSearch: input.loadSearch } : {}),
     searchScope: createRuntimeScope(input.config.search.scope, page),
     aiScope: createRuntimeScope(input.config.ai.scope, page),
-    surface: page?.frontmatter.layout === 'home' || page?.routePath === '/' ? 'home' : 'reading',
+    surface: page?.frontmatter.layout === 'home' || page?.scopePath === '/' ? 'home' : 'reading',
     isDocsPage: page?.kind === 'doc',
     activeNavHref,
     ...(locale ? { locale } : {}),
     localeCode,
+    languageTag,
     messages,
     t
   };
@@ -78,7 +80,7 @@ export function resolveMessages(config: SvedocsResolvedConfig, localeCode?: stri
 }
 
 export function createTranslate(messages: SvedocsMessages): SvedocsThemeContext['t'] {
-  return (key, values) => formatMessage(messages[key] ?? defaultSvedocsMessages[key] ?? key, values);
+  return (key, values) => formatMessage(messages[key] ?? (defaultSvedocsMessages as SvedocsMessages)[key] ?? key, values);
 }
 
 export function formatMessage(message: string, values: Record<string, string | number> | undefined): string {
@@ -90,7 +92,7 @@ export function formatMessage(message: string, values: Record<string, string | n
 }
 
 export function fallbackTranslate(key: SvedocsMessageKey, values?: Record<string, string | number>): string {
-  return formatMessage(defaultSvedocsMessages[key] ?? key, values);
+  return formatMessage((defaultSvedocsMessages as SvedocsMessages)[key] ?? key, values);
 }
 
 export function createRuntimeScope(mode: 'current' | 'all', page: SvedocsPage | undefined): SearchScope {
@@ -111,8 +113,15 @@ export function createThemeStyle(config: SvedocsResolvedConfig): string {
   ].join(';');
 }
 
-export function createThemeInitScript(defaultMode: 'light' | 'dark' | 'system', localeCode = 'en', dir: 'ltr' | 'rtl' = 'ltr'): string {
-  return `<script>(function(){try{var d=${JSON.stringify(defaultMode)};var l=${JSON.stringify(localeCode)};var r=${JSON.stringify(dir)};var s=localStorage.getItem('svedocs-theme');var p=s==='dark'||s==='light'||s==='system'?s:d;var t=p==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;document.documentElement.lang=l;document.documentElement.dir=r;}catch(e){}})();<\/script>`;
+export function createThemeInitScript(defaultMode: 'light' | 'dark' | 'system', languageTag = 'en', dir: 'ltr' | 'rtl' = 'ltr'): string {
+  return `<script>(function(){try{var d=${serializeInlineScriptValue(defaultMode)};var l=${serializeInlineScriptValue(languageTag)};var r=${serializeInlineScriptValue(dir)};var s=localStorage.getItem('svedocs-theme');var p=s==='dark'||s==='light'||s==='system'?s:d;var t=p==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;document.documentElement.lang=l;document.documentElement.dir=r;}catch(e){}})();<\/script>`;
+}
+
+function serializeInlineScriptValue(value: string): string {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
 }
 
 export function resolveColor(value: string, fallback: string): string {
@@ -124,26 +133,36 @@ export function linkRel(item: { external?: boolean; rel?: string }): string | un
   return item.external ? 'noreferrer' : item.rel;
 }
 
-export function resolveLocalizedNavItem(item: { label: string; href: string; external?: boolean }, context: SvedocsThemeContext): { label: string; href: string; external?: boolean } {
-  if (item.external) return item;
-  const href = resolveLocalizedHref(item.href, context);
+export function resolveLocalizedNavItem(
+  item: { label: string; labelKey?: string; href: string; external?: boolean },
+  context: SvedocsThemeContext
+): { label: string; labelKey?: string; href: string; external?: boolean } {
+  const label = resolveLocalizedText(item.label, item.labelKey, context);
+  if (item.external) return { ...item, label };
   return {
     ...item,
-    href,
-    label: resolveLocalizedNavLabel(item, context)
+    label,
+    href: resolveLocalizedHref(item.href, context)
   };
 }
 
-function resolveLocalizedNavLabel(item: { label: string; href: string }, context: SvedocsThemeContext): string {
-  const href = normalizePath(item.href);
-  if (href === '/docs' && item.label === 'Docs') return context.t('nav.docs');
-  if (href === '/docs/configuration' && item.label === 'Configuration') return context.t('nav.configuration');
-  if (href === '/docs/reference/api' && item.label === 'API') return context.t('nav.api');
-  return item.label;
+export function resolveLocalizedText(
+  fallback: string,
+  key: string | undefined,
+  context: Pick<SvedocsThemeContext, 'messages' | 't'>
+): string {
+  return key && context.messages[key] !== undefined ? context.t(key) : fallback;
 }
 
 export function resolveLocalizedHref(href: string, context: SvedocsThemeContext): string {
   return resolveLocalizedHrefForLocale(href, context.config, context.pages, context.localeCode);
+}
+
+export function resolveLocaleCodeFromPath(path: string, config: SvedocsResolvedConfig): string {
+  const segments = normalizePath(path).split('/').filter(Boolean);
+  const localePath = segments[0] === 'docs' ? segments[1] : segments[0];
+  const locale = config.i18n.locales.find((candidate) => candidate.path === decodePathSegment(localePath));
+  return locale?.code ?? config.i18n.defaultLocale ?? 'en';
 }
 
 function resolveLocalizedActiveNavHref(
@@ -1068,6 +1087,15 @@ function getPathname(path: string): string {
   }
 
   return path.split(/[?#]/, 1)[0] || '/';
+}
+
+function decodePathSegment(segment: string | undefined): string | undefined {
+  if (!segment) return undefined;
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
 }
 
 function createComparableUrl(value: string, base: string): string | undefined {

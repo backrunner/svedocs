@@ -95,6 +95,7 @@ export interface SvedocsLocale {
 }
 
 export interface SvedocsMessages {
+  [key: string]: string | undefined;
   'nav.primary': string;
   'nav.docs': string;
   'nav.configuration': string;
@@ -238,7 +239,7 @@ export interface SvedocsMessages {
   'render.errorUi.message': string;
 }
 
-export type SvedocsMessageKey = keyof SvedocsMessages;
+export type SvedocsMessageKey = string;
 export type SvedocsTranslate = (key: SvedocsMessageKey, values?: Record<string, string | number>) => string;
 
 export interface SvedocsLink {
@@ -359,17 +360,20 @@ export interface SvedocsResolvedConfig {
     };
     brand: {
       label: string;
+      labelKey?: string;
       href: string;
       logo?: string;
       mark: 'pixel' | false;
     };
     nav: Array<{
       label: string;
+      labelKey?: string;
       href: string;
       external?: boolean;
     }>;
     social: Array<{
       label: string;
+      labelKey?: string;
       href: string;
       external?: boolean;
     }>;
@@ -377,24 +381,29 @@ export interface SvedocsResolvedConfig {
       text: string;
       links: Array<{
         label: string;
+        labelKey?: string;
         href: string;
         external?: boolean;
       }>;
     };
     home: {
       kicker: string;
+      kickerKey?: string;
       primaryAction?: {
         label: string;
+        labelKey?: string;
         href: string;
       };
       secondaryAction?: {
         label: string;
+        labelKey?: string;
         href: string;
       };
       visual: {
         type: 'pixel' | 'image';
         src?: string;
         alt: string;
+        altKey?: string;
       };
     };
   };

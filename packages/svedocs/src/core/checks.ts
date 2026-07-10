@@ -80,8 +80,8 @@ function createMissingTranslationIssues(manifest: SvedocsContentManifest): Svedo
   if (locales.length <= 1) return [];
   const groups = new Map<string, SvedocsPage[]>();
   for (const page of manifest.pages) {
-    if (page.hidden || page.kind !== 'doc') continue;
-    const key = page.scopePath;
+    if (page.hidden) continue;
+    const key = `${page.kind}:${page.scopePath}`;
     const group = groups.get(key) ?? [];
     group.push(page);
     groups.set(key, group);

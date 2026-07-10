@@ -156,8 +156,8 @@ function renderDiffStat(count: string): string {
 }
 
 function renderPane(rows: SvedocsDiffSplitRow[], side: 'old' | 'new', label: string): string {
-  return `<section class="sd-diff-pane" data-side="${side}" role="rowgroup" aria-label="${label}">
-    <div class="sd-diff-column-label" role="columnheader" data-side="${side}">${label}</div>
+  return `<section class="sd-diff-pane" data-side="${side}" role="rowgroup" aria-label="${escapeAttribute(label)}">
+    <div class="sd-diff-column-label" role="columnheader" data-side="${side}">${escapeHtml(label)}</div>
     <div class="sd-diff-scroll" role="presentation" tabindex="0">
       <div class="sd-diff-lines">
         ${rows.map((row) => renderPaneRow(row, side)).join('')}

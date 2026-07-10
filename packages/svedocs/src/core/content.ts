@@ -296,7 +296,7 @@ function createRouteInfo(file: string, kind: 'doc' | 'page', config: SvedocsReso
 
 function consumeLocale(parts: string[], config: SvedocsResolvedConfig): string | undefined {
   if (config.i18n.locales.length === 0) return undefined;
-  const match = config.i18n.locales.find((locale) => locale.path === parts[0] || locale.code === parts[0]);
+  const match = config.i18n.locales.find((locale) => locale.path === parts[0]);
   if (match) {
     parts.shift();
     return match.code;

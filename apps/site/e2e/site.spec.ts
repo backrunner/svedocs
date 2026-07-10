@@ -16,7 +16,7 @@ test('serves the official home and docs entry', async ({ request }) => {
   const zhHome = await request.get('/zh');
   expect(zhHome.ok()).toBe(true);
   await expectResponseToContain(zhHome, [
-    '用一个集成框架包构建边缘优先的 SvelteKit 文档站。',
+    '为 Cloudflare 或静态托管构建 SvelteKit 文档站。',
     '阅读文档',
     '文档入口',
     'rel="canonical" href="https://svedocs.dev/zh"',
@@ -52,12 +52,26 @@ test('serves the official home and docs entry', async ({ request }) => {
 test('localizes interactive controls on zh docs pages', async ({ page }) => {
   await page.goto('/docs/zh');
 
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
+  await expect(page.locator('a.sd-brand')).toHaveAttribute('href', '/zh');
+  await expect(page.getByRole('navigation', { name: '主导航' }).getByRole('link', { name: '配置' })).toHaveAttribute('href', '/docs/zh/configuration');
   await expect(page.getByRole('button', { name: '搜索文档' })).toBeVisible();
   await expect(page.getByRole('button', { name: '问 AI' })).toBeVisible();
   await expect(page.getByLabel('本页内容')).toBeVisible();
 
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await expect(page.getByRole('button', { name: '回到顶部' })).toBeVisible();
+});
+
+test('keeps localized shell and recovery links on zh error routes', async ({ page }) => {
+  await page.goto('/docs/zh/not-a-real-page');
+
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
+  await expect(page.getByRole('heading', { name: '页面未找到' })).toBeVisible();
+  await expect(page.getByText('这个文档集中没有你正在查找的页面。')).toBeVisible();
+  await expect(page.getByRole('link', { name: '首页' })).toHaveAttribute('href', '/zh');
+  await expect(page.getByRole('link', { name: '文档' }).last()).toHaveAttribute('href', '/docs/zh');
 });
 
 async function expectResponseToContain(response: APIResponse, texts: string[]) {

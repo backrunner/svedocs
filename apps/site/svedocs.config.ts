@@ -29,9 +29,9 @@ export default defineConfig({
       dark: 'dark-plus'
     },
     nav: [
-      { label: 'Docs', href: '/docs' },
-      { label: 'Configuration', href: '/docs/configuration' },
-      { label: 'API', href: '/docs/reference/api' }
+      { label: 'Docs', labelKey: 'nav.docs', href: '/docs' },
+      { label: 'Configuration', labelKey: 'nav.configuration', href: '/docs/configuration' },
+      { label: 'API', labelKey: 'nav.api', href: '/docs/reference/api' }
     ],
     brand: {
       label: 'svedocs',

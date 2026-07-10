@@ -1,5 +1,8 @@
 import { defineConfig } from '@playwright/test';
 
+const port = process.env.SVEDOCS_E2E_PORT ?? '4173';
+const baseURL = `http://127.0.0.1:${port}`;
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 30_000,
@@ -7,11 +10,11 @@ export default defineConfig({
     timeout: 8_000
   },
   use: {
-    baseURL: 'http://127.0.0.1:4173'
+    baseURL
   },
   webServer: {
-    command: 'pnpm exec vite dev --host 127.0.0.1 --port 4173',
-    url: 'http://127.0.0.1:4173',
+    command: `pnpm exec vite dev --host 127.0.0.1 --port ${port}`,
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000
   }
