@@ -13,7 +13,7 @@
   },
   "homepage": "https://github.com/backrunner/svedocs#readme",
   "type": "module",
-  "packageManager": "pnpm@11.1.2+sha512-QVocwll0cx51RVwUaDcb50xapft2IbUNQFbSIkUWCfEUEvI/1gLmFp8eBgRmZB95hZfhvpYaEGiINqZ7FlaUmQ==",
+  "packageManager": "pnpm@11.1.2",
   "engines": {
     "node": ">=20.19.0"
   },
