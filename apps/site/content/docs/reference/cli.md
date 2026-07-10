@@ -6,8 +6,7 @@ order: 2
 
 # CLI
 
-`svedocs-cli` ships the two project binaries: `create-svedocs` and `svedocs`.
-The unscoped `create-svedocs` package is a compatibility shim for package-manager create commands and delegates to `svedocs-cli`.
+`svedocs-cli` provides two binaries: `create-svedocs` for scaffolding a project and `svedocs` for working with an existing one. The unscoped `create-svedocs` package only provides compatibility with package-manager create commands; it delegates all behavior to `svedocs-cli`.
 
 ## Create
 
@@ -18,7 +17,7 @@ pnpm dlx --package svedocs-cli create-svedocs my-docs --template docs
 svedocs create my-docs --template cloudflare
 ```
 
-The create command detects the invoking package manager from `npm_config_user_agent`, then the current project, then falls back to `pnpm`, `npm`, `yarn`, and `bun`. Use `--package-manager` or `--pm` to override it. By default it scaffolds without installing dependencies; add `--install` to run the selected package manager immediately.
+The create command first checks `npm_config_user_agent`, then the current project, to determine which package manager to use. If neither provides an answer, it looks for `pnpm`, `npm`, `yarn`, and `bun` in that order. Use `--package-manager` or `--pm` to choose one explicitly. Dependencies are not installed by default; add `--install` to install them immediately.
 
 Generated projects receive `svedocs` and `svedocs-cli` through the template `package.json`. The template dependency specs are normal npm package specs, so `--install` installs them through the selected package manager rather than copying framework code from the create package.
 
@@ -43,7 +42,7 @@ svedocs upgrade --check-only
 
 The upgrade command updates both `svedocs` and `svedocs-cli`, checks the current-to-target version span, and runs the detected package manager by default. Use `--no-install` to only rewrite `package.json`, `--dry-run` to preview the dependency plan, or `--check-only` to run compatibility checks without changing files.
 
-The compatibility layer has no breaking rules registered yet. Future breaking releases can add rules keyed to the version where the break is introduced, so upgrades that cross that version can warn or block unless `--force` is used.
+No breaking-change rules are registered yet. A future release can attach a rule to the version that introduces a breaking change. Upgrades that cross that version can then warn or stop, with `--force` available as an explicit override.
 
 ## Build
 
@@ -54,7 +53,7 @@ svedocs ssg
 svedocs build --mode spa
 ```
 
-`edge` is the default and targets Cloudflare Pages SSR. `static` and `svedocs ssg` prerender the docs site. `spa` prerenders known pages and writes a static fallback for constrained hosts; hosted Search, Ask AI, and other server-only features fall back to local behavior unless an edge runtime is available.
+`edge` is the default and targets Cloudflare Pages SSR. `static` and `svedocs ssg` prerender the whole docs site. `spa` prerenders known pages and writes a fallback page for constrained hosts. Without an edge runtime, hosted search, Ask AI, and other server-only features use their local alternatives.
 
 ## Check
 
@@ -65,7 +64,7 @@ svedocs check --package
 svedocs check --config ./svedocs.config.ts
 ```
 
-Checks include duplicate routes, duplicate canonical URLs, missing descriptions, broken internal links, broken anchors, local assets, empty search output, SPA risk, optional translation gap warnings, and optional package export validation.
+Checks include duplicate routes, duplicate canonical URLs, missing descriptions, broken internal links, broken anchors, local assets, empty search output, SPA risk, optional translation gaps across public docs and standalone pages, and optional package export validation.
 
 ## Index
 

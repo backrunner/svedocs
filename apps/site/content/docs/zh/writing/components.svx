@@ -10,7 +10,7 @@ order: 3
 
 # 组件
 
-svedocs 可以把 `.svx` 和 `.mdx` 文件路由到一个兼容 Svelte 的作者流程里，同时保留相同的 manifest、搜索记录、SEO 元数据和导航模型。
+文档里需要直接使用 Svelte 组件时，可以改用 `.svx` 或 `.mdx`。这些页面仍然会进入和 Markdown 相同的路由、导航、搜索和 SEO 流程。
 
 ## 交互式写作
 
@@ -22,7 +22,7 @@ svedocs 可以把 `.svx` 和 `.mdx` 文件路由到一个兼容 Svelte 的作者
   切换 {target}
 </button>
 
-上面的组件会被编译成 Svelte，而不是通过 React MDX runtime 渲染。
+上面的组件会直接编译成 Svelte，不需要 React MDX 运行时。
 
 ```ts title="component-authoring.ts" {1}
 export const runtime = 'svelte';
@@ -32,6 +32,5 @@ export const framework = 'svedocs';
 ## 什么时候用它
 
 - 小型交互示例。
-- 本地化 demo 和提示块。
+- 多语言示例和提示块。
 - 需要保持在文档主题内部的布局敏感片段。
-

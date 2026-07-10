@@ -6,20 +6,20 @@ order: 3
 
 # 写作
 
-svedocs 把文档看作一个内容系统，而不是一堆页面。每个源文件都会变成路由数据、侧栏导航、页面目录、搜索记录、SEO 元数据，以及可选的 Ask AI 引用来源。
+在 svedocs 里，文件目录本身就是站点结构。文件名和 frontmatter 会决定路由、侧栏顺序、页面目录、搜索结果、SEO 数据和 Ask AI 引用。
 
-这一节会说明如何写出对读者有帮助、同时对框架可预测的文档。
+这一节介绍内容应该放在哪里，以及怎样写出容易阅读、也容易被找到的页面。
 
-## 作者模型
+## 内容放在哪里
 
 大多数项目会使用两个内容根目录：
 
 | 目录 | 用途 | 路由形状 |
 | --- | --- | --- |
 | `content/docs` | 产品文档、指南、教程、API 解释、集成说明。 | `/docs/...` |
-| `content/pages` | 首页、changelog、独立产品页。 | `/...` |
+| `content/pages` | 首页、更新日志、独立产品页。 | `/...` |
 
-需要进入侧栏并参与上一页/下一页导航的内容，放在 docs。仍然由 svedocs 渲染但更独立的内容，放在 pages。
+指南和参考资料需要出现在侧栏时，放进 `docs`；首页、更新日志等独立内容放进 `pages`。
 
 ## 文件格式
 
@@ -33,7 +33,7 @@ svedocs 把文档看作一个内容系统，而不是一堆页面。每个源文
 
 ## 推荐页面结构
 
-一篇好的文档通常包含：
+一篇实用的文档通常包含：
 
 1. 明确的 `title` 和 `description`。
 2. 开头说明这页适合谁、解决什么问题。
@@ -43,18 +43,18 @@ svedocs 把文档看作一个内容系统，而不是一堆页面。每个源文
 
 ```md title="content/docs/deploy.md"
 ---
-title: Deploy
-description: Build and deploy the docs site to Cloudflare Pages.
+title: 部署
+description: 构建文档站并部署到 Cloudflare Pages。
 order: 4
 ---
 
-# Deploy
+# 部署
 
-This guide shows the default edge deployment path.
+这篇指南介绍默认的边缘部署流程。
 
-## Build
+## 构建
 
-Run the production build first.
+先运行生产构建。
 ```
 
 ## 导航和排序
@@ -75,7 +75,7 @@ Run the production build first.
 
 推荐：
 
-- 使用任务型标题，例如 `Configure Algolia`、`Deploy to Cloudflare Pages`。
+- 使用任务型标题，例如“配置 Algolia”“部署到 Cloudflare Pages”。
 - `description` 用一句话说明页面能帮用户完成什么。
 - 示例尽量短，并提供真实文件名。
 - 会被其他页面引用的锚点保持稳定。
@@ -83,13 +83,13 @@ Run the production build first.
 避免：
 
 - 很多页面使用相同标题。
-- 大量使用 `Usage`、`Options`、`More` 这类泛泛标题。
+- 大量使用“用法”“选项”“更多”这类含义宽泛的标题。
 - 放很长代码块但没有解释。
 - 把本该被搜索发现的页面设成 `hidden`。
 
 ## 本节内容
 
-- [内容](/docs/zh/writing/content)：frontmatter、Markdown 特性、代码块、diff、链接、资源和小节提取。
+- [内容](/docs/zh/writing/content)：frontmatter、Markdown 特性、代码块、差异对比、链接、资源和小节提取。
 - [组件](/docs/zh/writing/components)：Svelte 组件、自定义布局和主题组合。
 
 ## 文档工作流
@@ -102,4 +102,4 @@ pnpm check
 pnpm build
 ```
 
-经常运行 `pnpm check`。它比浏览器检查更早发现内容问题，也能在文档增长时持续保持导航、链接、搜索记录和 SEO 元数据健康。
+定期运行 `pnpm check`。它能在站点变大之前发现断链、路由冲突和缺失的元数据。

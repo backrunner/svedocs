@@ -6,4 +6,4 @@ layout: feature
 
 # Layout demo
 
-This page uses a custom layout component while keeping svedocs metadata, search records, OG image routes, and theme utilities.
+This page uses a custom layout component and still has access to svedocs metadata, search records, OG image routes, and theme utilities.

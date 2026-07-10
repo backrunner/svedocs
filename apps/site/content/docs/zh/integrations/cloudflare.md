@@ -1,12 +1,12 @@
 ---
 title: Cloudflare
-description: 把 svedocs 部署到 Cloudflare Pages，使用 edge SSR、静态输出、Workers AI 和 AI Search bindings。
+description: 把 svedocs 部署到 Cloudflare Pages，并配置边缘 SSR、静态输出、Workers AI 和 AI Search 绑定。
 order: 3
 ---
 
 # Cloudflare
 
-svedocs 的默认部署路径是 Cloudflare edge SSR。静态输出也是一等公民。SPA 输出则适合需要客户端兜底、但仍想预渲染已知页面的主机。
+svedocs 默认在 Cloudflare 上使用边缘 SSR，也可以输出完整的静态站点。对于必须依赖客户端路由的受限平台，还可以选择 SPA 输出，同时尽量保留已知页面的预渲染结果。
 
 ## 构建预设
 
@@ -40,11 +40,11 @@ binding = "SVEDOCS_AI_SEARCH"
 instance_name = "svedocs"
 ```
 
-如果你用的是 AI Search namespace，就把 `cloudflare.aiSearch.namespace` 配上，svedocs 会输出 `[[ai_search_namespaces]]`，而不是 `[[ai_search]]`。
+如果使用 AI Search namespace，设置 `cloudflare.aiSearch.namespace` 后，svedocs 会输出 `[[ai_search_namespaces]]`，而不是 `[[ai_search]]`。
 
-如果 Cloudflare Pages 输出应该是 `build`，可以在 setup 或 deploy 时传 `--mode static` 或 `--mode spa`；默认仍然是 edge SSR 输出。
+静态和 SPA 模式的 Cloudflare Pages 输出目录是 `build`。可以在初始化或部署时传入 `--mode static` 或 `--mode spa`；默认仍然输出边缘 SSR 构建。
 
-`platformProxy.remoteBindings` 在本地 adapter 配置里默认关闭，这样 edge 构建和预渲染就不需要 Cloudflare 账号。`platformProxy.persist` 默认也关闭，用来避免反复重启 dev server 时遇到本地 Miniflare state 锁。`cloudflare.aiSearch.remote` 默认是 `false`；只有在你确实想让本地开发直连 Cloudflare 资源时，才主动打开远端 bindings。
+本地适配器默认关闭 `platformProxy.remoteBindings`，因此边缘构建和预渲染不需要 Cloudflare 账号。`platformProxy.persist` 也默认关闭，避免反复重启开发服务器后遇到 Miniflare 状态锁。`cloudflare.aiSearch.remote` 默认为 `false`；只有本地开发确实需要访问 Cloudflare 资源时才开启。
 
 ## 运行时类型
 
@@ -61,12 +61,12 @@ export default defineConfig({
 });
 ```
 
-生成的平台声明会给 `SVEDOCS_AI_SEARCH` binding 补上类型。Workers AI 可以通过 `ai.provider = 'cloudflare-workers-ai'` 开启，它会发出 `AI` binding。
+生成的平台声明会为 `SVEDOCS_AI_SEARCH` 绑定补充类型。把 `ai.provider` 设为 `cloudflare-workers-ai` 可以启用 Workers AI，并生成 `AI` 绑定。
 
-AI Search 是可选项。默认项目会保留本地 MiniSearch 搜索，只有当 `search.provider` 或 `ai.provider` 设成 `cloudflare-ai-search` 时，才会生成对应的 AI Search binding。
+AI Search 是可选项。新项目默认使用本地 MiniSearch；只有把 `search.provider` 或 `ai.provider` 设为 `cloudflare-ai-search` 后，才会生成对应的 AI Search 绑定。
 
 ## 本地开发
 
-Cloudflare 相关路由要一直保留本地 fallback。模板里的 search route 使用 `createConfiguredSearchResponse`，所以没 binding 时会回退到本地 JSON 搜索。Ask AI route 使用 `createConfiguredAskResponse`，所以没有 AI Search、Workers AI 或 OpenAI-compatible 凭据时，会回退到 mock provider 和本地引用。
+即使没有 Cloudflare 绑定，模板路由也能继续使用。搜索路由通过 `createConfiguredSearchResponse` 改用本地 JSON 搜索；Ask AI 路由通过 `createConfiguredAskResponse` 返回带本地引用的模拟回答。
 
-环境变量名请写在 `.dev.vars.example` 里，真实 token 不要提交进仓库。
+需要哪些环境变量可以记录在 `.dev.vars.example` 中，真实令牌不要提交到仓库。

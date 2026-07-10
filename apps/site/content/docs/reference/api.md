@@ -6,7 +6,7 @@ order: 3
 
 # Public API
 
-svedocs keeps public entry files small. Internal capabilities live in subdirectories, but users should import from stable package paths.
+Import public APIs from the package paths shown below. Their entry files stay small and stable even when the implementation moves between internal directories.
 
 ## Config
 
@@ -38,14 +38,14 @@ export default defineConfig({
 });
 ```
 
-These hooks are used by manifest compilation and Svelte-compatible `.svx/.mdx` rendering, but are not serialized into browser virtual modules.
+These hooks run while svedocs builds the page list and renders Svelte-compatible `.svx/.mdx` files. They are not serialized into browser virtual modules.
 
 Virtual modules:
 
 | Module | Value |
 | --- | --- |
 | `virtual:svedocs/config` | Resolved config |
-| `virtual:svedocs/pages` | Page manifest |
+| `virtual:svedocs/pages` | Complete page list |
 | `virtual:svedocs/page-index` | Lightweight page index for client route matching |
 | `virtual:svedocs/page-loaders` | Dynamic loaders for full per-page data |
 | `virtual:svedocs/tree` | Sidebar tree |
@@ -66,7 +66,7 @@ import {
 } from 'svedocs/core';
 ```
 
-Core APIs expose the manifest, content model, navigation, links, checks, and search records. Page metadata includes locale scope for translated docs and content lifecycle fields for warnings.
+Core APIs cover content loading, navigation, links, checks, and search records. Page metadata includes locale information for translated docs and lifecycle fields used by content warnings.
 
 ## Theme
 
@@ -120,9 +120,9 @@ import { createConfiguredSearchResponse, createSearchResponse, searchRecords } f
 import { createConfiguredAskResponse, createAskResponse, createMemoryRateLimiter } from 'svedocs/ai';
 ```
 
-Search and Ask AI are built-in framework capabilities with local, Algolia, Typesense, Cloudflare-oriented, and OpenAI-compatible provider paths. Local search accepts locale and kind scope filters.
+Search and Ask AI support local, Algolia, Typesense, Cloudflare, and OpenAI-compatible services. Local search can filter by locale and content kind.
 
-Use the configured response helpers in generated route handlers. Import lower-level providers such as `createAlgoliaSearchProvider`, `createTypesenseSearchProvider`, `createCloudflareAiSearchProvider`, `createWorkersAiProvider`, or `createOpenAiCompatibleProvider` only for custom routing or custom provider selection.
+Generated route handlers should use the configured response utilities. Import lower-level providers such as `createAlgoliaSearchProvider`, `createTypesenseSearchProvider`, `createCloudflareAiSearchProvider`, `createWorkersAiProvider`, or `createOpenAiCompatibleProvider` only when you need custom routing or service selection.
 
 ## OG
 

@@ -6,7 +6,7 @@ order: 6
 
 # Reference
 
-This section is the stable surface of the framework: commands, exports, and the virtual modules that generated apps rely on.
+Use this section to look up CLI commands, public imports, virtual modules, and theme component contracts.
 
 ## Start here
 
@@ -14,7 +14,7 @@ This section is the stable surface of the framework: commands, exports, and the 
 - [Public API](/docs/reference/api)
 - [Components](/docs/reference/theme-components)
 
-## What belongs here
+## Covered here
 
 - Exact command shapes and flags.
 - Stable imports from `svedocs/*`.

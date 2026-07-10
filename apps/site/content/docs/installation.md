@@ -6,11 +6,11 @@ order: 2
 
 # Installation
 
-You can start with a generated project or add svedocs to an existing SvelteKit application. New projects are the easiest path because the template includes the route structure, config file, content folders, and runtime endpoints.
+You can generate a new project or add svedocs to an existing SvelteKit app. For a new site, the template is usually faster because it already contains the routes, config, content folders, and server endpoints.
 
 ## Requirements
 
-- Node.js 22 or newer.
+- Node.js 20.19 or newer.
 - A SvelteKit project using ESM.
 - pnpm, npm, yarn, or bun. The templates default to pnpm because the repository itself uses pnpm.
 
@@ -23,7 +23,7 @@ pnpm install
 pnpm dev
 ```
 
-The create package is a compatibility shim for package-manager create commands. It delegates to `svedocs-cli`, fetches the selected template from GitHub first, falls back to the bundled template when needed, rewrites the project name and package manager field, and then stops unless you pass `--install`.
+The `create-svedocs` package forwards the command to `svedocs-cli`. The CLI downloads the selected template from GitHub, uses its bundled copy if GitHub is unavailable, and updates the project name and package manager. Pass `--install` when you also want it to install dependencies.
 
 Template dependencies are normal registry dependencies:
 
@@ -38,7 +38,7 @@ Template dependencies are normal registry dependencies:
 }
 ```
 
-When you run create with `--install`, the selected package manager installs those packages from your configured registry. The create package does not copy framework code into your project.
+With `--install`, your chosen package manager installs these packages from its configured registry. No framework source is copied into the project.
 
 ## Choose a template
 
@@ -115,7 +115,7 @@ Import the default theme CSS once in the root layout:
 <slot />
 ```
 
-Then add the generated route shape you need. The simplest route can load `DocsApp` from `svedocs/theme`; the fuller templates show search, Ask AI, sitemap, robots, and OG routes.
+Then add the routes your site needs. A minimal setup can render `DocsApp` from `svedocs/theme`; the `docs` and `cloudflare` templates show the complete search, Ask AI, sitemap, robots, and OG setup.
 
 ## Add content
 
@@ -159,7 +159,7 @@ svedocs upgrade 0.2.0 --no-install
 svedocs upgrade --check-only
 ```
 
-The upgrade command checks the current-to-target version span before changing dependencies. There are no breaking-version rules registered yet, but the compatibility layer is in place so future breaking releases can warn or block when an upgrade crosses a registered boundary.
+Before changing dependencies, the upgrade command checks whether the requested version crosses a known breaking release. There are no special migration rules yet; future releases can add them when needed.
 
 ## Troubleshooting
 

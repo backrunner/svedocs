@@ -6,7 +6,7 @@ order: 4
 
 # SEO and OG
 
-SEO data is resolved from global config, frontmatter, route metadata, and generated page data.
+svedocs combines global config, frontmatter, route metadata, and generated page data to build each page's SEO tags.
 
 ## Frontmatter
 
@@ -41,7 +41,7 @@ head:
 
 If `site.url` is set, svedocs generates canonical URLs automatically.
 
-Use `head` for page-specific serializable additions. Global `seo.head` values are merged first, then page frontmatter additions are appended. The default root layout renders `meta`, `link`, and extra JSON-LD entries automatically.
+Use `head` for serializable entries that belong only to this page. Global `seo.head` values come first, followed by entries from page frontmatter. The default root layout renders `meta`, `link`, and additional JSON-LD entries automatically.
 
 ## Metadata
 
@@ -54,7 +54,7 @@ The default root layout renders:
 - `keywords`, `robots`, and serializable `head` additions.
 - Article author, publish time, and update time when frontmatter provides them.
 
-Use `createPageMetadata(config, page)` from `svedocs/og` when building custom layouts.
+When building a custom layout, use `createPageMetadata(config, page, pages)` from `svedocs/og`. Pass the complete page list so Open Graph locale alternates include only translations that exist.
 
 ## Sitemap and robots
 

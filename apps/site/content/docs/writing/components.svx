@@ -10,7 +10,7 @@ order: 3
 
 # Components
 
-svedocs can route `.svx` and `.mdx` files through a Svelte-compatible authoring path while keeping the same manifest, search records, SEO metadata, and navigation model.
+Use `.svx` or `.mdx` when a documentation page needs live Svelte components. The page still participates in the same routing, navigation, search, and SEO flow as Markdown.
 
 ## Interactive authoring
 
@@ -34,4 +34,3 @@ export const framework = 'svedocs';
 - Small interactive examples.
 - Localized demos and callouts.
 - Layout-sensitive snippets that should stay inside the docs theme.
-

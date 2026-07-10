@@ -124,13 +124,13 @@ export default defineConfig({
 });
 ```
 
-`palette.accent` 可以是内置 token，例如 `emerald`、`teal`、`sky`、`indigo`、`rose` 或 `amber`。它也可以是任意 CSS 颜色值，例如 `#0ea5e9`、`hsl(221 83% 53%)` 或 `oklch(62% 0.18 250)`。默认主题会保持克制、适合阅读的视觉基调。
+`palette.accent` 可以使用 `emerald`、`teal`、`sky`、`indigo`、`rose` 或 `amber` 等内置颜色名，也可以直接填写 `#0ea5e9`、`hsl(221 83% 53%)`、`oklch(62% 0.18 250)` 等任意 CSS 颜色值。
 
-`home.visual` 可以继续使用内置 pixel 模块，也可以指向项目图片：`{ type: 'image', src: '/hero.png', alt: 'Preview' }`。
+`home.visual` 可以继续使用内置的像素效果，也可以指向项目中的图片：`{ type: 'image', src: '/hero.png', alt: 'Preview' }`。
 
 ## 主题插槽
 
-`DocsApp` 提供命名插槽，用来替换默认视觉层，同时保留内建路由外壳、metadata、header、footer、搜索、Ask AI 和文档导航。
+`DocsApp` 提供命名插槽，可以只替换页面中的某个区域，不必重新实现路由、元数据、页头、页脚、搜索、Ask AI 和文档导航。
 
 ```svelte title="src/routes/+page.svelte"
 <script lang="ts">
@@ -156,11 +156,15 @@ export default defineConfig({
 </DocsApp>
 ```
 
-`background` 插槽会替换首页、普通单页和文档文章中的内置格子背景。它作为 `aria-hidden` 装饰层渲染，并禁用 pointer events。
+`background` 插槽会替换首页、普通单页和文档文章中的内置格子背景。它会作为 `aria-hidden` 的装饰层渲染，并禁用指针事件。
 
 首页还提供更细粒度的插槽：
 
 ```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import { resolveLocalizedHref } from 'svedocs/theme/headless';
+</script>
+
 <DocsApp
   page={data.page}
   pages={data.pages}
@@ -182,9 +186,9 @@ export default defineConfig({
 </DocsApp>
 ```
 
-用 `home-hero-visual` 替换 pixel hero 特效或配置的 hero 图片；用 `home-features` 替换默认 feature blocks。`home-features` 会收到生成后的 `cards` 数组，方便自定义块复用同一组文档链接。它也会收到 `context`，所以自定义 UI 可以调用 `context.t(...)`、读取 `context.localeCode`，或使用 `context.messages`。
+用 `home-hero-visual` 替换首页主视觉中的像素效果或配置图片，用 `home-features` 替换默认的功能介绍区。`home-features` 会收到生成后的 `cards` 数组，方便自定义内容复用同一组文档链接；它也会收到 `context`，可以调用 `context.t(...)`、读取 `context.localeCode` 或使用 `context.messages`。
 
-如果要替换整个 landing 内容，但保留 svedocs header 和 footer，可以使用 `landing`：
+如果要替换首页的全部内容，但保留 svedocs 的页头和页脚，可以使用 `landing`：
 
 ```svelte title="src/routes/+page.svelte"
 <DocsApp
@@ -200,16 +204,16 @@ export default defineConfig({
   <section slot="landing" let:page let:context class="custom-landing">
     <h1>{page.title}</h1>
     <p>{page.description}</p>
-    <a href={context.localeCode === 'zh' ? '/docs/zh' : '/docs'}>
+    <a href={resolveLocalizedHref('/docs', context)}>
       {context.t('home.primaryAction')}
     </a>
   </section>
 </DocsApp>
 ```
 
-`landing` 插槽外层仍由主题提供 `main#content`，所以跳过链接和页面语义会保留下来。
+`landing` 插槽外层仍由主题提供 `main#content`，因此跳转到正文的无障碍链接和页面语义不会丢失。
 
-自定义 landing 和主题替换组件里，建议用 `context.t('message.key')`，不要把 UI 文案写死。项目作者可以在 `i18n.messages` 里按 locale 覆盖文案，自定义组件会和默认主题一样拿到当前 locale 的 messages。
+在自定义首页和替换组件中，使用 `context.t('message.key')` 读取界面文案，不要把文字写死。可以在 `i18n.messages` 中添加内建或项目自定义的键，自定义组件会收到当前语言的文案。过滤数据时使用 `context.localeCode`，设置 HTML 属性或按语言格式化数据时使用 `context.languageTag`。完整配置见[多语言](/docs/zh/configuration/i18n)。
 
 文档文章也提供 `doc-header`，适合只替换标题和面包屑区域：
 
@@ -237,23 +241,23 @@ export default defineConfig({
 
 ## 主题开发
 
-主题开发分成三层。按需要使用其中一层即可：
+根据改动范围选择合适的定制方式：
 
 | 层级 | 适合场景 |
 | --- | --- |
-| 主题 token | 你喜欢默认组件，只想换品牌色、字体、圆角、导航、首页或代码块设置。 |
+| 主题变量 | 保留默认组件，只调整品牌色、字体、圆角、导航、首页或代码块设置。 |
 | 组件替换 | 你想保留 svedocs 路由壳层，但替换一个或多个视觉组件。 |
-| Headless 组合 | 你想完全接管 markup 和 CSS，同时复用搜索、Ask AI、ToC、明暗模式、移动导航和复制行为。 |
+| 无样式组合 | 完全接管 HTML 结构和 CSS，同时复用搜索、Ask AI、目录高亮、明暗模式、移动导航和复制行为。 |
 
 默认 CSS 是可选的：
 
-| Import | 结果 |
+| 导入方式 | 结果 |
 | --- | --- |
 | `svedocs/theme/styles.css` | 完整内置视觉主题。 |
-| `svedocs/theme/base.css` | 最小 reset、无障碍 helper 和 prose/code 结构。 |
+| `svedocs/theme/base.css` | 最小样式重置、无障碍基础样式，以及正文和代码结构。 |
 | 不导入主题 CSS | 应用或主题包完全接管所有样式。 |
 
-配置值继续放在 `svedocs.config.ts`。Svelte 组件路径放在 Vite 插件里，因为组件路径是构建期 import，不应该被序列化进内容配置。
+普通配置继续放在 `svedocs.config.ts`。Svelte 组件路径则放在 Vite 插件中，因为它们需要在构建时导入，不应被序列化进内容配置。
 
 在 Vite 插件里注册替换组件：
 
@@ -296,7 +300,7 @@ svedocs({
 />
 ```
 
-替换组件的 props 从 `svedocs/theme/types` 获取类型。可替换组件包括 `Root`、`Layout`、`Docs`、`DocsShell`、`Page`、`PageShell`、`Home`、`Error`、`Header`、`Navbar`、`Brand`、`TopNav`、`MobileNav`、`SocialNav`、`Sidebar`、`Article`、`Toc`、`Search`、`AskAi`、`Footer`、`FooterLinks`、`ThemeToggle`、`PageTools` 和 `RenderError`。每个组件的完整 props 见 [组件](/docs/zh/reference/theme-components)。
+替换组件可以从 `svedocs/theme/types` 获取属性类型。可替换组件包括 `Root`、`Layout`、`Docs`、`DocsShell`、`Page`、`PageShell`、`Home`、`Error`、`Header`、`Navbar`、`Brand`、`TopNav`、`MobileNav`、`SocialNav`、`Sidebar`、`Article`、`Toc`、`Search`、`AskAi`、`Footer`、`FooterLinks`、`ThemeToggle`、`PageTools` 和 `RenderError`。各组件的完整属性见[组件](/docs/zh/reference/theme-components)。
 
 ```svelte title="src/lib/theme/Navbar.svelte"
 <script lang="ts">
@@ -310,7 +314,7 @@ svedocs({
 </header>
 ```
 
-如果只想复用框架行为、不使用默认 UI，可以从 `svedocs/theme/headless` 引入 controller。它提供 theme context、搜索、Ask AI、ToC 高亮、明暗模式、移动导航、页面工具和代码复制等行为。
+如果只想复用交互逻辑、不使用默认界面，可以从 `svedocs/theme/headless` 引入控制器。其中包含主题上下文、搜索、Ask AI、目录高亮、明暗模式、移动导航、页面工具和代码复制等逻辑。
 
 ```svelte title="src/lib/theme/Search.svelte"
 <script lang="ts">
@@ -326,30 +330,30 @@ svedocs({
 
 编写替换组件时：
 
-- 保留正常的 `header`、`nav`、`main`、`article`、`aside`、`footer` 等 landmarks。
+- 保留 `header`、`nav`、`main`、`article`、`aside`、`footer` 等标准语义区域。
 - 对 `.svx` / `.mdx` 页面渲染 `content`，没有内容组件时回退到 `page.html`。
 - 仍然组合部分默认组件时，把 `themeComponents` 继续传给嵌套组件。
-- 如果替换 `Root`、`Docs`、`Page`、`Home` 或 `Error`，继续把 `pages`、`tree`、`search`、`config` 和 `loadSearch` 传进 theme context 或嵌套默认组件，这样侧栏高亮、移动导航、搜索和 Ask AI 才能保持联动。
+- 如果替换 `Root`、`Docs`、`Page`、`Home` 或 `Error`，继续把 `pages`、`tree`、`search`、`config` 和 `loadSearch` 传入主题上下文或嵌套的默认组件，这样侧栏高亮、移动导航、搜索和 Ask AI 才能保持联动。
 - 只调整布局几何结构时，优先替换 `Layout`、`DocsShell` 或 `PageShell`，再考虑替换更大的 `Root`、`Docs`、`Page` 或 `Error`。
-- 大型站点优先使用 `loadSearch`，避免把所有搜索记录塞进首屏路由 payload。
+- 大型站点优先使用 `loadSearch`，避免把所有搜索记录都放进首屏路由数据。
 - 自定义命令按钮可以用 `svedocs:open-search` 和 `svedocs:open-ai` 事件打开默认搜索和 Ask AI 面板。
 
-Markdown 输出仍然保留稳定的 `sd-*` 结构类名，默认主题和自定义主题都可以针对同一套 prose、heading、code markup 写样式。如果主题自己渲染复制按钮，可以设置 `theme.code.copyButton: false`。
+Markdown 输出会保留稳定的 `sd-*` 结构类名，默认主题和自定义主题都可以针对同一套正文、标题和代码结构编写样式。如果主题自己渲染复制按钮，可以设置 `theme.code.copyButton: false`。
 
-生成模板已经包含 `src/routes/+error.svelte`。注册 `theme.components.Error` 可以替换完整路由错误页；注册 `theme.components.RenderError` 可以替换文章内容、布局区域、导航和工具里的局部 error boundary UI。生成的错误路由会捕获自定义 `Error` 组件自身的失败，并回退到内置 `ErrorPage`。
+生成模板已经包含 `src/routes/+error.svelte`。注册 `theme.components.Error` 可以替换完整路由的错误页；注册 `theme.components.RenderError` 可以替换文章内容、布局区域、导航和工具中的局部错误提示。生成的错误路由会捕获自定义 `Error` 组件自身的异常，并改用内置 `ErrorPage`。
 
-主题包可以是普通 Svelte library。你可以从包里导出 Svelte 组件，声明期望的 `svedocs` peer version，然后让用户在 `svedocs({ theme: { components } })` 中注册对应组件路径。
+主题包可以是普通的 Svelte 库。从包中导出组件，声明兼容的 `svedocs` peer dependency 版本，再让使用者在 `svedocs({ theme: { components } })` 中注册对应的组件路径即可。
 
 ## 交互能力
 
 默认主题包括：
 
 - 带键盘焦点管理的搜索弹窗。
-- 支持 JSON 和 event-stream 的 Ask AI 面板。
+- 支持 JSON 和事件流响应的 Ask AI 面板。
 - 文档、搜索、Ask AI 入口工具栏。
-- 可折叠的递归侧栏和 locale 作用域树。
+- 可折叠的递归侧栏，以及按语言过滤的导航树。
 - 移动端菜单状态和过渡。
-- 基于当前标题的 ToC 高亮。
+- 根据当前位置高亮目录标题。
 - 带复制按钮的代码块工具条。
 - 兼容 `prefers-reduced-motion` 的过渡。
 
@@ -359,11 +363,11 @@ Markdown 输出仍然保留稳定的 `sd-*` 结构类名，默认主题和自定
 
 ```md
 ---
-title: Changelog
-description: Product updates rendered with the single-page template.
+title: 更新日志
+description: 使用单页模板展示产品更新。
 ---
 
-# Changelog
+# 更新日志
 ```
 
 ## 自定义布局
@@ -387,4 +391,4 @@ layout: feature
 ---
 ```
 
-布局组件会收到与默认页面相同的 page data，所以自定义单页仍然可以使用 manifest、搜索记录、SEO 元数据和框架外壳。
+布局组件会收到与默认页面相同的数据，因此自定义单页仍然可以使用页面列表、搜索记录、SEO 元数据和站点外壳。

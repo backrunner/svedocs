@@ -6,11 +6,11 @@ order: 3
 
 # Writing
 
-svedocs treats documentation as a content system, not a pile of pages. Each source file becomes route data, sidebar navigation, table-of-contents entries, search records, SEO metadata, and optional Ask AI citations.
+In svedocs, the file tree is also the structure of the site. File names and frontmatter determine routes, sidebar order, page outlines, search results, SEO data, and Ask AI citations.
 
-This section explains how to write pages that are useful to humans and predictable for the framework.
+This section covers how to organize that content and write pages that are easy to read and easy to find.
 
-## Authoring model
+## Where files go
 
 Most projects use two content roots:
 
@@ -19,7 +19,7 @@ Most projects use two content roots:
 | `content/docs` | Product docs, guides, tutorials, API explanations, integration notes. | `/docs/...` |
 | `content/pages` | Landing pages, changelog pages, standalone product pages. | `/...` |
 
-Use docs pages for material that belongs in the sidebar and participates in previous/next navigation. Use pages for content that is still rendered by svedocs but should feel more standalone.
+Put guides and reference material in `docs` when they belong in the sidebar. Use `pages` for home pages, changelogs, and other standalone content.
 
 ## File formats
 
@@ -33,7 +33,7 @@ Start with Markdown. Move to SVX only when the page needs interactivity.
 
 ## Recommended page shape
 
-A strong docs page usually has:
+A useful docs page usually has:
 
 1. A specific `title` and `description`.
 2. A short opening paragraph that explains who the page is for.
@@ -102,4 +102,4 @@ pnpm check
 pnpm build
 ```
 
-Run `pnpm check` often. It catches content issues earlier than a browser review, and it is the fastest way to keep navigation, links, search records, and SEO metadata healthy as the docs grow.
+Run `pnpm check` regularly. It catches broken links, route conflicts, and missing metadata before they become harder to spot in a large site.

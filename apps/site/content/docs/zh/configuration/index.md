@@ -1,12 +1,12 @@
 ---
 title: 配置
-description: 配置站点元数据、内容目录、构建模式、主题、搜索、AI、SEO、检查、Cloudflare 和 i18n。
+description: 配置站点信息、内容目录、构建模式、主题、搜索、AI、SEO、检查、Cloudflare 和多语言。
 order: 4
 ---
 
 # 配置
 
-在项目根目录创建 `svedocs.config.ts`，并导出 `defineConfig`。这份配置会被 Vite 插件、CLI 命令、运行时 helper、virtual modules、检查和构建期 OG 生成共同使用。
+站点的大部分行为都在项目根目录的 `svedocs.config.ts` 中配置。通过 `defineConfig` 导出后，Vite 插件、CLI、运行时工具、内容检查和 OG 图片生成都会读取同一份设置。
 
 ```ts title="svedocs.config.ts"
 import { defineConfig } from 'svedocs/config';
@@ -42,7 +42,7 @@ export default defineConfig({
 });
 ```
 
-`site.name` 会用于主题和元数据。`site.title` 是默认文档标题。`site.description` 是 SEO 描述 fallback。`site.url` 会启用绝对 canonical URL、sitemap URL、Open Graph URL 和 locale alternates。
+主题会显示 `site.name`，`site.title` 则是默认的文档标题。页面没有单独填写描述时，会使用 `site.description`。公开站点还应设置 `site.url`，这样 canonical 链接、站点地图、Open Graph URL 和多语言 alternate 链接才能使用绝对地址。
 
 ## 内容目录
 
@@ -58,7 +58,7 @@ export default defineConfig({
 });
 ```
 
-`docs` 内容会进入文档导航。`pages` 内容会成为独立站点页面。草稿应放在 include 之外，或通过 `exclude` 明确排除。
+`docs` 下的内容会进入文档导航，`pages` 下的内容则会生成独立页面。草稿可以放在 `include` 不匹配的位置，也可以通过 `exclude` 明确排除。
 
 ## 构建模式
 
@@ -72,9 +72,9 @@ export default defineConfig({
 
 | 模式 | 输出 | 适合场景 |
 | --- | --- | --- |
-| `edge` | 面向 Cloudflare 的 SSR。 | 需要 hosted search、Ask AI 或动态响应等运行时路由。 |
-| `static` | 完全预渲染站点。 | 文档可以作为静态文件部署，运行时集成有 fallback。 |
-| `spa` | 预渲染已知页面并提供静态 fallback。 | 受限主机需要客户端 fallback 行为。 |
+| `edge` | 面向 Cloudflare 的 SSR。 | 需要托管搜索、Ask AI 或其他动态响应。 |
+| `static` | 完全预渲染站点。 | 文档可以作为静态文件部署，运行时功能也有本地替代方案。 |
+| `spa` | 预渲染已知页面，并提供一个静态回退页。 | 部署平台受限，需要使用客户端路由。 |
 
 可以通过 `SVEDOCS_BUILD_MODE` 或 `svedocs build --mode <mode>` 覆盖配置。
 
@@ -108,8 +108,8 @@ export default defineConfig({
       mark: 'pixel'
     },
     nav: [
-      { label: 'Docs', href: '/docs/zh' },
-      { label: 'API', href: '/docs/zh/reference/api' }
+      { label: 'Docs', labelKey: 'nav.docs', href: '/docs' },
+      { label: 'API', labelKey: 'nav.api', href: '/docs/reference/api' }
     ],
     social: [
       { label: 'GitHub', href: 'https://github.com/acme/docs', external: true }
@@ -136,16 +136,16 @@ export default defineConfig({
 });
 ```
 
-Provider：
+可选服务：
 
-| Provider | 说明 |
+| 配置值 | 说明 |
 | --- | --- |
 | `local` | 默认 MiniSearch 路由，不需要外部服务。 |
 | `algolia` | 使用服务端凭据查询 Algolia 索引。 |
-| `typesense` | 通过 REST provider 查询 Typesense collection。 |
-| `cloudflare-ai-search` | 使用 Cloudflare AI Search binding 或 API 索引。 |
+| `typesense` | 通过 REST 查询 Typesense 集合。 |
+| `cloudflare-ai-search` | 使用 Cloudflare AI Search 绑定或索引 API。 |
 
-设置 `search: false` 可以从配置主题和 helper 中移除搜索。
+设置 `search: false` 可以从主题和相关运行时工具中移除搜索。
 
 ## Ask AI
 
@@ -165,7 +165,7 @@ export default defineConfig({
 });
 ```
 
-Provider 包括 `mock`、`cloudflare-ai-search`、`cloudflare-workers-ai` 和 `openai-compatible`。开发阶段保留 `mock` 或本地 fallback，等内容稳定后再加入 hosted 凭据。
+可选值包括 `mock`、`cloudflare-ai-search`、`cloudflare-workers-ai` 和 `openai-compatible`。`mock` 不需要凭据，适合一边写内容一边调试界面；等内容和提问流程稳定后，再接入托管服务测试真实回答。
 
 ## SEO 和 OG
 
@@ -196,9 +196,9 @@ export default defineConfig({
 });
 ```
 
-设置 `seo.ogImage = false` 可以禁用自动 OG 生成。SVG 更适合 edge/runtime 输出。需要更复杂的构建期图片时，可以用 PNG 或 Satori，并显式提供字体。
+设置 `seo.ogImage = false` 可以关闭自动 OG 图片生成。SVG 适合边缘运行时直接输出；如果需要更丰富的构建期图片，可以使用 PNG 或 Satori，并显式提供字体。
 
-`seo.head` 用来配置每个页面都要输出的可序列化 head 内容，例如站点验证 meta、feed link、preload link 和组织级 JSON-LD。页面 frontmatter 也可以定义 `head` 来追加页面级内容。
+`seo.head` 用来添加每个页面都需要的可序列化 `<head>` 内容，例如站点验证标签、Feed 链接、预加载链接和组织级 JSON-LD。页面 frontmatter 也可以定义 `head`，补充只属于当前页面的内容。
 
 ## 源码链接
 
@@ -241,9 +241,9 @@ export default defineConfig({
 });
 ```
 
-Cloudflare 配置会被部署 helper、生成的 Wrangler 配置、平台类型、AI Search 路由和 Workers AI 路由使用。
+这些 Cloudflare 设置会用于部署工具、生成的 Wrangler 配置、平台类型、AI Search 路由和 Workers AI 路由。
 
-## i18n
+## 多语言
 
 ```ts
 export default defineConfig({
@@ -265,9 +265,11 @@ export default defineConfig({
 });
 ```
 
-Locale 会影响路由生成、侧栏、搜索作用域、Ask AI 引用、SEO alternates 和翻译检查。`hreflang` 会用于 `<link rel="alternate">`、sitemap alternates、Open Graph locale 标签和 JSON-LD `inLanguage`；`dir` 让主题能为 RTL locale 设置文本方向。
+语言设置会影响路由、侧栏、搜索范围、Ask AI 引用、SEO alternate 链接和翻译检查。`hreflang` 会用于 `<link rel="alternate">`、站点地图、Open Graph 语言标签和 JSON-LD `inLanguage`。从右向左书写的语言还需要把 `dir` 设为 `rtl`。
 
-`i18n.messages` 用来本地化站点外壳：landing action 和卡片、导航标签、搜索、Ask AI、目录、文章页脚工具、渲染 fallback UI、代码复制标签和页脚文本。英文 messages 会始终作为默认值存在，包括 `i18n: false` 的单语言站点；各 locale 只需要覆盖不同的 key。
+`i18n.messages` 用来翻译正文之外的界面，包括导航、搜索、Ask AI、目录、文章操作、代码复制按钮、首页卡片、错误提示和页脚。英文是基础文案，即使设置了 `i18n: false` 也仍然可用；其他语言只需覆盖有差异的键。
+
+内容目录、路由映射、自定义文案键、多语言链接、SEO 行为和翻译检查的完整说明见[多语言](/docs/zh/configuration/i18n)。
 
 ## Markdown 钩子
 
@@ -283,17 +285,17 @@ export default defineConfig({
 });
 ```
 
-Markdown 钩子会在 manifest 生成和 SVX/MDX 渲染期间运行，属于编译期能力，不会序列化到浏览器 virtual modules。
+Markdown 钩子会在编译页面清单以及渲染 SVX/MDX 时运行，不会被序列化到浏览器虚拟模块中。
 
-## 配置顺序建议
+## 推荐配置顺序
 
-生产站点建议按这个顺序配置：
+新建生产站点时，可以按下面的顺序推进，每一步都比较容易验证：
 
 1. `site`、`content` 和 `build`。
 2. `theme` 和导航。
 3. `seo`、sitemap、robots 和 OG 图片。
 4. `search` 和 `ai` 的本地行为。
-5. Hosted providers 和 Cloudflare bindings。
+5. 托管服务和 Cloudflare 绑定。
 6. `checks` 和 CI 命令。
 
-这个顺序能让第一版文档体验先跑起来，再逐步引入外部服务。
+完成第四步时，站点已经可以在本地完整使用；后两步再处理外部服务和 CI。

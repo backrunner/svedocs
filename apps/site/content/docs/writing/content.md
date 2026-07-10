@@ -6,7 +6,7 @@ order: 2
 
 # Content
 
-svedocs scans `.md`, `.mdx`, and `.svx` files from the configured content roots and turns them into a typed page manifest. That manifest drives routes, navigation, search records, checks, SEO, and the default theme.
+svedocs reads `.md`, `.mdx`, and `.svx` files from the configured content folders. Each file becomes a page with a route, navigation entry, search records, and SEO data.
 
 ## Route mapping
 
@@ -27,6 +27,8 @@ Examples:
 | `content/pages/changelog.md` | `/changelog` |
 
 Use `index.md` for a section landing page. Use nested directories when the sidebar should have groups.
+
+Multilingual projects place the locale `path` below each content root. See [Internationalization](/docs/configuration/i18n) for the complete file-to-route mapping.
 
 ## Frontmatter
 
@@ -149,7 +151,7 @@ Local assets are checked when `checks.assets` is enabled:
 ![Dashboard screenshot](/images/dashboard.png)
 ```
 
-Use absolute site paths for public assets and stable docs routes for internal links. That keeps search, Ask AI citations, and static builds aligned.
+Use absolute site paths for public assets and stable docs routes for internal links. This keeps links working in search results, Ask AI citations, and static builds.
 
 ## Search records
 

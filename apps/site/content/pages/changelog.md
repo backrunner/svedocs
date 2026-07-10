@@ -7,7 +7,7 @@ type: website
 
 # Changelog
 
-This page uses the built-in single-page layout. It keeps the same metadata, search records, OG route, theme controls, and command palette as the documentation shell without showing the docs sidebar.
+This page uses the built-in single-page layout. It omits the docs sidebar while keeping the site's metadata, search records, OG route, theme controls, and command palette.
 
 ## 2026-05-18
 

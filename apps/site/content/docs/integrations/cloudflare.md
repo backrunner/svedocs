@@ -6,7 +6,7 @@ order: 3
 
 # Cloudflare
 
-Cloudflare edge SSR is the default deployment path for svedocs. Static output is also first-class. SPA output is supported for hosts that need a client-side fallback while still serving prerendered known pages.
+svedocs defaults to edge SSR on Cloudflare, but it can also produce a fully static site. SPA output is available for constrained hosts that need client-side routing while still serving prerendered pages where possible.
 
 ## Build preset
 
@@ -44,7 +44,7 @@ For AI Search namespaces, configure `cloudflare.aiSearch.namespace`; svedocs wil
 
 Use `--mode static` or `--mode spa` with either setup or deploy when the Cloudflare Pages output should be `build` instead of the default edge SSR output.
 
-`platformProxy.remoteBindings` is disabled in the local adapter config so edge builds and prerendering do not require a Cloudflare account. `platformProxy.persist` is disabled by default to avoid local Miniflare state locks during repeated dev-server restarts. `cloudflare.aiSearch.remote` defaults to `false`; set remote bindings intentionally only when you want local development to talk to Cloudflare resources.
+The local adapter disables `platformProxy.remoteBindings`, so edge builds and prerendering do not require a Cloudflare account. It also disables `platformProxy.persist` to avoid Miniflare state locks after repeated dev-server restarts. `cloudflare.aiSearch.remote` defaults to `false`; enable it only when local development needs to access Cloudflare resources.
 
 ## Runtime types
 
@@ -67,6 +67,6 @@ AI Search is opt-in. A default project keeps MiniSearch local search, and only e
 
 ## Local development
 
-Cloudflare-backed routes should always keep local fallback behavior. The template search route uses `createConfiguredSearchResponse`, so Cloudflare AI Search falls back to local JSON search when no binding is present. The Ask AI route uses `createConfiguredAskResponse`, so missing AI Search, Workers AI, or OpenAI-compatible credentials fall back to the mock provider with local citations.
+Template routes remain usable without Cloudflare bindings. `createConfiguredSearchResponse` uses local JSON search when AI Search is unavailable, while `createConfiguredAskResponse` returns a mock answer with local citations when no AI Search, Workers AI, or OpenAI-compatible credentials are present.
 
 Use `.dev.vars.example` for environment names and keep real tokens out of the repository.

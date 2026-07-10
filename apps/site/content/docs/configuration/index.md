@@ -6,7 +6,7 @@ order: 4
 
 # Configuration
 
-Create `svedocs.config.ts` in the project root and export `defineConfig`. The config is loaded by the Vite plugin, CLI commands, runtime helpers, virtual modules, checks, and build-time OG generation.
+Most site behavior is configured in `svedocs.config.ts` at the project root. Export `defineConfig` from this file so the Vite plugin, CLI, runtime utilities, checks, and OG image generator all use the same settings.
 
 ```ts title="svedocs.config.ts"
 import { defineConfig } from 'svedocs/config';
@@ -42,7 +42,7 @@ export default defineConfig({
 });
 ```
 
-`site.name` is used by the theme and metadata. `site.title` is the default document title. `site.description` is the fallback SEO description. `site.url` enables absolute canonical URLs, sitemap URLs, Open Graph URLs, and locale alternates.
+The theme displays `site.name`, while `site.title` becomes the default document title. `site.description` is used when a page has no description of its own. Set `site.url` on public sites so canonical links, sitemap entries, Open Graph URLs, and language alternates can be absolute.
 
 ## Content roots
 
@@ -73,8 +73,8 @@ export default defineConfig({
 | Mode | Output | Use it when |
 | --- | --- | --- |
 | `edge` | Cloudflare-oriented SSR. | You need runtime routes for hosted search, Ask AI, or dynamic responses. |
-| `static` | Fully prerendered site. | Your docs can be served as static files and runtime integrations have fallbacks. |
-| `spa` | Prerendered known pages plus a static fallback. | A constrained host needs client-side fallback behavior. |
+| `static` | Fully prerendered site. | Your docs can be served as static files and runtime features can use local alternatives. |
+| `spa` | Prerendered known pages plus a static fallback page. | A constrained host needs client-side routing. |
 
 You can override the configured mode with `SVEDOCS_BUILD_MODE` or `svedocs build --mode <mode>`.
 
@@ -108,8 +108,8 @@ export default defineConfig({
       mark: 'pixel'
     },
     nav: [
-      { label: 'Docs', href: '/docs' },
-      { label: 'API', href: '/docs/reference/api' }
+      { label: 'Docs', labelKey: 'nav.docs', href: '/docs' },
+      { label: 'API', labelKey: 'nav.api', href: '/docs/reference/api' }
     ],
     social: [
       { label: 'GitHub', href: 'https://github.com/acme/docs', external: true }
@@ -136,16 +136,16 @@ export default defineConfig({
 });
 ```
 
-Providers:
+Available providers:
 
 | Provider | Notes |
 | --- | --- |
 | `local` | Default MiniSearch-backed route, no external service required. |
 | `algolia` | Uses server-side credentials to query an Algolia index. |
-| `typesense` | Uses a REST provider for a Typesense collection. |
+| `typesense` | Queries a Typesense collection over REST. |
 | `cloudflare-ai-search` | Uses Cloudflare AI Search bindings or API indexing. |
 
-Set `search: false` to remove search from the configured theme and helpers.
+Set `search: false` to remove search from the theme and its related runtime utilities.
 
 ## Ask AI
 
@@ -165,7 +165,7 @@ export default defineConfig({
 });
 ```
 
-Providers include `mock`, `cloudflare-ai-search`, `cloudflare-workers-ai`, and `openai-compatible`. Keep `mock` or local fallback behavior during development, then add hosted credentials when the content is stable.
+Choose from `mock`, `cloudflare-ai-search`, `cloudflare-workers-ai`, and `openai-compatible`. The `mock` provider works without credentials and is useful while writing the site. Connect a hosted service once the content and question flow are ready to test with real responses.
 
 ## SEO and OG
 
@@ -224,7 +224,7 @@ export default defineConfig({
 });
 ```
 
-Checks run through `svedocs check`. Enable external link checks deliberately because they require network access and can make CI slower.
+Run these checks with `svedocs check`. External link checks need network access and can slow down CI, so they are disabled by default.
 
 ## Cloudflare
 
@@ -241,7 +241,7 @@ export default defineConfig({
 });
 ```
 
-Cloudflare settings are used by deployment helpers, generated Wrangler config, platform types, AI Search routes, and Workers AI routes.
+These settings feed the deployment utilities, generated Wrangler config, platform types, AI Search routes, and Workers AI routes.
 
 ## i18n
 
@@ -265,9 +265,11 @@ export default defineConfig({
 });
 ```
 
-Locales affect route generation, sidebars, search scopes, Ask AI citations, SEO alternates, and translation checks. `hreflang` controls `<link rel="alternate">`, sitemap alternates, Open Graph locale tags, and JSON-LD `inLanguage`; `dir` lets the theme set text direction for RTL locales.
+Locale settings control routes, sidebars, search filters, Ask AI citations, SEO alternates, and translation checks. `hreflang` is used in `<link rel="alternate">`, sitemap alternates, Open Graph locale tags, and JSON-LD `inLanguage`. Set `dir` to `rtl` for right-to-left languages.
 
-`i18n.messages` localizes the site shell: landing actions and cards, navigation labels, search, Ask AI, table of contents, article footer controls, render fallback UI, code copy labels, and footer text. English messages are always available as defaults, including when `i18n: false`; locale messages only need to override the keys that differ.
+Use `i18n.messages` to translate the interface around your content, including navigation, search, Ask AI, the table of contents, article actions, code-copy labels, landing-page cards, errors, and footer text. English is the base catalog, even when `i18n: false`, so each locale only needs to override the messages it changes.
+
+See [Internationalization](/docs/configuration/i18n) for content layout, route mapping, custom message keys, locale-aware links, SEO behavior, and translation checks.
 
 ## Markdown hooks
 
@@ -283,17 +285,17 @@ export default defineConfig({
 });
 ```
 
-Markdown hooks run at compile time during manifest generation and SVX/MDX rendering. They are not serialized into browser virtual modules.
+Markdown hooks run at compile time while svedocs builds the page list and renders SVX or MDX. They are never serialized into browser virtual modules.
 
-## Configuration strategy
+## A practical setup order
 
-For production sites, configure in this order:
+For a new production site, this order keeps each step easy to verify:
 
 1. `site`, `content`, and `build`.
 2. `theme` and navigation.
 3. `seo`, sitemap, robots, and OG images.
 4. `search` and `ai` local behavior.
-5. Hosted providers and Cloudflare bindings.
+5. Hosted services and Cloudflare bindings.
 6. `checks` and CI commands.
 
-That order keeps the first docs experience working before you introduce external services.
+At step four, the site is already usable locally. The remaining steps prepare it for external services and CI.

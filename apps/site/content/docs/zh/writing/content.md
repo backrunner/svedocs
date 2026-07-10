@@ -1,12 +1,12 @@
 ---
 title: 内容
-description: 使用 frontmatter、GFM、KaTeX、代码块、diff、链接、资源和小节提取来编写页面。
+description: 使用 frontmatter、GFM、KaTeX、代码块、差异对比、链接、资源和小节提取来编写页面。
 order: 2
 ---
 
 # 内容
 
-svedocs 会从配置的内容根目录扫描 `.md`、`.mdx` 和 `.svx` 文件，并把它们转换成类型化页面 manifest。这个 manifest 会驱动路由、导航、搜索记录、检查、SEO 和默认主题。
+svedocs 会读取内容目录里的 `.md`、`.mdx` 和 `.svx` 文件。每个文件都会成为一个页面，并拥有自己的路由、导航项、搜索记录和 SEO 数据。
 
 ## 路由映射
 
@@ -28,14 +28,16 @@ content/pages -> /
 
 用 `index.md` 表示一个分组首页。需要侧栏分组时，用嵌套目录组织。
 
+多语言项目需要把语言的 `path` 放在每个内容根目录的下一层。完整的文件到路由映射见[多语言](/docs/zh/configuration/i18n)。
+
 ## Frontmatter
 
 重要页面至少应该包含 `title` 和 `description`：
 
 ```md
 ---
-title: Content
-description: Explain the content pipeline and authoring features.
+title: 内容
+description: 了解内容处理流程和写作功能。
 order: 2
 ---
 ```
@@ -44,21 +46,21 @@ order: 2
 
 | 字段 | 类型 | 作用 |
 | --- | --- | --- |
-| `title` | string | 页面标题、搜索标题、OG 标题和默认侧栏标题。 |
-| `navTitle` | string | 更短的侧栏标题，不改变页面标题。 |
-| `description` | string | SEO 描述、搜索摘要 fallback 和页面简介。 |
-| `order` | number | 导航和上一页/下一页排序权重。 |
-| `hidden` | boolean | 从生成的导航和公开列表中移除。 |
-| `collapsed` | boolean | 让导航分组默认折叠。 |
-| `section` | boolean | 标记目录页为分组页。 |
-| `icon` | string | 默认主题的图标提示。 |
-| `canonical` | string | 覆盖生成的 canonical URL。 |
-| `image` | string | Open Graph 图片 URL。 |
-| `keywords` | string[] | SEO 和搜索元数据。 |
-| `author` | string | 文章作者；默认回退到 `seo.defaultAuthor`。 |
-| `published`、`date`、`publishedTime` | date | 发布时间。 |
-| `updated`、`updatedTime` | date | 最近一次有意义的内容更新时间。 |
-| `type`、`ogType` | string | Open Graph 内容类型。 |
+| `title` | `string` | 页面标题、搜索标题、OG 标题和默认侧栏标题。 |
+| `navTitle` | `string` | 更短的侧栏标题，不改变页面标题。 |
+| `description` | `string` | SEO 描述、搜索摘要的默认内容和页面简介。 |
+| `order` | `number` | 导航和上一篇/下一篇的排序权重。 |
+| `hidden` | `boolean` | 从生成的导航和公开列表中移除。 |
+| `collapsed` | `boolean` | 让导航分组默认折叠。 |
+| `section` | `boolean` | 标记目录页为分组页。 |
+| `icon` | `string` | 默认主题的图标提示。 |
+| `canonical` | `string` | 覆盖生成的 canonical URL。 |
+| `image` | `string` | Open Graph 图片 URL。 |
+| `keywords` | `string[]` | SEO 和搜索元数据。 |
+| `author` | `string` | 文章作者；未填写时使用 `seo.defaultAuthor`。 |
+| `published`、`date`、`publishedTime` | `date` | 发布时间。 |
+| `updated`、`updatedTime` | `date` | 最近一次有意义的内容更新时间。 |
+| `type`、`ogType` | `string` | Open Graph 内容类型。 |
 
 如果第一个 Markdown 标题和 `title` 一样，svedocs 会从渲染内容中移除重复标题，但保留页面标题。
 
@@ -67,11 +69,11 @@ order: 2
 svedocs 支持 GitHub-flavored Markdown，例如表格、任务列表和自动链接。它也会提取标题，用于锚点和页面目录。
 
 ```md
-## Configure search
+## 配置搜索
 
-- [x] Create the runtime route.
-- [x] Choose a provider.
-- [ ] Add production credentials.
+- [x] 创建运行时路由。
+- [x] 选择搜索服务。
+- [ ] 添加生产环境凭据。
 ```
 
 需要公式时，可以使用 KaTeX 行内或块级数学公式。
@@ -99,16 +101,16 @@ export default defineConfig({
 - 通过主题配置控制行号和折行。
 - 复制按钮。
 
-## Diff 块
+## 差异对比
 
-小修改可以使用标准 diff fence：
+小修改可以使用标准 diff 代码块：
 
 ```diff
 - const docs = fragmented();
 + const docs = svedocs();
 ```
 
-需要表达左右对比时，可以使用 split diff：
+需要左右对比时，可以使用分栏 diff：
 
 ```diff split title="packages/svedocs/src/core.ts"
 @@ -1,3 +1,4 @@
@@ -118,38 +120,38 @@ export default defineConfig({
  export * from './config.js';
 ```
 
-split diff 的左右两侧都支持横向滚动，所以窄屏下长代码也能检查。
+分栏 diff 的左右两侧都支持横向滚动，因此在窄屏上也能查看长代码。
 
 ## 链接和资源
 
 内部链接会根据生成的路由和标题锚点进行检查：
 
 ```md
-Read [Configuration](/docs/configuration) and jump to
-[Build modes](/docs/configuration#build-modes).
+阅读[配置](/docs/zh/configuration)，或直接跳到
+[构建模式](/docs/zh/configuration#构建模式)。
 ```
 
 外部链接在默认主题里会带一个小的内联图标，帮助读者区分站外跳转：
 
 ```md
-Read the [SvelteKit docs](https://svelte.dev/docs/kit).
+阅读 [SvelteKit 文档](https://svelte.dev/docs/kit)。
 ```
 
-例如，[SvelteKit documentation](https://svelte.dev/docs/kit) 这个链接会被标记为外部网页链接。
+例如，[SvelteKit 文档](https://svelte.dev/docs/kit)这个链接会被标记为站外链接。
 
-独立一行的内部链接可以通过 `card` title 渲染成类似 Fumadocs 的卡片式链接：
+独立一行的内部链接可以通过 `card` 标题渲染成类似 Fumadocs 的卡片式链接：
 
 ```md
-[SEO and OG](/docs/integrations/seo-og "card: Metadata, sitemap, robots, JSON-LD, and Open Graph routes.")
+[SEO 和 OG](/docs/zh/integrations/seo-og "card: 元数据、站点地图、robots、JSON-LD 和 Open Graph 路由。")
 ```
 
 启用 `checks.assets` 时，本地资源也会被检查：
 
 ```md
-![Dashboard screenshot](/images/dashboard.png)
+![控制台截图](/images/dashboard.png)
 ```
 
-公共资源建议使用绝对站点路径，内部链接使用稳定的文档路由。这样搜索、Ask AI 引用和静态构建会保持一致。
+公共资源建议使用绝对站点路径，内部链接使用稳定的文档路由。这样链接出现在搜索结果、Ask AI 引用或静态构建里时仍然有效。
 
 ## 搜索记录
 

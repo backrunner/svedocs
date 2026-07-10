@@ -1,18 +1,18 @@
 ---
 title: Integrations
-description: Connect search, Ask AI, Cloudflare deployment, SEO, and Open Graph features without losing local fallbacks.
+description: Add search, Ask AI, Cloudflare deployment, SEO, and Open Graph features to a svedocs site.
 order: 5
 ---
 
 # Integrations
 
-svedocs integrations are designed around one principle: the docs site should work locally before external services are configured. Hosted search, Ask AI, Cloudflare bindings, and OG generation can be added incrementally once the content model is stable.
+You can build and preview a complete svedocs site without connecting an external service. Start with the local options, then add hosted search, Ask AI, Cloudflare bindings, or custom OG generation when the site needs them.
 
-## Integration map
+## Where to start
 
 | Area | Start with | Move to production when |
 | --- | --- | --- |
-| Search | Local MiniSearch records from the manifest. | You need a hosted index, typo tolerance, analytics, or Cloudflare AI Search. |
+| Search | Local MiniSearch records generated from your pages. | You need a hosted index, typo tolerance, analytics, or Cloudflare AI Search. |
 | Ask AI | Mock provider with local citations. | You have enough docs content to answer real questions and can enforce rate limits. |
 | Cloudflare | Local adapter config with remote bindings disabled. | You need edge SSR, AI Search, Workers AI, or Pages deployment. |
 | SEO | Generated metadata from config and frontmatter. | Public pages need canonical URLs, sitemap, robots, JSON-LD, and OG images. |
@@ -28,7 +28,7 @@ svedocs integrations are designed around one principle: the docs site should wor
 6. Add Ask AI after search records and citations are high quality.
 7. Add Cloudflare bindings, rate limits, and deployment config.
 
-This order avoids debugging provider credentials while the content tree is still changing.
+This lets you evaluate search quality and citations before credentials and remote indexes enter the picture.
 
 ## Runtime route pattern
 
@@ -46,7 +46,7 @@ export const GET = ({ platform, request }) => {
 };
 ```
 
-The configured helpers read `svedocs.config.ts`, use hosted providers when credentials or bindings exist, and keep local fallback behavior for development and static builds.
+The configured response utilities read `svedocs.config.ts` and select the requested service. During development or a static build, they can use the local implementation when credentials or bindings are unavailable.
 
 ## Build-time pattern
 
@@ -60,7 +60,7 @@ svedocs deploy cloudflare setup --write
 svedocs deploy cloudflare
 ```
 
-Use dry-runs in CI until credentials are ready. Setup commands print or write generated output so deployment changes stay reviewable; the deploy command then builds and publishes through Wrangler.
+Use dry runs in CI until credentials are available. Setup commands print or write their generated files, making deployment changes easy to review. The deploy command then builds the site and publishes it through Wrangler.
 
 ## Security and operations
 
@@ -69,7 +69,7 @@ Use dry-runs in CI until credentials are ready. Setup commands print or write ge
 - Use memory rate limiting only for local development.
 - Use KV or another shared rate limiter for production Ask AI.
 - Prefer server-routed search keys over embedding search credentials in client code.
-- Keep Cloudflare remote bindings disabled locally unless you intentionally want local development to mutate remote resources.
+- Keep Cloudflare remote bindings disabled unless local development needs to modify remote resources.
 
 ## Pages in this section
 
@@ -81,4 +81,4 @@ Use dry-runs in CI until credentials are ready. Setup commands print or write ge
 
 ## Choosing a path
 
-If you are building a small docs site, start with local search, SVG OG images, and static output. If you are building a product docs site with live AI or provider-backed search, use edge mode and add hosted integrations after the content structure is reliable.
+For a small docs site, local search, SVG OG images, and static output may be all you need. Choose edge mode when the site needs live AI, hosted search, or another server-side integration.

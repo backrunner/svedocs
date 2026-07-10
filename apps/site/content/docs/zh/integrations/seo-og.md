@@ -6,14 +6,14 @@ order: 4
 
 # SEO 和 OG
 
-SEO 数据来自全局配置、frontmatter、路由元数据和页面生成结果。
+svedocs 会合并全局配置、frontmatter、路由元数据和页面生成结果，为每个页面生成 SEO 标签。
 
 ## Frontmatter
 
 ```md
 ---
 title: 搜索和 Ask AI
-description: 使用本地搜索、Cloudflare AI Search 和 Ask AI 提供商。
+description: 使用本地搜索、Cloudflare AI Search 和 Ask AI 服务。
 canonical: https://svedocs.dev/docs/zh/integrations/search-ai
 image: https://svedocs.dev/og/docs-search-ai.svg
 author: svedocs team
@@ -41,20 +41,20 @@ head:
 
 如果设置了 `site.url`，svedocs 会自动生成 canonical URL。
 
-`head` 用来追加页面级的可序列化 head 内容。全局 `seo.head` 会先合并，然后追加页面 frontmatter 里的内容。默认 RootLayout 会自动渲染 `meta`、`link` 和额外 JSON-LD。
+`head` 用来添加只属于当前页面的可序列化内容。全局 `seo.head` 会排在前面，随后追加页面 frontmatter 中的配置。默认根布局会自动渲染 `meta`、`link` 和额外的 JSON-LD。
 
 ## 元数据
 
 默认根布局会渲染：
 
-- `<title>` 和 description。
+- `<title>` 和页面描述。
 - canonical URL。
 - Open Graph 和 Twitter card 标签。
 - 文档页和单页的 JSON-LD。
 - `keywords`、`robots` 和可序列化的 `head` 追加内容。
-- frontmatter 提供时的 author、published time 和 updated time。
+- frontmatter 中提供的作者、发布时间和更新时间。
 
-自定义布局时可以直接用 `createPageMetadata(config, page)`。
+自定义布局可以调用 `createPageMetadata(config, page, pages)`。传入完整页面列表后，Open Graph 的语言映射只会包含真实存在的译文。
 
 ## 站点地图和 robots
 
@@ -68,7 +68,7 @@ export const GET = () => {
 };
 ```
 
-`createRobotsResponse(config)` 可以生成对应的 `robots.txt` 响应。两个 response helper 会在对应的 `seo.sitemap` 或 `seo.robots` 被禁用时返回 `404`。
+`createRobotsResponse(config)` 可以生成对应的 `robots.txt` 响应。如果 `seo.sitemap` 或 `seo.robots` 被关闭，相应的响应函数会返回 `404`。
 
 ## 动态 OG 路由
 
@@ -108,9 +108,9 @@ export const GET = async ({ params }) => {
 };
 ```
 
-SVG OG 路由适合 edge runtime。PNG 可以在构建期通过 CLI 生成。
+SVG OG 路由适合边缘运行时。PNG 图片可以在构建期通过 CLI 生成。
 
-自定义根布局可以用 `svedocs/og` 里的 `createJsonLdScript(value)` 配合 Svelte `{@html ...}` 渲染 JSON-LD。它会先转义 script 敏感字符，然后返回完整的 `<script type="application/ld+json">` 标签。
+自定义根布局可以用 `svedocs/og` 中的 `createJsonLdScript(value)` 配合 Svelte `{@html ...}` 渲染 JSON-LD。它会先转义可能影响脚本标签的字符，再返回完整的 `<script type="application/ld+json">` 标签。
 
 ## 构建期 OG 资源
 
@@ -140,4 +140,4 @@ svedocs og --renderer satori --font ./Inter-Regular.ttf --format png
 
 Satori 渲染需要显式指定字体文件，这样输出才会在不同机器和部署环境里保持稳定。
 
-构建期 `svedocs og` 和自动生成的 `svedocs build` 会保留 `svedocs.config.ts` 里的函数模板。动态路由在目标运行时安全时可以复用同一套模板，否则优先用默认 SVG renderer。
+无论运行 `svedocs og`，还是通过 `svedocs build` 自动生成图片，`svedocs.config.ts` 中的函数模板都会保留。动态路由也可以在目标运行时支持时复用同一模板；否则应优先使用兼容性更好的默认 SVG 渲染器。

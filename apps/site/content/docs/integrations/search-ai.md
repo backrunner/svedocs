@@ -6,7 +6,7 @@ order: 2
 
 # Search and Ask AI
 
-svedocs builds search records from pages and sections. Those records power MiniSearch-backed local search, optional Algolia or Typesense search, Cloudflare indexing, and local fallback citations for Ask AI.
+svedocs creates search records for each page and section. Local MiniSearch, Algolia, Typesense, Cloudflare indexing, and Ask AI citations can all work from those records.
 
 ## Runtime routes
 
@@ -22,7 +22,7 @@ export const GET = ({ platform, request }) => {
 };
 ```
 
-The generated templates use the configured runtime route. It selects `local`, `algolia`, `typesense`, or `cloudflare-ai-search` from `svedocs.config.ts`, then falls back to local MiniSearch when hosted credentials or bindings are missing.
+Generated templates use this runtime route. It reads `svedocs.config.ts` and selects `local`, `algolia`, `typesense`, or `cloudflare-ai-search`. If credentials or bindings are missing, the route uses local MiniSearch instead.
 
 ```ts title="src/routes/api/ask/+server.ts"
 import { createConfiguredAskResponse, createMemoryRateLimiter } from 'svedocs/ai';
@@ -39,11 +39,11 @@ export const POST = ({ platform, request }) => {
 };
 ```
 
-`createConfiguredAskResponse` selects `mock`, `cloudflare-ai-search`, `cloudflare-workers-ai`, or `openai-compatible` from config. Missing credentials fall back to the mock provider with local citations instead of throwing during development.
+`createConfiguredAskResponse` selects `mock`, `cloudflare-ai-search`, `cloudflare-workers-ai`, or `openai-compatible` from the config. During development, missing credentials produce a mock answer with local citations instead of an error.
 
 ## Local search
 
-Local search is deterministic and requires no hosted service. It uses MiniSearch to rank title, section, path, content, and metadata matches, and it accepts `locale` and `kind` query parameters for scoped sites.
+Local search requires no external service. MiniSearch ranks matches from titles, sections, paths, body content, and metadata. Use the `locale` and `kind` query parameters to limit the results.
 
 ```txt
 /api/search?q=cloudflare&locale=zh
@@ -55,11 +55,11 @@ Set `search.provider = 'algolia'` and provide `ALGOLIA_APP_ID`, `ALGOLIA_SEARCH_
 
 ## Typesense
 
-Set `search.provider = 'typesense'` and provide `TYPESENSE_HOST`, `TYPESENSE_SEARCH_KEY`, and optionally `TYPESENSE_COLLECTION`. Typesense is useful when you want a self-hostable search service with fast typo tolerance. The provider is REST-based and does not add a runtime dependency to the generated site.
+Set `search.provider = 'typesense'` and provide `TYPESENSE_HOST`, `TYPESENSE_SEARCH_KEY`, and optionally `TYPESENSE_COLLECTION`. Typesense suits teams that want a self-hosted search service with fast typo tolerance. svedocs calls it over REST, so the generated site does not gain another runtime package.
 
 ## Cloudflare AI Search
 
-The provider supports the current `ai_search` and `ai_search_namespaces` bindings. It is not enabled by default; local MiniSearch remains the default search provider.
+This integration supports the current `ai_search` and `ai_search_namespaces` bindings. It is opt-in; new sites use local MiniSearch.
 
 ## Indexing
 
@@ -68,15 +68,15 @@ svedocs index --provider cloudflare-ai-search --dry-run
 svedocs index --provider cloudflare-ai-search --strategy replace --wait
 ```
 
-Indexing uploads Markdown documents with compact svedocs metadata, supports explicit deletes, and reports per-record failures. The compact metadata uses one `svedocs` JSON field for display data and preserves `locale` and `kind` as filterable fields.
+The index command uploads Markdown documents, can delete stale records explicitly, and reports failures per record. Display data is stored in a compact `svedocs` JSON field, while `locale` and `kind` remain available for filtering.
 
 ## Ask AI
 
-The Ask AI runtime route supports JSON and event-stream responses. Cloudflare AI Search can pass through native token streams when the binding supports `chatCompletions({ stream: true })`; other providers still return structured answer/citation events. Request bodies can include `locale` or `kind`; the default theme sends the active scope automatically.
+The Ask AI route supports JSON and event-stream responses. Cloudflare AI Search can pass through its token stream when the binding supports `chatCompletions({ stream: true })`; other providers return structured answer and citation events. Requests may include `locale` or `kind`, and the default theme sends the active filters automatically.
 
 ## OpenAI-compatible Ask AI
 
-Set `ai.provider = 'openai-compatible'` and provide `OPENAI_COMPATIBLE_API_KEY`, `OPENAI_COMPATIBLE_MODEL`, and optionally `OPENAI_COMPATIBLE_BASE_URL`. This provider builds a small RAG prompt from local svedocs search records, so it can work with OpenAI-compatible Chat Completions providers such as OpenAI, OpenRouter, Groq, Together, or private gateways.
+Set `ai.provider = 'openai-compatible'` and provide `OPENAI_COMPATIBLE_API_KEY`, `OPENAI_COMPATIBLE_MODEL`, and optionally `OPENAI_COMPATIBLE_BASE_URL`. svedocs builds a short RAG prompt from local search records and sends it to any compatible Chat Completions service, including OpenAI, OpenRouter, Groq, Together, or a private gateway.
 
 When you need lower-level control, import `createAlgoliaSearchProvider`, `createTypesenseSearchProvider`, `createCloudflareAiSearchProvider`, `createWorkersAiProvider`, or `createOpenAiCompatibleProvider` directly and pass the resulting provider to `createSearchResponse` or `createAskResponse`.
 

@@ -6,7 +6,7 @@ order: 2
 
 # CLI
 
-`svedocs-cli` 提供两个项目二进制：`create-svedocs` 和 `svedocs`。未加 scope 的 `create-svedocs` 包只是给 package manager create 命令用的 shim，会转发到 `svedocs-cli`。
+`svedocs-cli` 提供两个可执行命令：`create-svedocs` 用于创建项目，`svedocs` 用于管理已有项目。未带 npm scope 的 `create-svedocs` 包只负责兼容各包管理器的 create 命令，所有行为都会转交给 `svedocs-cli`。
 
 ## 创建
 
@@ -17,11 +17,11 @@ pnpm dlx --package svedocs-cli create-svedocs my-docs --template docs
 svedocs create my-docs --template cloudflare
 ```
 
-创建命令会先从 `npm_config_user_agent` 识别包管理器，再看当前项目，最后回退到 `pnpm`、`npm`、`yarn` 和 `bun`。可以用 `--package-manager` 或 `--pm` 覆盖。默认只脚手架，不会安装依赖；加 `--install` 就会立刻运行选中的包管理器。
+创建命令会先检查 `npm_config_user_agent`，再查看当前项目，以判断应使用哪个包管理器。如果都没有结果，就按顺序查找 `pnpm`、`npm`、`yarn` 和 `bun`。可以用 `--package-manager` 或 `--pm` 明确指定。默认只生成项目文件，不安装依赖；加上 `--install` 后会立即安装。
 
-生成出来的项目会从模板 `package.json` 里获得 `svedocs` 和 `svedocs-cli` 依赖。这些是普通的 npm 包依赖声明，所以 `--install` 会通过选中的包管理器从 registry 安装，而不是从 create 包里复制框架代码。
+生成项目的 `package.json` 会声明 `svedocs` 和 `svedocs-cli` 依赖。它们都是普通的 npm 依赖，因此 `--install` 会通过选中的包管理器从 registry 安装，不会从 create 包里复制框架代码。
 
-模板会优先从 GitHub 拉取（默认 `backrunner/svedocs@main`），这样模板修复不需要重新发布 CLI。GitHub 不可用时会回退到 CLI 内置模板。设置 `SVEDOCS_TEMPLATE_SOURCE=bundled` 可以强制使用内置模板，设置 `SVEDOCS_TEMPLATE_SOURCE=github` 可以禁用回退，设置 `SVEDOCS_TEMPLATE_REF=<branch|tag|sha>` 可以固定远程模板版本。
+模板会优先从 GitHub 拉取，默认来源是 `backrunner/svedocs@main`，因此模板修复不必等待 CLI 重新发布。GitHub 不可用时会改用 CLI 内置模板。设置 `SVEDOCS_TEMPLATE_SOURCE=bundled` 可以强制使用内置模板；设置 `SVEDOCS_TEMPLATE_SOURCE=github` 可以在拉取失败时直接报错；设置 `SVEDOCS_TEMPLATE_REF=<branch|tag|sha>` 可以固定远程模板版本。
 
 模板：
 
@@ -29,7 +29,7 @@ svedocs create my-docs --template cloudflare
 | --- | --- |
 | `minimal` | 轻量 SvelteKit 文档项目，带本地渲染。 |
 | `docs` | 带本地 MiniSearch、站点地图、robots 和 OG 路由的文档站。 |
-| `cloudflare` | 面向 edge 的项目，包含 Cloudflare Pages 配置和 AI Search binding 形状。 |
+| `cloudflare` | 面向边缘运行时的项目，包含 Cloudflare Pages 配置和 AI Search 绑定示例。 |
 
 ## 升级
 
@@ -42,7 +42,7 @@ svedocs upgrade --check-only
 
 升级命令会同时升级 `svedocs` 和 `svedocs-cli`，先检查当前版本到目标版本的跨度，再默认运行检测到的包管理器。使用 `--no-install` 可以只改写 `package.json`，使用 `--dry-run` 可以只预览依赖计划，使用 `--check-only` 可以只跑兼容性检查。
 
-现在还没有登记 breaking 规则，所以检查会明确通过。未来发布 breaking 版本时，可以把规则挂到引入 breaking 的版本上；升级跨度跨过该版本时，CLI 就能告警或阻断，必要时再用 `--force` 继续。
+目前还没有登记破坏性变更规则。未来发布不兼容版本时，可以把规则关联到引入变更的版本；升级跨过该版本时，CLI 就能发出警告或停止操作，使用者仍可通过 `--force` 明确继续。
 
 ## 构建
 
@@ -53,7 +53,7 @@ svedocs ssg
 svedocs build --mode spa
 ```
 
-`edge` 是默认值，面向 Cloudflare Pages SSR。`static` 和 `svedocs ssg` 会预渲染整个站点。`spa` 会预渲染已知页面并写出静态 fallback，适合受限主机；如果没有 edge runtime，托管 Search、Ask AI 和其他只运行在服务端的功能会退回到本地行为。
+`edge` 是默认值，面向 Cloudflare Pages SSR。`static` 和 `svedocs ssg` 会预渲染整个站点。`spa` 会预渲染已知页面，并为受限平台写出一个回退页。没有边缘运行时时，托管搜索、Ask AI 和其他服务端功能会改用本地实现。
 
 ## 检查
 
@@ -64,7 +64,7 @@ svedocs check --package
 svedocs check --config ./svedocs.config.ts
 ```
 
-检查项包括重复路由、重复 canonical URL、缺少 description、内部链接断裂、锚点断裂、本地资源、空搜索输出、SPA 风险、可选的翻译缺口告警，以及可选的包导出校验。
+检查项包括重复路由、重复 canonical URL、缺少页面描述、失效的内部链接和锚点、缺失的本地资源、空搜索输出、SPA 风险、公开文档与独立页面的翻译缺口，以及可选的包导出校验。
 
 ## 索引
 
@@ -74,7 +74,7 @@ svedocs index --format jsonl --out static/search.jsonl
 svedocs index --provider cloudflare-ai-search --dry-run
 ```
 
-Cloudflare AI Search 索引支持 append 和 replace 两种策略：
+Cloudflare AI Search 索引支持追加和替换两种策略：
 
 ```sh
 svedocs index \
@@ -85,7 +85,7 @@ svedocs index \
   --wait
 ```
 
-设置 `CLOUDFLARE_ACCOUNT_ID` 和 `CLOUDFLARE_API_TOKEN` 就能上传记录。没有凭据时，命令会保持 dry-run。
+设置 `CLOUDFLARE_ACCOUNT_ID` 和 `CLOUDFLARE_API_TOKEN` 后即可上传记录。没有凭据时，命令只会试运行，不会修改远程索引。
 
 ## OG
 

@@ -1,6 +1,6 @@
 ---
 title: svedocs
-description: Build edge-first SvelteKit documentation sites with one integrated framework package.
+description: Build SvelteKit documentation sites for Cloudflare or static hosting.
 layout: home
 ---
 
@@ -10,11 +10,11 @@ layout: home
 2. Open `/docs` and read the [Quick Start](/docs).
 3. Move through [Installation](/docs/installation), [Writing](/docs/writing), [Configuration](/docs/configuration), [Integrations](/docs/integrations), and [Reference](/docs/reference) as the project grows.
 
-## What ships first
+## Included
 
-- Content loading, scoped navigation, and search records.
+- Content loading, filtered navigation, and search records.
 - Tailwind CSS v4 theme tokens and the default docs shell.
-- Search, Ask AI, SEO, OG, and Cloudflare deployment helpers in one package.
+- Search, Ask AI, SEO, OG images, and Cloudflare deployment tools.
 
 ## Typical flow
 
@@ -25,4 +25,4 @@ pnpm install
 pnpm dev
 ```
 
-Then keep the docs tree small at first: install the package, write pages, wire config, and only add hosted search or AI once the content itself feels stable.
+Start with a small docs tree: install the package, write a few pages, and configure the site. Add hosted search or AI once there is enough content to judge the results.

@@ -1,6 +1,6 @@
 ---
 title: svedocs
-description: 用一个集成框架包构建边缘优先的 SvelteKit 文档站。
+description: 为 Cloudflare 或静态托管构建 SvelteKit 文档站。
 layout: home
 ---
 
@@ -10,11 +10,11 @@ layout: home
 2. 打开 `/docs/zh`，阅读[快速开始](/docs/zh)。
 3. 随着项目增长，继续查看[安装](/docs/zh/installation)、[写作](/docs/zh/writing)、[配置](/docs/zh/configuration)、[集成](/docs/zh/integrations)和[参考](/docs/zh/reference)。
 
-## 开箱包含
+## 已包含
 
-- 内容加载、作用域导航和搜索记录。
+- 内容加载、按范围过滤的导航和搜索记录。
 - Tailwind CSS v4 主题变量和默认文档外壳。
-- 搜索、Ask AI、SEO、OG 和 Cloudflare 部署辅助能力都在一个包里。
+- 搜索、Ask AI、SEO、OG 图片和 Cloudflare 部署工具。
 
 ## 常见流程
 
@@ -25,4 +25,4 @@ pnpm install
 pnpm dev
 ```
 
-先让文档树保持小而清晰：安装包、编写页面、接好配置。等内容本身稳定后，再加入托管搜索或 AI。
+先从少量页面开始：安装包、编写内容并完成基础配置。等内容足够判断搜索和回答质量后，再接入托管搜索或 AI。

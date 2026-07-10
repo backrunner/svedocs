@@ -1,12 +1,12 @@
 ---
 title: Components
-description: Props, responsibilities, and headless controllers for every replaceable svedocs theme component.
+description: Look up props, responsibilities, and headless controllers for replaceable svedocs theme components.
 order: 4
 ---
 
 # Components
 
-svedocs themes are built from replaceable Svelte components plus headless behavior helpers. Use this page when you are replacing the default navbar, article shell, search UI, Ask AI panel, ToC, footer, or floating page tools.
+The svedocs theme is split into replaceable Svelte components and reusable headless controllers. This page documents the contracts for the navbar, article layout, search dialog, Ask AI panel, table of contents, footer, and floating page tools.
 
 ## Import paths
 
@@ -102,7 +102,8 @@ Most shell components receive `SvedocsThemeContext`.
 | `isDocsPage` | Whether the current page is a docs article. |
 | `activeNavHref` | Normalized active top-nav href. |
 | `locale` | Current resolved locale config, including `hreflang` and `dir` when configured. |
-| `localeCode` | Current locale code. |
+| `localeCode` | Stable locale code used by search, AI, and stored scopes. |
+| `languageTag` | BCP 47 tag used by HTML and locale-sensitive formatting. |
 | `messages` | Fully merged messages for the current locale. |
 | `t` | Locale-aware translator with `{value}` interpolation. |
 
@@ -110,7 +111,7 @@ Create the same object in custom shells with `createThemeContext`.
 
 ## DocsApp
 
-`DocsApp` is the complete route renderer. Keep using it when you want routing, metadata, layouts, slots, and replacement components wired for you.
+`DocsApp` is the complete route renderer. Use it when you want svedocs to connect routing, metadata, layouts, slots, and replacement components.
 
 | Prop | Type | Notes |
 | --- | --- | --- |
@@ -128,7 +129,7 @@ Slots: `background`, `landing`, `home-hero-visual`, `home-features`, and `doc-he
 
 ## Root
 
-`Root` owns document metadata, the theme initialization script, route hydration state, scrollbar visibility behavior, and the shared background slot. Its default visual shell is `Layout`.
+`Root` handles document metadata, the theme initialization script, route hydration state, scrollbar visibility, and the shared background slot. Its default visual shell is `Layout`.
 
 | Prop | Notes |
 | --- | --- |
@@ -270,7 +271,7 @@ Use `createTocController({ page })` in a custom layout when the ToC and article 
 | `context` | Optional `SvedocsThemeContext`. |
 | `tree` | Optional navigation tree used for a docs-home action. |
 
-Replace `RenderError` when your theme needs different recovery actions, logging, telemetry, or copy. Keep the UI calm and local: article failures should still leave the header/sidebar visible, and sidebar/ToC failures should not hide the article.
+Replace `RenderError` when your theme needs different recovery actions, logging, telemetry, or copy. Keep failures contained: an article error should leave the header and sidebar visible, while a sidebar or ToC error should not hide the article.
 
 ## Search
 

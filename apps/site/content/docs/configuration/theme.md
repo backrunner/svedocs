@@ -124,13 +124,13 @@ export default defineConfig({
 });
 ```
 
-`palette.accent` accepts a built-in token such as `emerald`, `teal`, `sky`, `indigo`, `rose`, or `amber`. It also accepts any CSS color value, such as `#0ea5e9`, `hsl(221 83% 53%)`, or `oklch(62% 0.18 250)`. The default theme keeps the palette restrained and documentation-focused.
+`palette.accent` accepts a built-in color name such as `emerald`, `teal`, `sky`, `indigo`, `rose`, or `amber`. You can also pass any CSS color value, including `#0ea5e9`, `hsl(221 83% 53%)`, or `oklch(62% 0.18 250)`.
 
 `home.visual` can stay as the built-in pixel module or point at a project image with `{ type: 'image', src: '/hero.png', alt: 'Preview' }`.
 
 ## Theme slots
 
-`DocsApp` exposes named slots for replacing the default visual layers while keeping the built-in routing shell, metadata, header, footer, search, Ask AI, and docs navigation.
+`DocsApp` exposes named slots for changing parts of the page without rebuilding its routing, metadata, header, footer, search, Ask AI, or docs navigation.
 
 ```svelte title="src/routes/+page.svelte"
 <script lang="ts">
@@ -161,6 +161,10 @@ The `background` slot replaces the built-in grid layer on the homepage, single p
 Homepage-specific slots let you replace smaller regions:
 
 ```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import { resolveLocalizedHref } from 'svedocs/theme/headless';
+</script>
+
 <DocsApp
   page={data.page}
   pages={data.pages}
@@ -200,7 +204,7 @@ To replace the entire landing content while preserving the svedocs header and fo
   <section slot="landing" let:page let:context class="custom-landing">
     <h1>{page.title}</h1>
     <p>{page.description}</p>
-    <a href={context.localeCode === 'zh' ? '/docs/zh' : '/docs'}>
+    <a href={resolveLocalizedHref('/docs', context)}>
       {context.t('home.primaryAction')}
     </a>
   </section>
@@ -209,7 +213,7 @@ To replace the entire landing content while preserving the svedocs header and fo
 
 The theme still provides the `main#content` wrapper for the `landing` slot, so the skip link and page semantics remain intact.
 
-For custom landing pages and replacement components, prefer `context.t('message.key')` over hard-coded UI text. Project authors can add locale-specific overrides in `i18n.messages`, and custom components automatically receive the same locale-aware messages as the default theme.
+In custom landing pages and replacement components, use `context.t('message.key')` instead of hard-coding interface text. Add built-in or project-specific keys to `i18n.messages`; custom components receive the catalog for the active locale. Use `context.localeCode` for filtering data and `context.languageTag` for HTML attributes or locale-sensitive formatting. See [Internationalization](/docs/configuration/i18n) for the complete setup.
 
 Documentation articles also expose `doc-header` when you only need to replace the title and breadcrumb area:
 
@@ -237,13 +241,13 @@ Documentation articles also expose `doc-header` when you only need to replace th
 
 ## Theme development
 
-Theme development has three layers. You can use only the layer you need:
+Choose the level of customization that matches the change:
 
 | Layer | Use it when |
 | --- | --- |
 | Theme tokens | You like the default components and only need brand color, fonts, radius, navigation, homepage, or code settings. |
 | Component replacement | You want to keep the svedocs route shell and replace one or more visual components. |
-| Headless composition | You want full ownership of markup and CSS while reusing search, Ask AI, ToC, theme mode, mobile nav, and copy behavior. |
+| Headless composition | You want to own the markup and CSS while reusing search, Ask AI, ToC, theme mode, mobile nav, and copy behavior. |
 
 The default CSS is optional:
 
@@ -387,4 +391,4 @@ layout: feature
 ---
 ```
 
-Layouts receive the same page data as default pages, so custom single pages can still use the manifest, search records, SEO metadata, and framework shell.
+Layouts receive the same data as default pages, so a custom single page can still use the page list, search records, SEO metadata, and surrounding site UI.
