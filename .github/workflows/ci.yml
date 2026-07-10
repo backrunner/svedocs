@@ -53,6 +53,7 @@ jobs:
       - run: pnpm --filter svedocs build
       - run: pnpm --filter @svedocs/site check
       - run: pnpm --filter @svedocs/site lint
+      - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm --filter @svedocs/site test:e2e
 
   template-e2e:
