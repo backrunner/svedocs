@@ -5,7 +5,7 @@ export default defineConfig({
     name: 'svedocs',
     title: 'svedocs',
     description: 'A SvelteKit-native documentation framework for edge-first docs.',
-    url: 'https://svedocs.dev'
+    url: 'https://svedocs.pwp.sh'
   },
   content: {
     root: 'content',
