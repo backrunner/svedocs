@@ -1,4 +1,3 @@
-import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSlug from 'rehype-slug';
@@ -12,6 +11,7 @@ import type { SvedocsCodeBlock, SvedocsHeading } from '../core/types.js';
 import { extractMarkdownOutline, markdownAstToPlainText } from './ast.js';
 import { extractCodeBlocks, rehypeCodeBlocks, remarkSvedocsCodeBlocks, type SvedocsMarkdownMessages } from './code.js';
 import { createDiffRows, createDiffSplitRows } from './diff.js';
+import { rehypeSvedocsHeadingAnchors } from './headings.js';
 import { rehypeSvedocsLinks } from './links.js';
 import { markdownToPlainText } from './utils.js';
 
@@ -33,6 +33,7 @@ export interface CompileMarkdownOptions {
   codeWrap?: boolean;
   codeCopyButton?: boolean;
   messages?: SvedocsMarkdownMessages;
+  resolveHref?: (href: string) => string;
 }
 
 export async function compileMarkdown(
@@ -67,19 +68,11 @@ export async function compileMarkdown(
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
     .use(rehypeSlug)
-    .use(rehypeAutolinkHeadings, {
-      behavior: 'append',
-      properties: {
-        className: ['sd-heading-anchor'],
-        ariaHidden: 'true'
-      },
-      content: {
-        type: 'text',
-        value: '#'
-      }
-    })
+    .use(rehypeSvedocsHeadingAnchors, options.messages?.['heading.anchor']
+      ? { label: options.messages['heading.anchor'] }
+      : {})
     .use(rehypeKatex)
-    .use(rehypeSvedocsLinks);
+    .use(rehypeSvedocsLinks, options.resolveHref ? { resolveHref: options.resolveHref } : {});
 
   for (const plugin of options.rehypePlugins ?? []) {
     processor.use(plugin as never);

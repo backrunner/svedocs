@@ -2545,13 +2545,39 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
 }
 
 .sd-heading-anchor {
+  display: inline-flex;
+  width: .9em;
+  height: .9em;
   margin-left: .45rem;
+  align-items: center;
+  justify-content: center;
+  vertical-align: -.08em;
   color: var(--sd-muted);
   opacity: 0;
+  border-radius: 3px;
+  text-decoration: none;
+  transition: color .14s ease, opacity .14s ease;
 }
 
-.sd-prose :is(h2, h3, h4):hover .sd-heading-anchor {
+.sd-heading-anchor svg {
+  width: 100%;
+  height: 100%;
+}
+
+.sd-prose :is(h2, h3, h4):hover .sd-heading-anchor,
+.sd-heading-anchor:focus-visible {
   opacity: 1;
+}
+
+.sd-heading-anchor:hover,
+.sd-heading-anchor:focus-visible {
+  color: var(--sd-accent);
+}
+
+@media (hover: none) {
+  .sd-heading-anchor {
+    opacity: .5;
+  }
 }
 
 .sd-home-faq .sd-heading-anchor {

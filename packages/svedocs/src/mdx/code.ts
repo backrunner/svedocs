@@ -14,7 +14,7 @@ import {
 export type SvedocsMarkdownMessages = Pick<
   SvedocsMessages,
   'code.copy' | 'code.copyDiff' | 'diff.label' | 'diff.aria' | 'diff.before' | 'diff.after'
->;
+> & Partial<Pick<SvedocsMessages, 'heading.anchor'>>;
 
 export function extractCodeBlocks(markdown: string): SvedocsCodeBlock[] {
   const blocks: SvedocsCodeBlock[] = [];

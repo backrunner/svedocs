@@ -1,6 +1,7 @@
 import { tick } from 'svelte';
 import { derived, get, writable } from 'svelte/store';
 import { defaultSvedocsMessages } from '../core/config.js';
+import { resolveSvedocsHref } from '../core/routes.js';
 import type { SvedocsMessageKey, SvedocsMessages, SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTranslate } from '../core/types.js';
 import { filterSearchRecords, searchRecords } from '../search/local.js';
 import type { SearchResult, SearchScope } from '../search/types.js';
@@ -189,14 +190,7 @@ function resolveLocalizedHrefForLocale(
   pages: SvedocsPage[],
   localeCode: string
 ): string {
-  const hrefPath = normalizePath(href);
-  const target = pages.find((candidate) => (
-    candidate.scopePath === hrefPath
-    && (candidate.locale ?? config.i18n.defaultLocale ?? 'en') === localeCode
-  ));
-  if (!target) return href;
-  const suffix = href.match(/[?#].*$/)?.[0] ?? '';
-  return `${target.routePath}${suffix}`;
+  return resolveSvedocsHref({ href, pages, config, localeCode }).href;
 }
 
 export function isActiveNavItem(item: { href: string; external?: boolean }, activeNavHref: string): boolean {

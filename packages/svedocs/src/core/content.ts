@@ -8,6 +8,7 @@ import { checkSvedocsContent } from './checks.js';
 import { defaultSvedocsMessages, isResolvedConfig, resolveSvedocsConfig } from './config.js';
 import { extractMarkdownLinks } from './links.js';
 import { createPageTree, wirePrevNext } from './navigation.js';
+import { resolveSvedocsHref, type SvedocsRouteTarget } from './routes.js';
 import { createPageSearchRecords, createSearchRecords } from './search.js';
 import type { SvedocsContentManifest, SvedocsPage, SvedocsResolvedConfig, SvedocsSeoHead, SvedocsSeoJsonLd, SvedocsSeoLinkTag, SvedocsSeoMetaTag } from './types.js';
 import {
@@ -37,12 +38,23 @@ export async function loadSvedocsContent(options: {
     ignore: config.content.exclude,
     onlyFiles: true
   });
-  const pages = await Promise.all(
-    files
-      .filter((file) => isContentFile(file))
-      .sort()
-      .map((file) => loadContentFile(projectRoot, file, config, markdownOptions))
-  );
+  const entries = files
+    .filter((file) => isContentFile(file))
+    .sort()
+    .map((file) => {
+      const kind = inferKind(file, config);
+      return { file, kind, route: createRouteInfo(file, kind, config) };
+    });
+  const routeTargets: SvedocsRouteTarget[] = entries.map(({ file, kind, route }) => ({
+    kind,
+    sourcePath: file,
+    routePath: route.routePath,
+    scopePath: route.scopePath,
+    ...(route.locale ? { locale: route.locale } : {})
+  }));
+  const pages = await Promise.all(entries.map((entry) => (
+    loadContentFile(projectRoot, entry, routeTargets, config, markdownOptions)
+  )));
   const sorted = pages.sort((a, b) => a.routePath.localeCompare(b.routePath));
   const tree = createPageTree(sorted);
   wirePrevNext(sorted, tree);
@@ -63,10 +75,12 @@ function isContentFile(file: string): boolean {
 
 async function loadContentFile(
   projectRoot: string,
-  file: string,
+  entry: { file: string; kind: 'doc' | 'page'; route: SvedocsRouteInfo },
+  routeTargets: SvedocsRouteTarget[],
   config: SvedocsResolvedConfig,
   markdownOptions: CompileMarkdownOptions
 ): Promise<SvedocsPage> {
+  const { file, kind, route } = entry;
   const sourcePath = path.join(projectRoot, file);
   const raw = await readFile(sourcePath, 'utf8');
   const fileStats = await stat(sourcePath);
@@ -76,12 +90,23 @@ async function loadContentFile(
   const discoveredTitle = extractFirstMarkdownTitle(markdown);
   const titleFromFrontmatter = stringFrontmatter(frontmatter.title);
   const renderMarkdown = stripLeadingTitleHeading(markdown, titleFromFrontmatter ?? discoveredTitle);
-  const kind = inferKind(file, config);
-  const route = createRouteInfo(file, kind, config);
   const routePath = route.routePath;
+  const currentRoute: SvedocsRouteTarget = {
+    kind,
+    sourcePath: file,
+    routePath,
+    scopePath: route.scopePath,
+    ...(route.locale ? { locale: route.locale } : {})
+  };
   const compiled = await compileMarkdown(renderMarkdown, {
     ...markdownOptions,
-    messages: createMarkdownMessages(config, route.locale)
+    messages: createMarkdownMessages(config, route.locale),
+    resolveHref: (href) => resolveSvedocsHref({
+      href,
+      pages: routeTargets,
+      config,
+      page: currentRoute
+    }).href
   });
   const title = titleFromFrontmatter ?? discoveredTitle ?? compiled.title ?? titleFromRoute(routePath);
   const navTitle = stringFrontmatter(frontmatter.navTitle) ?? stringFrontmatter(frontmatter.nav_title);
@@ -237,7 +262,8 @@ function createMarkdownMessages(config: SvedocsResolvedConfig, locale: string | 
     'diff.label': messages['diff.label'],
     'diff.aria': messages['diff.aria'],
     'diff.before': messages['diff.before'],
-    'diff.after': messages['diff.after']
+    'diff.after': messages['diff.after'],
+    'heading.anchor': messages['heading.anchor']
   };
 }
 

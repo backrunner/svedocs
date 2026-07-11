@@ -6,7 +6,7 @@ import { get } from 'svelte/store';
 import { createAskResponse, createCloudflareAiSearchAiProvider, createCloudflareKvRateLimiter, createConfiguredAiProvider, createConfiguredAskResponse, createMemoryRateLimiter, createMockAiProvider, createOpenAiCompatibleProvider, createWorkersAiProvider } from '../src/ai';
 import { createCloudflareEnvDts, createWranglerJson, readSvedocsBuildMode, svedocsPagePrerender, svedocsSsr, svedocsTrailingSlash } from '../src/cloudflare';
 import { defineConfig, loadSvedocsConfigFile, validateSvedocsConfig } from '../src/config';
-import { checkPackagePublication, createPageTree, createSearchRecords, flattenPageTree, loadSvedocsContent, resolveSvedocsConfig } from '../src/core';
+import { checkPackagePublication, createPageTree, createSearchRecords, createSvedocsRouteEntries, flattenPageTree, loadSvedocsContent, resolveSvedocsConfig, resolveSvedocsHref, resolveSvedocsPageRoute } from '../src/core';
 import { createConfiguredOgImageFormat, createConfiguredOgImageTemplate, createConfiguredPageOgImageEntries, createJsonLdScript, createOgPng, createPageAlternates, createPageMetadata, createPageOgImagePath, createPageOgImageResponse, createRobotsResponse, createRobotsTxt, createSatoriOgSvg, createSitemapResponse, createSitemapXml, serializeJsonLd } from '../src/og';
 import { compileMarkdown, createDiffRows, createDiffSplitRows } from '../src/mdx/compile';
 import { createAlgoliaSearchProvider, createCloudflareAiSearchDocuments, createCloudflareAiSearchProvider, createConfiguredSearchProvider, createConfiguredSearchResponse, createSearchResponse, createTypesenseSearchProvider, searchRecords, syncCloudflareAiSearchIndex } from '../src/search';
@@ -182,6 +182,122 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(resolveLocalizedHref('/', context)).toBe('/zh');
     expect(resolveLocaleCodeFromPath('/docs/zh/missing', config)).toBe('zh');
     expect(resolveLocaleCodeFromPath('/missing', config)).toBe('en');
+  });
+
+  it('resolves localized routes and redirects missing translations to the default locale', () => {
+    const config = resolveSvedocsConfig({
+      i18n: {
+        defaultLocale: 'en',
+        locales: ['en', 'zh']
+      }
+    });
+    const pages = [
+      createFixturePage({ id: 'guide-en', routePath: '/docs/guide', scopePath: '/docs/guide', locale: 'en', kind: 'doc' }),
+      createFixturePage({ id: 'guide-zh', routePath: '/docs/zh/guide', scopePath: '/docs/guide', locale: 'zh', kind: 'doc' }),
+      createFixturePage({ id: 'install-en', routePath: '/docs/install', scopePath: '/docs/install', locale: 'en', kind: 'doc' }),
+      createFixturePage({ id: 'home-en', routePath: '/', scopePath: '/', locale: 'en', kind: 'page' })
+    ];
+
+    expect(resolveSvedocsPageRoute('/docs/zh/guide', pages, config)).toMatchObject({
+      status: 'found',
+      page: { id: 'guide-zh' }
+    });
+    expect(resolveSvedocsPageRoute('/docs/zh/install', pages, config)).toMatchObject({
+      status: 'redirect',
+      location: '/docs/install',
+      requestedLocale: 'zh',
+      resolvedLocale: 'en'
+    });
+    expect(resolveSvedocsPageRoute('/zh', pages, config)).toMatchObject({
+      status: 'redirect',
+      location: '/'
+    });
+    expect(resolveSvedocsPageRoute('/docs/zh/missing', pages, config)).toEqual({
+      status: 'missing',
+      requestedLocale: 'zh'
+    });
+    expect(resolveSvedocsPageRoute('/docs/not-a-locale/install', pages, config)).toEqual({ status: 'missing' });
+    expect(createSvedocsRouteEntries(pages, config)).toEqual([
+      '/docs/guide',
+      '/docs/zh/guide',
+      '/docs/install',
+      '/docs/zh/install',
+      '/zh'
+    ]);
+
+    const prefixedConfig = resolveSvedocsConfig({
+      i18n: {
+        defaultLocale: 'en-US',
+        prefixDefaultLocale: true,
+        locales: [
+          { code: 'en-US', path: 'en' },
+          { code: 'zh-Hans', path: 'zh' }
+        ]
+      }
+    });
+    const prefixedPages = [
+      createFixturePage({ id: 'install-en', routePath: '/docs/en/install', scopePath: '/docs/install', locale: 'en-US', kind: 'doc' }),
+      createFixturePage({ id: 'install-zh', routePath: '/docs/zh/install', scopePath: '/docs/install', locale: 'zh-Hans', kind: 'doc' }),
+      createFixturePage({ id: 'missing-en', routePath: '/docs/en/missing', scopePath: '/docs/missing', locale: 'en-US', kind: 'doc' })
+    ];
+    expect(resolveSvedocsPageRoute('/docs/zh/install', prefixedPages, prefixedConfig)).toMatchObject({
+      status: 'found',
+      page: { id: 'install-zh' }
+    });
+    expect(resolveSvedocsPageRoute('/docs/zh/missing', prefixedPages, prefixedConfig)).toMatchObject({
+      status: 'redirect',
+      location: '/docs/en/missing',
+      requestedLocale: 'zh-Hans',
+      resolvedLocale: 'en-US'
+    });
+  });
+
+  it('localizes authored links, preserves suffixes, and respects explicit locale routes', () => {
+    const config = resolveSvedocsConfig({
+      i18n: {
+        defaultLocale: 'en',
+        locales: ['en', 'zh']
+      }
+    });
+    const current = createFixturePage({
+      id: 'guide-zh',
+      sourcePath: 'content/docs/zh/guides/intro.md',
+      routePath: '/docs/zh/guides/intro',
+      scopePath: '/docs/guides/intro',
+      locale: 'zh',
+      kind: 'doc'
+    });
+    const pages = [
+      current,
+      createFixturePage({ id: 'install-en', routePath: '/docs/install', scopePath: '/docs/install', locale: 'en', kind: 'doc' }),
+      createFixturePage({ id: 'api-en', routePath: '/docs/api', scopePath: '/docs/api', locale: 'en', kind: 'doc' }),
+      createFixturePage({ id: 'api-zh', routePath: '/docs/zh/api', scopePath: '/docs/api', locale: 'zh', kind: 'doc' }),
+      createFixturePage({ id: 'about-en', routePath: '/about', scopePath: '/about', locale: 'en', kind: 'page' }),
+      createFixturePage({ id: 'about-zh', routePath: '/zh/about', scopePath: '/about', locale: 'zh', kind: 'page' })
+    ];
+
+    expect(resolveSvedocsHref({ href: '../api.md?tab=one#client', pages, config, page: current })).toMatchObject({
+      href: '/docs/zh/api?tab=one#client',
+      page: { id: 'api-zh' },
+      fallback: false
+    });
+    expect(resolveSvedocsHref({ href: '/docs/install#requirements', pages, config, page: current })).toMatchObject({
+      href: '/docs/install#requirements',
+      page: { id: 'install-en' },
+      fallback: true
+    });
+    expect(resolveSvedocsHref({ href: '/docs/zh/api', pages, config, page: pages[1]! })).toMatchObject({
+      href: '/docs/zh/api',
+      page: { id: 'api-zh' },
+      fallback: false
+    });
+    expect(resolveSvedocsHref({ href: '/about', pages, config, page: current })).toMatchObject({
+      href: '/zh/about',
+      page: { id: 'about-zh', kind: 'page' },
+      fallback: false
+    });
+    expect(resolveSvedocsHref({ href: '#local', pages, config, page: current })).toEqual({ href: '#local', fallback: false });
+    expect(resolveSvedocsHref({ href: '/images/guide.png', pages, config, page: current })).toEqual({ href: '/images/guide.png', fallback: false });
   });
 
   it('rejects ambiguous locale configuration before content discovery', () => {
@@ -1123,6 +1239,44 @@ describe('svedocs Batch 0 skeleton', () => {
     });
 
     expect(manifest.issues).toEqual([]);
+  });
+
+  it('rewrites localized markdown links and falls back to default-locale routes', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-i18n-links-'));
+    try {
+      await mkdir(path.join(tmp, 'content/docs/en'), { recursive: true });
+      await mkdir(path.join(tmp, 'content/docs/zh'), { recursive: true });
+      await mkdir(path.join(tmp, 'content/pages/en'), { recursive: true });
+      await mkdir(path.join(tmp, 'content/pages/zh'), { recursive: true });
+      await writeFile(path.join(tmp, 'content/docs/en/index.md'), '---\ndescription: Docs.\n---\n# Docs\n', 'utf8');
+      await writeFile(path.join(tmp, 'content/docs/en/api.md'), '---\ndescription: API.\n---\n# API\n', 'utf8');
+      await writeFile(path.join(tmp, 'content/docs/en/install.md'), '---\ndescription: Install.\n---\n# Install\n\n## Requirements\n', 'utf8');
+      await writeFile(
+        path.join(tmp, 'content/docs/zh/index.md'),
+        '---\ndescription: 中文文档。\n---\n# 中文文档\n\n[API](./api.md) [安装](./install.md#requirements) [关于](/about)\n',
+        'utf8'
+      );
+      await writeFile(path.join(tmp, 'content/docs/zh/api.md'), '---\ndescription: 中文 API。\n---\n# API\n', 'utf8');
+      await writeFile(path.join(tmp, 'content/pages/en/about.md'), '---\ndescription: About.\n---\n# About\n', 'utf8');
+      await writeFile(path.join(tmp, 'content/pages/zh/about.md'), '---\ndescription: 关于。\n---\n# 关于\n', 'utf8');
+      const manifest = await loadSvedocsContent({
+        projectRoot: tmp,
+        config: {
+          i18n: {
+            defaultLocale: 'en',
+            locales: ['en', 'zh']
+          }
+        }
+      });
+      const zhPage = manifest.pages.find((page) => page.routePath === '/docs/zh');
+
+      expect(zhPage?.html).toContain('href="/docs/zh/api"');
+      expect(zhPage?.html).toContain('href="/docs/install#requirements"');
+      expect(zhPage?.html).toContain('href="/zh/about"');
+      expect(manifest.issues.filter((issue) => issue.code === 'broken-link' || issue.code === 'broken-anchor')).toEqual([]);
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
   });
 
   it('reports missing translations for public non-doc pages', async () => {
@@ -2077,6 +2231,34 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(compiled.html).toContain('class="sd-link-card"');
     expect(compiled.html).toContain('class="sd-link-card-title"');
     expect(compiled.html).toContain('Metadata, sitemap, and robots.');
+  });
+
+  it('adds accessible link icons to section headings without rendering hash text', async () => {
+    const compiled = await compileMarkdown([
+      '# Page title',
+      '',
+      '## Install',
+      '',
+      '### Install',
+      '',
+      '##### Not linked'
+    ].join('\n'), {
+      messages: {
+        'code.copy': 'Copy code',
+        'code.copyDiff': 'Copy diff',
+        'diff.label': 'Diff',
+        'diff.aria': '{title} diff',
+        'diff.before': 'Before',
+        'diff.after': 'After',
+        'heading.anchor': 'Link to this section'
+      }
+    });
+
+    expect(compiled.html).toContain('<h2 id="install">Install<a class="sd-heading-anchor" href="#install" aria-label="Link to this section"><svg');
+    expect(compiled.html).toContain('<h3 id="install-1">Install<a class="sd-heading-anchor" href="#install-1" aria-label="Link to this section"><svg');
+    expect(compiled.html).not.toContain('>#</a>');
+    expect(compiled.html).not.toContain('<h1 id="page-title">Page title<a');
+    expect(compiled.html).not.toContain('<h5 id="not-linked">Not linked<a');
   });
 
   it('renders Ask AI event streams and applies rate limits', async () => {

@@ -133,6 +133,7 @@ export default defineConfig({
         'ask.fallbackReady': 'Ask AI 已准备好。连接 {provider} 并索引文档后，就能基于引用回答这个问题。',
         'ask.sourceTitle': '来源 {index}',
         'toc.label': '本页内容',
+        'heading.anchor': '链接到此章节',
         'article.kind.doc': '文档',
         'article.kind.page': '页面',
         'article.breadcrumb': '面包屑',

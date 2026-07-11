@@ -1,11 +1,11 @@
 import { mdsvex } from 'mdsvex';
 import type { MdsvexOptions } from 'mdsvex';
-import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeKatex from 'rehype-katex';
 import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import { extractCodeBlocks, rehypeCodeBlocks, remarkSvedocsCodeBlocks } from './mdx/code.js';
+import { rehypeSvedocsHeadingAnchors } from './mdx/headings.js';
 import { rehypeSvedocsLinks } from './mdx/links.js';
 
 export const svedocsContentExtensions = ['.md', '.mdx', '.svx'] as const;
@@ -36,7 +36,14 @@ export function svedocsPreprocess(options: MdsvexOptions = {}): SvedocsPreproces
 export function createSvedocsMdsvexOptions(
   source: string,
   options: MdsvexOptions = {},
-  svedocsOptions: { codeTheme?: string; codeThemes?: { light?: string; dark?: string }; shikiTransformers?: unknown[]; codeCopyButton?: boolean } = {}
+  svedocsOptions: {
+    codeTheme?: string;
+    codeThemes?: { light?: string; dark?: string };
+    shikiTransformers?: unknown[];
+    codeCopyButton?: boolean;
+    headingAnchorLabel?: string;
+    resolveHref?: (href: string) => string;
+  } = {}
 ): MdsvexOptions {
   const codeBlocks = extractCodeBlocks(source);
   return {
@@ -55,22 +62,9 @@ export function createSvedocsMdsvexOptions(
     ] as any,
     rehypePlugins: [
       rehypeSlug,
-      [
-        rehypeAutolinkHeadings,
-        {
-          behavior: 'append',
-          properties: {
-            className: ['sd-heading-anchor'],
-            ariaHidden: 'true'
-          },
-          content: {
-            type: 'text',
-            value: '#'
-          }
-        }
-      ],
+      [rehypeSvedocsHeadingAnchors, { label: svedocsOptions.headingAnchorLabel }],
       rehypeKatex,
-      rehypeSvedocsLinks,
+      [rehypeSvedocsLinks, { resolveHref: svedocsOptions.resolveHref }],
       [rehypeCodeBlocks, codeBlocks],
       ...((options.rehypePlugins ?? []) as any[])
     ] as any

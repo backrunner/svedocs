@@ -146,6 +146,7 @@ export interface SvedocsMessages {
   'ask.fallbackReady': string;
   'ask.sourceTitle': string;
   'toc.label': string;
+  'heading.anchor': string;
   'article.kind.doc': string;
   'article.kind.page': string;
   'article.breadcrumb': string;

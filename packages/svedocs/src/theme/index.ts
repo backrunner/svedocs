@@ -26,6 +26,7 @@ export { default as TableOfContents } from './TableOfContents.svelte';
 export { default as Footer } from './Footer.svelte';
 export { default as FooterLinks } from './FooterLinks.svelte';
 export { default as ScopeSwitcher } from './ScopeSwitcher.svelte';
+export { default as LocalizedLink } from './LocalizedLink.svelte';
 export { default as FormField } from './FormField.svelte';
 export { default as Input } from './Input.svelte';
 export { default as Textarea } from './Textarea.svelte';

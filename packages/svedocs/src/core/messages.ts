@@ -52,6 +52,7 @@ export const defaultSvedocsMessages = {
   'ask.fallbackReady': 'Ask AI is ready. Connect {provider} and index your docs to answer this question with citations.',
   'ask.sourceTitle': 'Source {index}',
   'toc.label': 'On this page',
+  'heading.anchor': 'Link to this section',
   'article.kind.doc': 'Documentation',
   'article.kind.page': 'Page',
   'article.breadcrumb': 'Breadcrumb',

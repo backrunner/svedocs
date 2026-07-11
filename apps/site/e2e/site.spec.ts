@@ -52,6 +52,7 @@ test('serves the official home and docs entry', async ({ request }) => {
 test('localizes interactive controls on zh docs pages', async ({ page }) => {
   await page.goto('/docs/zh');
 
+  await expect(page).toHaveURL(/\/docs\/zh$/);
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
   await expect(page.locator('a.sd-brand')).toHaveAttribute('href', '/zh');
@@ -59,6 +60,14 @@ test('localizes interactive controls on zh docs pages', async ({ page }) => {
   await expect(page.getByRole('button', { name: '搜索文档' })).toBeVisible();
   await expect(page.getByRole('button', { name: '问 AI' })).toBeVisible();
   await expect(page.getByLabel('本页内容')).toBeVisible();
+
+  const sectionHeading = page.getByRole('heading', { name: '创建站点 链接到此章节' });
+  const headingAnchor = sectionHeading.getByRole('link', { name: '链接到此章节' });
+  await expect(headingAnchor).toHaveCSS('opacity', '0');
+  await sectionHeading.hover();
+  await expect(headingAnchor).toHaveCSS('opacity', '1');
+  await expect(headingAnchor.locator('svg')).toBeVisible();
+  await expect(headingAnchor).not.toHaveText('#');
 
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await expect(page.getByRole('button', { name: '回到顶部' })).toBeVisible();

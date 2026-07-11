@@ -6,7 +6,7 @@ import { compile as compileMdsvex } from 'mdsvex';
 import type { MdsvexOptions } from 'mdsvex';
 import { loadConfigFromFile, type Plugin } from 'vite';
 import type { SvedocsConfig } from './config.js';
-import { loadSvedocsContent, type SvedocsContentManifest, type SvedocsPage } from './core.js';
+import { loadSvedocsContent, resolveSvedocsHref, type SvedocsContentManifest, type SvedocsPage } from './core.js';
 import { createSvedocsMdsvexOptions } from './svelte.js';
 import type { SvedocsThemeComponentMap } from './theme/types.js';
 
@@ -347,6 +347,9 @@ async function loadPageComponent(
   const raw = await readFile(path.join(root, page.sourcePath), 'utf8');
   const parsed = matter(raw);
   const source = injectSvedocsComponentImports(stripFirstTitleHeading(parsed.content), components);
+  const headingAnchorLabel = manifestConfig.i18n.messages[
+    page.locale ?? manifestConfig.i18n.defaultLocale ?? 'en'
+  ]?.['heading.anchor'];
   try {
     const compiled = await compileMdsvex(source, {
       filename: page.sourcePath,
@@ -359,6 +362,13 @@ async function loadPageComponent(
             dark: manifestConfig.theme.codeTheme.dark
           },
           codeCopyButton: manifestConfig.theme.code.copyButton,
+          ...(headingAnchorLabel ? { headingAnchorLabel } : {}),
+          resolveHref: (href) => resolveSvedocsHref({
+            href,
+            pages,
+            config: manifestConfig,
+            page
+          }).href,
           ...(rawConfig?.markdown?.shiki?.transformers ? { shikiTransformers: rawConfig.markdown.shiki.transformers } : {})
         }
       )

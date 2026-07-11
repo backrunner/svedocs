@@ -1,22 +1,14 @@
-import path from 'node:path';
 import GithubSlugger from 'github-slugger';
 import type { SvedocsContentIssue, SvedocsContentManifest, SvedocsLinkReference, SvedocsPage } from './types.js';
 import { extractMarkdownLinksFromAst } from '../mdx/ast.js';
-import { normalizePath, stripContentExtension } from './utils.js';
+import { resolveSvedocsHref } from './routes.js';
 
 export function extractMarkdownLinks(markdown: string): SvedocsLinkReference[] {
   return extractMarkdownLinksFromAst(markdown);
 }
 
 export function createLinkCheckContext(manifest: SvedocsContentManifest) {
-  const routeMap = new Map(manifest.pages.map((page) => [page.routePath, page]));
-  const sourceMap = new Map<string, SvedocsPage>();
-  for (const page of manifest.pages) {
-    const source = stripContentExtension(normalizePath(page.sourcePath));
-    sourceMap.set(source, page);
-    if (source.endsWith('/index')) sourceMap.set(source.slice(0, -'/index'.length), page);
-  }
-  return { routeMap, sourceMap };
+  return manifest;
 }
 
 export function checkLink(
@@ -56,16 +48,13 @@ function resolveLinkTarget(
 ): { page: SvedocsPage | undefined; hash?: string } {
   const parts = splitHref(link.href);
   if (!parts.pathname && parts.hash) return { page, hash: parts.hash };
-  if (parts.pathname.startsWith('/')) {
-    return {
-      page: context.routeMap.get(normalizeRouteTarget(parts.pathname)),
-      ...(parts.hash ? { hash: parts.hash } : {})
-    };
-  }
-  const sourceTarget = resolveSourceTarget(page, parts.pathname, context.sourceMap);
-  if (sourceTarget) return { page: sourceTarget, ...(parts.hash ? { hash: parts.hash } : {}) };
-  const routeTarget = resolveRouteTarget(page, parts.pathname, context.routeMap);
-  return { page: routeTarget, ...(parts.hash ? { hash: parts.hash } : {}) };
+  const resolved = resolveSvedocsHref({
+    href: link.href,
+    page,
+    pages: context.pages,
+    config: context.config
+  });
+  return { page: resolved.page, ...(parts.hash ? { hash: parts.hash } : {}) };
 }
 
 function splitHref(href: string): { pathname: string; hash?: string } {
@@ -76,36 +65,6 @@ function splitHref(href: string): { pathname: string; hash?: string } {
     pathname,
     ...(hash ? { hash: decodeURIComponent(hash) } : {})
   };
-}
-
-function resolveSourceTarget(
-  page: SvedocsPage,
-  pathname: string,
-  sourceMap: Map<string, SvedocsPage>
-): SvedocsPage | undefined {
-  if (!pathname) return page;
-  const sourceDir = path.posix.dirname(normalizePath(page.sourcePath));
-  const target = stripContentExtension(path.posix.normalize(path.posix.join(sourceDir, pathname)));
-  return sourceMap.get(target) ?? sourceMap.get(`${target}/index`);
-}
-
-function resolveRouteTarget(
-  page: SvedocsPage,
-  pathname: string,
-  routeMap: Map<string, SvedocsPage>
-): SvedocsPage | undefined {
-  if (!pathname) return page;
-  const base = page.routePath === '/' ? '/' : path.posix.dirname(page.routePath);
-  const target = normalizeRouteTarget(path.posix.join(base, pathname));
-  return routeMap.get(target);
-}
-
-function normalizeRouteTarget(route: string): string {
-  const normalized = path.posix
-    .normalize(`/${route.replace(/^\/+/, '')}`)
-    .replace(/\.(md|mdx|svx|html)$/i, '')
-    .replace(/\/index$/, '');
-  return normalized === '/' ? '/' : normalized.replace(/\/$/, '');
 }
 
 function knownAnchors(page: SvedocsPage): Set<string> {

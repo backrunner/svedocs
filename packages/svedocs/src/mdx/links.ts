@@ -21,12 +21,14 @@ const externalLinkIcon = {
   ]
 };
 
-export function rehypeSvedocsLinks() {
+export function rehypeSvedocsLinks(options: { resolveHref?: (href: string) => string } = {}) {
   return (tree: unknown) => {
     visit(tree as any, 'element', (node: any, index: number | undefined, parent: any) => {
       if (node.tagName !== 'a') return;
-      const href = typeof node.properties?.href === 'string' ? node.properties.href : '';
+      const originalHref = typeof node.properties?.href === 'string' ? node.properties.href : '';
+      const href = originalHref ? options.resolveHref?.(originalHref) ?? originalHref : '';
       if (!href) return;
+      if (href !== originalHref) node.properties.href = href;
 
       if (isInternalHref(href) && shouldRenderAsLinkCard(node, parent)) {
         const label = nodeToText(node).trim() || href;
