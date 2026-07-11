@@ -54,6 +54,7 @@ export function createConfiguredAiProvider(options: CreateConfiguredAiProviderOp
       return createCloudflareAiSearchAiProvider({
         binding,
         instanceName: options.config.cloudflare.aiSearch.instanceName,
+        namespace: Boolean(options.config.cloudflare.aiSearch.namespace),
         ...(systemPrompt ? { systemPrompt } : {}),
         ...(typeof maxResults === 'number' ? { maxResults } : {})
       });

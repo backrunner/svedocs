@@ -4,7 +4,7 @@
   import type { SvedocsSearchRecord } from '../core/types.js';
   import type { SearchResult, SearchScope } from '../search/types.js';
   import { createSearchController, fallbackTranslate } from './headless.js';
-  import { portal } from './portal.js';
+  import { lockDocumentScroll, portal } from './portal.js';
   import type { SvedocsSearchController, SvedocsThemeContext } from './types.js';
 
   export let records: SvedocsSearchRecord[] = [];
@@ -31,6 +31,7 @@
   let previousFocus: HTMLElement | undefined;
   let boundController: SvedocsSearchController | undefined;
   let unsubscribeController: (() => void) | undefined;
+  let releaseScrollLock: (() => void) | undefined;
 
   $: t = context?.t ?? fallbackTranslate;
   $: activeController = controller ?? internalController;
@@ -86,7 +87,14 @@
     unsubscribeController?.();
     boundController = nextController;
     const unsubscribers = [
-      nextController.open.subscribe((value) => (open = value)),
+      nextController.open.subscribe((value) => {
+        open = value;
+        if (value && !releaseScrollLock) releaseScrollLock = lockDocumentScroll();
+        if (!value && releaseScrollLock) {
+          releaseScrollLock();
+          releaseScrollLock = undefined;
+        }
+      }),
       nextController.query.subscribe((value) => (query = value)),
       nextController.activeIndex.subscribe((value) => (activeIndex = value)),
       nextController.results.subscribe((value) => (results = value)),
@@ -110,6 +118,7 @@
 
   onDestroy(() => {
     unsubscribeController?.();
+    releaseScrollLock?.();
   });
 
   function trapFocus(event: KeyboardEvent, root: HTMLElement | undefined) {

@@ -810,6 +810,38 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(assistant?.citations?.[0]?.url).toBe('/docs/install');
   });
 
+  it('fills error-only Ask AI streams with a fallback message', async () => {
+    const config = resolveSvedocsConfig({
+      ai: {
+        enabled: true,
+        provider: 'cloudflare-ai-search'
+      }
+    });
+    const rpcError = 'The RPC receiver does not implement the method "get".';
+    const controller = createAskAiController({
+      config,
+      buildMode: 'edge',
+      async fetcher() {
+        return new Response([
+          `event: error\ndata: ${JSON.stringify({ error: rpcError })}`,
+          'event: done\ndata: {}'
+        ].join('\n\n'), {
+          status: 500,
+          headers: {
+            'content-type': 'text/event-stream'
+          }
+        });
+      }
+    });
+
+    await controller.send('install');
+
+    const assistant = get(controller.messages).at(-1);
+    expect(assistant?.role).toBe('assistant');
+    expect(assistant?.content).not.toBe('');
+    expect(assistant?.error).toBe(rpcError);
+  });
+
   it('keeps Ask AI page tools hidden and inert when AI is disabled', () => {
     const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
     let dispatched = 0;
@@ -1842,6 +1874,39 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(scoped.map((result) => result.url)).toEqual(['/docs/zh/install']);
   });
 
+  it('does not probe direct Cloudflare AI Search RPC bindings for namespace methods', async () => {
+    let getCalls = 0;
+    const binding = new Proxy({
+      async search() {
+        return {
+          chunks: [{
+            text: 'Direct instance result.',
+            item: { metadata: { title: 'Direct', url: '/docs/direct' } }
+          }]
+        };
+      }
+    }, {
+      has(target, property) {
+        return property === 'get' || Reflect.has(target, property);
+      },
+      get(target, property, receiver) {
+        if (property === 'get') {
+          return () => {
+            getCalls += 1;
+            throw new Error('The RPC receiver does not implement the method "get".');
+          };
+        }
+        return Reflect.get(target, property, receiver);
+      }
+    });
+    const provider = createCloudflareAiSearchProvider({ binding });
+
+    const results = await provider.search({ query: 'direct' });
+
+    expect(getCalls).toBe(0);
+    expect(results[0]?.url).toBe('/docs/direct');
+  });
+
   it('queries Algolia as an optional hosted search provider', async () => {
     let requestBody: { query?: string; hitsPerPage?: number; filters?: string } | undefined;
     const provider = createAlgoliaSearchProvider({
@@ -2020,7 +2085,7 @@ describe('svedocs Batch 0 skeleton', () => {
   it('routes configured Cloudflare AI Search bindings from named env', async () => {
     const config = resolveSvedocsConfig({
       search: { provider: 'cloudflare-ai-search' },
-      cloudflare: { aiSearch: { binding: 'DOCS_SEARCH', instanceName: 'docs' } }
+      cloudflare: { aiSearch: { binding: 'DOCS_SEARCH', instanceName: 'docs', namespace: 'production-docs' } }
     });
     const provider = createConfiguredSearchProvider({
       config,
@@ -2384,6 +2449,37 @@ describe('svedocs Batch 0 skeleton', () => {
       title: 'Install',
       url: '/docs/install'
     });
+  });
+
+  it('does not probe direct Cloudflare AI Search chat RPC bindings for namespace methods', async () => {
+    let getCalls = 0;
+    const binding = new Proxy({
+      async search() {
+        return { response: 'Search fallback.' };
+      },
+      async chatCompletions() {
+        return { answer: 'Direct chat answer.' };
+      }
+    }, {
+      has(target, property) {
+        return property === 'get' || Reflect.has(target, property);
+      },
+      get(target, property, receiver) {
+        if (property === 'get') {
+          return () => {
+            getCalls += 1;
+            throw new Error('The RPC receiver does not implement the method "get".');
+          };
+        }
+        return Reflect.get(target, property, receiver);
+      }
+    });
+    const provider = createCloudflareAiSearchAiProvider({ binding });
+
+    const result = await provider.ask({ question: 'How do I install?' });
+
+    expect(getCalls).toBe(0);
+    expect(result.answer).toBe('Direct chat answer.');
   });
 
   it('passes Ask AI scope into Cloudflare AI Search retrieval filters and citations', async () => {

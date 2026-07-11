@@ -1,7 +1,7 @@
 import type { SvedocsSearchRecord } from '../core.js';
 import { createCloudflareAiSearchScopeFilters, normalizeCloudflareAiSearchResults } from '../search/cloudflare.js';
 import { matchesSearchScope, searchRecords } from '../search.js';
-import type { CloudflareAiSearchChatOutput, CloudflareAiSearchInput } from '../search.js';
+import type { CloudflareAiSearchChatOutput, CloudflareAiSearchInput, CloudflareAiSearchNamespace } from '../search.js';
 import type {
   AiProvider,
   AiSearchBinding,
@@ -29,6 +29,7 @@ export function createMockAiProvider(): AiProvider {
 export function createCloudflareAiSearchAiProvider(input: {
   binding: AiSearchBinding;
   instanceName?: string;
+  namespace?: boolean;
   systemPrompt?: string;
   model?: string;
   maxResults?: number;
@@ -38,7 +39,7 @@ export function createCloudflareAiSearchAiProvider(input: {
 
   async function ask(question: AskInput) {
     const conversation = buildChatMessages(systemPrompt, question);
-    const instance = resolveAiChatInstance(input.binding, input.instanceName);
+    const instance = resolveAiChatInstance(input.binding, input.instanceName, input.namespace);
     if (!instance.chatCompletions) {
       const result = await instance.search({
         messages: conversation,
@@ -68,7 +69,7 @@ export function createCloudflareAiSearchAiProvider(input: {
     name: 'cloudflare-ai-search',
     ask,
     async stream(question) {
-      const instance = resolveAiChatInstance(input.binding, input.instanceName);
+      const instance = resolveAiChatInstance(input.binding, input.instanceName, input.namespace);
       if (!instance.chatCompletions) {
         return createSvedocsAnswerStream(await ask(question));
       }
@@ -151,9 +152,12 @@ function createSvedocsAnswerStream(result: { answer: string; citations: AskCitat
 
 function resolveAiChatInstance(
   binding: AiSearchBinding,
-  instanceName = 'svedocs'
+  instanceName = 'svedocs',
+  namespace = false
 ): CloudflareAiChatInstance {
-  return ('get' in binding ? binding.get(instanceName) : binding) as CloudflareAiChatInstance;
+  return namespace
+    ? (binding as CloudflareAiSearchNamespace).get(instanceName) as CloudflareAiChatInstance
+    : binding as CloudflareAiChatInstance;
 }
 
 function normalizeCitations(citations: Array<{ title?: string; url?: string; section?: string }> | undefined): AskCitation[] {

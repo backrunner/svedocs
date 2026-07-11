@@ -58,7 +58,8 @@ export function createConfiguredSearchProvider(options: CreateConfiguredSearchPr
     if (binding) {
       return createCloudflareAiSearchProvider({
         binding,
-        instanceName: options.config.cloudflare.aiSearch.instanceName
+        instanceName: options.config.cloudflare.aiSearch.instanceName,
+        namespace: Boolean(options.config.cloudflare.aiSearch.namespace)
       });
     }
     return createLocalSearchProvider(records);

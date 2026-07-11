@@ -16,6 +16,7 @@ import { createExcerpt, stringMetadata, stringifyMetadata } from './utils.js';
 export function createCloudflareAiSearchProvider(input: {
   binding: CloudflareAiSearchInstance | CloudflareAiSearchNamespace;
   instanceName?: string;
+  namespace?: boolean;
 }): SearchProvider {
   return {
     name: 'cloudflare-ai-search',
@@ -39,7 +40,7 @@ export function createCloudflareAiSearchProvider(input: {
             ...(filters ? { filters } : {})
           }
         }
-      });
+      }, input.namespace);
       return normalizeCloudflareAiSearchResults(result, query.query)
         .filter((record) => matchesSearchScope({ metadata: record.metadata } as SvedocsSearchRecord, query));
     }
@@ -49,9 +50,10 @@ export function createCloudflareAiSearchProvider(input: {
 export async function runCloudflareAiSearch(
   binding: CloudflareAiSearchInstance | CloudflareAiSearchNamespace,
   instanceName = 'svedocs',
-  input: CloudflareAiSearchInput
+  input: CloudflareAiSearchInput,
+  namespace = false
 ): Promise<CloudflareAiSearchOutput> {
-  const instance = resolveAiSearchInstance(binding, instanceName);
+  const instance = resolveAiSearchInstance(binding, instanceName, namespace);
   const aiSearchOptions = createAiSearchOptions(input);
   const messages = input.messages;
   return instance.search({
@@ -70,9 +72,12 @@ export function normalizeCloudflareAiSearchResults(result: CloudflareAiSearchOut
 
 export function resolveAiSearchInstance(
   binding: CloudflareAiSearchInstance | CloudflareAiSearchNamespace,
-  instanceName = 'svedocs'
+  instanceName = 'svedocs',
+  namespace = false
 ): CloudflareAiSearchInstance {
-  return 'get' in binding ? binding.get(instanceName) : binding;
+  return namespace
+    ? (binding as CloudflareAiSearchNamespace).get(instanceName)
+    : binding as CloudflareAiSearchInstance;
 }
 
 export function createCloudflareAiSearchScopeFilters(scope: SearchScope = {}): Record<string, unknown> | undefined {

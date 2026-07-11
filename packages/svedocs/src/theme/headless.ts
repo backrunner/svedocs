@@ -516,9 +516,11 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
 
       if (response.headers.get('content-type')?.includes('text/event-stream')) {
         await readAskStream(response, assistantMsg.id, currentOptions.t);
-        if (!response.ok && !findMessage(assistantMsg.id)?.error) {
-          throw new Error(currentOptions.t('ask.requestError', { status: response.status }));
+        const streamedMessage = findMessage(assistantMsg.id);
+        if (!response.ok) {
+          throw new Error(streamedMessage?.error ?? currentOptions.t('ask.requestError', { status: response.status }));
         }
+        if (streamedMessage?.error && !streamedMessage.content.trim()) throw new Error(streamedMessage.error);
         return;
       }
       if (!response.ok) {

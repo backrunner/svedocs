@@ -180,15 +180,17 @@
         {/if}
         {#each messages as message (message.id)}
           <div class="sd-chat-bubble" data-role={message.role}>
-            <div class="sd-chat-bubble-body">
-              {#if message.role === 'assistant' && !message.content && loading && message.id === messages[messages.length - 1]?.id}
-                <span class="sd-chat-typing" aria-label={t('ask.thinking')}>
-                  <span></span><span></span><span></span>
-                </span>
-              {:else}
-                {message.content}
-              {/if}
-            </div>
+            {#if message.content || (message.role === 'assistant' && loading && message.id === messages[messages.length - 1]?.id)}
+              <div class="sd-chat-bubble-body">
+                {#if !message.content}
+                  <span class="sd-chat-typing" aria-label={t('ask.thinking')}>
+                    <span></span><span></span><span></span>
+                  </span>
+                {:else}
+                  {message.content}
+                {/if}
+              </div>
+            {/if}
             {#if message.citations && message.citations.length > 0}
               <div class="sd-chat-citations">
                 {#each message.citations as citation}
