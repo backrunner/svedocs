@@ -365,6 +365,8 @@ svedocs({
 
 ## 无样式工具
 
+自定义 Svelte 组件需要复用 Markdown 和默认导航的当前语言、默认语言链接解析时，可以向 `LocalizedLink` 传入 `SvedocsThemeContext`。
+
 | 工具 | 用途 |
 | --- | --- |
 | `createThemeContext(input)` | 为自定义根组件或布局创建共享上下文。 |

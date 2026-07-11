@@ -365,6 +365,8 @@ Use `createPageToolsController(config)` when you want the same scroll state and 
 
 ## Headless helpers
 
+Use `LocalizedLink` with a `SvedocsThemeContext` when a custom Svelte component needs the same current-locale and default-locale link resolution as Markdown and the default navigation.
+
 | Helper | Use it for |
 | --- | --- |
 | `createThemeContext(input)` | Build the shared context object for custom roots/layouts. |

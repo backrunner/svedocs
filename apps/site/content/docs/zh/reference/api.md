@@ -64,9 +64,10 @@ import {
   createSearchRecords,
   checkSvedocsContent
 } from 'svedocs/core';
+import { resolveSvedocsPageRoute, resolveSvedocsHref } from 'svedocs/routes';
 ```
 
-核心 API 包含内容加载、导航、链接、检查和搜索记录。页面元数据会带上语言信息，以及内容警告使用的生命周期字段。
+核心 API 包含内容加载、导航、链接、检查和搜索记录。浏览器安全的 `svedocs/routes` 入口提供 `resolveSvedocsPageRoute`，用于加载 canonical 路由并处理默认语言重定向；`resolveSvedocsHref` 对链接应用同一套语言规则。
 
 ## Theme
 
@@ -93,7 +94,8 @@ import {
   Select,
   Textarea,
   Checkbox,
-  Button
+  Button,
+  LocalizedLink
 } from 'svedocs/theme';
 import 'svedocs/theme/styles.css';
 import 'svedocs/theme/base.css';

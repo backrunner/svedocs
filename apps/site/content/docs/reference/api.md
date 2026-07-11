@@ -64,9 +64,10 @@ import {
   createSearchRecords,
   checkSvedocsContent
 } from 'svedocs/core';
+import { resolveSvedocsPageRoute, resolveSvedocsHref } from 'svedocs/routes';
 ```
 
-Core APIs cover content loading, navigation, links, checks, and search records. Page metadata includes locale information for translated docs and lifecycle fields used by content warnings.
+Core APIs cover content loading, navigation, links, checks, and search records. The browser-safe `svedocs/routes` entry exposes `resolveSvedocsPageRoute` for canonical route loading and default-locale redirects, plus `resolveSvedocsHref` for applying the same locale rules to links.
 
 ## Theme
 
@@ -93,7 +94,8 @@ import {
   Select,
   Textarea,
   Checkbox,
-  Button
+  Button,
+  LocalizedLink
 } from 'svedocs/theme';
 import 'svedocs/theme/styles.css';
 import 'svedocs/theme/base.css';
