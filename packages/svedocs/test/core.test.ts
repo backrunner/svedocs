@@ -842,6 +842,33 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(assistant?.error).toBe(rpcError);
   });
 
+  it('fills successful Ask AI streams without answer content with a fallback message', async () => {
+    const config = resolveSvedocsConfig({
+      ai: {
+        enabled: true,
+        provider: 'cloudflare-ai-search'
+      }
+    });
+    const controller = createAskAiController({
+      config,
+      buildMode: 'edge',
+      async fetcher() {
+        return new Response('event: chunks\ndata: []\n\nevent: done\ndata: {}\n\n', {
+          headers: {
+            'content-type': 'text/event-stream'
+          }
+        });
+      }
+    });
+
+    await controller.send('install');
+
+    const assistant = get(controller.messages).at(-1);
+    expect(assistant?.role).toBe('assistant');
+    expect(assistant?.content).not.toBe('');
+    expect(assistant?.error).toBe('Ask AI failed.');
+  });
+
   it('keeps Ask AI page tools hidden and inert when AI is disabled', () => {
     const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
     let dispatched = 0;

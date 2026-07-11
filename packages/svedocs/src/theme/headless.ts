@@ -521,6 +521,7 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
           throw new Error(streamedMessage?.error ?? currentOptions.t('ask.requestError', { status: response.status }));
         }
         if (streamedMessage?.error && !streamedMessage.content.trim()) throw new Error(streamedMessage.error);
+        if (!streamedMessage?.content.trim()) throw new Error(currentOptions.t('ask.failed'));
         return;
       }
       if (!response.ok) {
