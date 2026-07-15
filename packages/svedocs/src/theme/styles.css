@@ -1870,7 +1870,7 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
   order: -1;
 }
 
-.sd-sidebar-list[data-depth="0"] .sd-sidebar-chevron {
+.sd-sidebar-list[data-depth="0"] > .sd-sidebar-item > .sd-sidebar-group > .sd-sidebar-summary > .sd-sidebar-chevron {
   margin-left: auto;
   width: .8rem;
   height: .8rem;
