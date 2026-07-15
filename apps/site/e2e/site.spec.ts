@@ -6,9 +6,9 @@ test('serves the official home and docs entry', async ({ request }) => {
   await expectResponseToContain(home, [
     'svedocs',
     'Read docs',
-    'rel="canonical" href="https://svedocs.dev/"',
-    'hreflang="zh-CN" href="https://svedocs.dev/zh"',
-    'hreflang="x-default" href="https://svedocs.dev/"',
+    'rel="canonical" href="https://svedocs.pwp.sh/"',
+    'hreflang="zh-CN" href="https://svedocs.pwp.sh/zh"',
+    'hreflang="x-default" href="https://svedocs.pwp.sh/"',
     'property="og:locale" content="en"',
     '"inLanguage":"en"'
   ]);
@@ -19,10 +19,10 @@ test('serves the official home and docs entry', async ({ request }) => {
     '为 Cloudflare 或静态托管构建 SvelteKit 文档站。',
     '阅读文档',
     '文档入口',
-    'rel="canonical" href="https://svedocs.dev/zh"',
-    'hreflang="en" href="https://svedocs.dev/"',
-    'hreflang="zh-CN" href="https://svedocs.dev/zh"',
-    'hreflang="x-default" href="https://svedocs.dev/"',
+    'rel="canonical" href="https://svedocs.pwp.sh/zh"',
+    'hreflang="en" href="https://svedocs.pwp.sh/"',
+    'hreflang="zh-CN" href="https://svedocs.pwp.sh/zh"',
+    'hreflang="x-default" href="https://svedocs.pwp.sh/"',
     'property="og:locale" content="zh_CN"',
     'property="og:locale:alternate" content="en"',
     '"inLanguage":"zh-CN"'
@@ -40,10 +40,10 @@ test('serves the official home and docs entry', async ({ request }) => {
     '问 AI',
     '本页内容',
     '编辑此页',
-    'rel="canonical" href="https://svedocs.dev/docs/zh"',
-    'hreflang="en" href="https://svedocs.dev/docs"',
-    'hreflang="zh-CN" href="https://svedocs.dev/docs/zh"',
-    'hreflang="x-default" href="https://svedocs.dev/docs"',
+    'rel="canonical" href="https://svedocs.pwp.sh/docs/zh"',
+    'hreflang="en" href="https://svedocs.pwp.sh/docs"',
+    'hreflang="zh-CN" href="https://svedocs.pwp.sh/docs/zh"',
+    'hreflang="x-default" href="https://svedocs.pwp.sh/docs"',
     'property="og:locale" content="zh_CN"',
     '"inLanguage":"zh-CN"'
   ]);
