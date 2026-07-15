@@ -74,4 +74,11 @@ pnpm changeset
 
 Keep changesets focused on user-visible behavior or public API changes. Internal-only changes can be documented in `.agents/gap-analysis.md` when they affect implementation status.
 
-Publishable packages use npm provenance via `publishConfig.provenance: true`. Release jobs should run from a trusted CI environment with npm trusted publishing or an appropriately scoped automation token.
+Site deployments run manually from an authenticated local Wrangler session:
+
+```sh
+pnpm deploy:site:dry-run
+pnpm deploy:site
+```
+
+Publishable packages use npm provenance via `publishConfig.provenance: true`. Dispatch the `Release npm packages` workflow with the matching stable or beta channel so npm trusted publishing remains the release path.

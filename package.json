@@ -26,6 +26,8 @@
     "pack:dry-run": "turbo pack:dry-run",
     "publish:cli": "node --experimental-strip-types scripts/publish-cli.ts",
     "publish:npm": "node --experimental-strip-types scripts/publish-npm.ts",
+    "deploy:site": "pnpm --filter svedocs build && pnpm --filter @svedocs/site check && SVEDOCS_BUILD_MODE=edge pnpm --filter @svedocs/site build && wrangler deploy",
+    "deploy:site:dry-run": "pnpm --filter svedocs build && pnpm --filter @svedocs/site check && SVEDOCS_BUILD_MODE=edge pnpm --filter @svedocs/site build && wrangler deploy --dry-run",
     "test:templates": "SVEDOCS_TEMPLATE_E2E=1 pnpm --filter svedocs-cli test",
     "test:e2e": "pnpm --filter @svedocs/site test:e2e",
     "release:check": "pnpm build && pnpm check && pnpm test && pnpm lint && pnpm pack:dry-run",

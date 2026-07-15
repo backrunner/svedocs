@@ -193,6 +193,15 @@ Before publishing packages, run:
 pnpm release:check
 ```
 
+Site deployments are manual operations. Authenticate Wrangler locally, validate the bundle, and deploy with:
+
+```sh
+pnpm deploy:site:dry-run
+pnpm deploy:site
+```
+
+No GitHub workflow deploys the site. npm packages continue to publish through the manually dispatched `Release npm packages` workflow with trusted publishing and provenance.
+
 Generated templates have a heavier install/build smoke test:
 
 ```sh
