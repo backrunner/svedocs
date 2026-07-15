@@ -19,7 +19,7 @@ pnpm install
 pnpm dev
 ```
 
-Open the local URL printed by the dev server. The `docs` template is ready to use: it includes sample pages, local search, an Ask AI route that works without credentials, sitemap and robots routes, and Open Graph images.
+Open the local URL printed by the dev server. The `docs` template is ready to use: it includes sample pages, local search, an Ask AI route that works without credentials, sitemap and robots routes, an optional RSS route, and Open Graph images.
 
 Use a smaller template when you want less surface area:
 
@@ -38,7 +38,7 @@ Use a smaller template when you want less surface area:
 | Theme | Provides a Svelte theme, Tailwind CSS v4 variables, light/dark modes, code blocks, diffs, callouts, forms, and docs layouts. |
 | Search | Creates page and section records for local MiniSearch, Algolia, Typesense, and Cloudflare AI Search. |
 | Ask AI | Uses search records as citations and supports local answers, Cloudflare AI Search, Workers AI, and OpenAI-compatible services. |
-| SEO | Generates canonical URLs, language alternates, JSON-LD, sitemap, robots, and OG images. |
+| SEO | Generates canonical URLs, language alternates, JSON-LD, sitemap, optional RSS, robots, and OG images. |
 | CLI | Creates, checks, builds, indexes, upgrades, and deploys documentation projects. |
 
 ## Project anatomy
@@ -58,6 +58,7 @@ my-docs/
     api/ask/+server.ts
     og/[...path]/+server.ts
     sitemap.xml/+server.ts
+    feed.xml/+server.ts
     robots.txt/+server.ts
   svedocs.config.ts
   vite.config.ts

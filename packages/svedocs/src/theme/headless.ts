@@ -115,7 +115,7 @@ export function createThemeStyle(config: SvedocsResolvedConfig): string {
 }
 
 export function createThemeInitScript(defaultMode: 'light' | 'dark' | 'system', languageTag = 'en', dir: 'ltr' | 'rtl' = 'ltr'): string {
-  return `<script>(function(){try{var d=${serializeInlineScriptValue(defaultMode)};var l=${serializeInlineScriptValue(languageTag)};var r=${serializeInlineScriptValue(dir)};var s=localStorage.getItem('svedocs-theme');var p=s==='dark'||s==='light'||s==='system'?s:d;var t=p==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;document.documentElement.lang=l;document.documentElement.dir=r;}catch(e){}})();<\/script>`;
+  return `<script>(function(){try{var d=${serializeInlineScriptValue(defaultMode)};var l=${serializeInlineScriptValue(languageTag)};var r=${serializeInlineScriptValue(dir)};var s;try{s=localStorage.getItem('svedocs-theme')}catch(e){}var p=s==='dark'||s==='light'||s==='system'?s:d;var m=typeof matchMedia==='function'&&matchMedia('(prefers-color-scheme: dark)').matches;var t=p==='system'?(m?'dark':'light'):p;var h=document.documentElement;h.dataset.theme=t;h.style.colorScheme=t;h.lang=l;h.dir=r;}catch(e){}})();<\/script>`;
 }
 
 function serializeInlineScriptValue(value: string): string {
@@ -822,8 +822,12 @@ export function createThemeModeController(defaultMode: 'light' | 'dark' | 'syste
 
   function resolveMode(nextPreference: 'light' | 'dark' | 'system'): 'light' | 'dark' {
     if (nextPreference !== 'system') return nextPreference;
-    if (typeof window === 'undefined') return 'light';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    try {
+      if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return 'light';
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    } catch {
+      return 'light';
+    }
   }
 
   function applyResolvedMode(nextMode: 'light' | 'dark'): void {
@@ -836,9 +840,7 @@ export function createThemeModeController(defaultMode: 'light' | 'dark' | 'syste
 
   function setPreference(nextPreference: 'light' | 'dark' | 'system'): void {
     preference.set(nextPreference);
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('svedocs-theme', nextPreference);
-    }
+    writeStoredThemePreference(nextPreference);
     applyResolvedMode(resolveMode(nextPreference));
   }
 
@@ -851,7 +853,7 @@ export function createThemeModeController(defaultMode: 'light' | 'dark' | 'syste
   }
 
   function syncFromSystem(): void {
-    const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('svedocs-theme') : undefined;
+    const stored = readStoredThemePreference();
     const nextPreference = stored === 'dark' || stored === 'light' || stored === 'system' ? stored : defaultMode;
     preference.set(nextPreference);
     applyResolvedMode(resolveMode(nextPreference));
@@ -864,9 +866,13 @@ export function createThemeModeController(defaultMode: 'light' | 'dark' | 'syste
   function mount(): () => void {
     const current = typeof document !== 'undefined' ? document.documentElement.dataset.theme : undefined;
     mode.set(current === 'dark' ? 'dark' : 'light');
-    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
-      media = window.matchMedia('(prefers-color-scheme: dark)');
-      media.addEventListener('change', syncFromMedia);
+    try {
+      if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+        media = window.matchMedia('(prefers-color-scheme: dark)');
+        media.addEventListener('change', syncFromMedia);
+      }
+    } catch {
+      media = undefined;
     }
     syncFromSystem();
     return () => media?.removeEventListener('change', syncFromMedia);
@@ -880,6 +886,22 @@ export function createThemeModeController(defaultMode: 'light' | 'dark' | 'syste
     toggle,
     mount
   };
+}
+
+function readStoredThemePreference(): string | undefined {
+  try {
+    return typeof localStorage === 'undefined' ? undefined : localStorage.getItem('svedocs-theme') ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeStoredThemePreference(value: 'light' | 'dark' | 'system'): void {
+  try {
+    if (typeof localStorage !== 'undefined') localStorage.setItem('svedocs-theme', value);
+  } catch {
+    // Theme switching remains functional when storage is blocked.
+  }
 }
 
 export function createMobileNavController(): SvedocsMobileNavController {

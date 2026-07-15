@@ -28,7 +28,7 @@ Templates:
 | Template | Purpose |
 | --- | --- |
 | `minimal` | Small SvelteKit docs project with local rendering. |
-| `docs` | Documentation site with local MiniSearch-powered search, sitemap, robots, and OG routes. |
+| `docs` | Documentation site with local MiniSearch-powered search, sitemap, robots, optional RSS, and OG routes. |
 | `cloudflare` | Edge-first project with Cloudflare Pages config and AI Search binding shape. |
 
 ## Upgrade

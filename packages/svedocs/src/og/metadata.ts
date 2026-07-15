@@ -10,10 +10,12 @@ export function createPageMetadata(
 ): SvedocsPageMetadata {
   const title = page.routePath === '/' ? page.seo.title : `${page.seo.title} | ${config.site.name}`;
   const description = page.seo.description ?? config.site.description;
-  const canonical = page.seo.canonical ?? createAbsoluteRouteUrl(config, page.routePath);
+  const canonical = page.seo.canonical
+    ? createAbsoluteUrl(config, page.seo.canonical) ?? page.seo.canonical
+    : createAbsoluteRouteUrl(config, page.routePath);
   const keywords = page.seo.keywords ?? [];
   const robots = page.seo.robots;
-  const head = mergeSeoHead(config.seo.head, page.seo.head);
+  const head = withRssAlternate(config, mergeSeoHead(config.seo.head, page.seo.head));
   const generatedImage = config.seo.ogImage === false
     ? undefined
     : createAbsoluteUrl(config, createPageOgImagePath(page, createConfiguredOgImageFormat(config)));
@@ -62,26 +64,6 @@ export function createPageMetadata(
   };
 }
 
-export function createSitemapXml(config: SvedocsResolvedConfig, pages: SvedocsPage[]): string {
-  if (!config.seo.sitemap) return '';
-  const urls = pages
-    .filter((page) => !page.hidden)
-    .map((page) => {
-      const loc = page.seo.canonical ?? createAbsoluteRouteUrl(config, page.routePath) ?? formatRoutePathForBuildMode(page.routePath, config.build.mode);
-      const lastmod = page.seo.updatedTime ?? page.lastUpdated;
-      const alternates = createPageAlternates(config, page, pages);
-      return [
-        '  <url>',
-        `    <loc>${escapeXml(loc)}</loc>`,
-        ...(lastmod ? [`    <lastmod>${escapeXml(lastmod)}</lastmod>`] : []),
-        ...alternates.map((alternate) => `    <xhtml:link rel="alternate" hreflang="${escapeXml(alternate.lang)}" href="${escapeXml(alternate.href)}" />`),
-        '  </url>'
-      ].join('\n');
-    })
-    .join('\n');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls}\n</urlset>\n`;
-}
-
 export function createPageAlternates(
   config: SvedocsResolvedConfig,
   page: SvedocsPage,
@@ -95,7 +77,9 @@ export function createPageAlternates(
   const alternates: SvedocsPageAlternate[] = [];
   for (const candidate of candidates) {
     if (!candidate.locale) continue;
-    const href = candidate.seo.canonical ?? createAbsoluteRouteUrl(config, candidate.routePath);
+    const href = candidate.seo.canonical
+      ? createAbsoluteUrl(config, candidate.seo.canonical) ?? candidate.seo.canonical
+      : createAbsoluteRouteUrl(config, candidate.routePath);
     if (!href) continue;
     const locale = config.i18n.locales.find((item) => item.code === candidate.locale);
     alternates.push({
@@ -108,7 +92,11 @@ export function createPageAlternates(
   const defaultPage = defaultLocale
     ? candidates.find((candidate) => candidate.locale === defaultLocale)
     : undefined;
-  const defaultHref = defaultPage?.seo.canonical ?? (defaultPage ? createAbsoluteRouteUrl(config, defaultPage.routePath) : undefined);
+  const defaultHref = defaultPage?.seo.canonical
+    ? createAbsoluteUrl(config, defaultPage.seo.canonical) ?? defaultPage.seo.canonical
+    : defaultPage
+      ? createAbsoluteRouteUrl(config, defaultPage.routePath)
+      : undefined;
   const defaultAlternate: SvedocsPageAlternate[] = defaultHref
     ? [
         {
@@ -121,39 +109,27 @@ export function createPageAlternates(
   return uniqueAlternates([...alternates, ...defaultAlternate]);
 }
 
-export function createRobotsTxt(config: SvedocsResolvedConfig): string {
-  if (!config.seo.robots) return '';
-  const sitemap = createAbsoluteUrl(config, '/sitemap.xml');
-  return [
-    'User-agent: *',
-    'Allow: /',
-    ...(sitemap ? [`Sitemap: ${sitemap}`] : [])
-  ].join('\n') + '\n';
-}
-
-export function createSitemapResponse(config: SvedocsResolvedConfig, pages: SvedocsPage[]): Response {
-  if (!config.seo.sitemap) return new Response('Sitemap is disabled.', { status: 404 });
-  return new Response(createSitemapXml(config, pages), {
-    headers: {
-      'content-type': 'application/xml; charset=utf-8'
-    }
-  });
-}
-
-export function createRobotsResponse(config: SvedocsResolvedConfig): Response {
-  if (!config.seo.robots) return new Response('Robots is disabled.', { status: 404 });
-  return new Response(createRobotsTxt(config), {
-    headers: {
-      'content-type': 'text/plain; charset=utf-8'
-    }
-  });
-}
-
 function mergeSeoHead(globalHead: SvedocsResolvedSeoHead, pageHead: SvedocsSeoHead | undefined): SvedocsResolvedSeoHead {
   return {
     meta: [...globalHead.meta, ...(pageHead?.meta ?? [])],
     links: [...globalHead.links, ...(pageHead?.links ?? [])],
     jsonLd: [...globalHead.jsonLd, ...(pageHead?.jsonLd ?? pageHead?.jsonld ?? pageHead?.['json-ld'] ?? [])]
+  };
+}
+
+function withRssAlternate(config: SvedocsResolvedConfig, head: SvedocsResolvedSeoHead): SvedocsResolvedSeoHead {
+  if (!config.seo.rss || head.links.some((link) => link.type === 'application/rss+xml')) return head;
+  return {
+    ...head,
+    links: [
+      ...head.links,
+      {
+        rel: 'alternate',
+        type: 'application/rss+xml',
+        href: createAbsoluteUrl(config, '/feed.xml') ?? '/feed.xml',
+        title: config.seo.rss.title
+      }
+    ]
   };
 }
 
@@ -234,13 +210,4 @@ export function serializeJsonLd(value: unknown): string {
 
 export function createJsonLdScript(value: unknown): string {
   return `<script type="application/ld+json">${serializeJsonLd(value)}<${'/script'}>`;
-}
-
-function escapeXml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
 }

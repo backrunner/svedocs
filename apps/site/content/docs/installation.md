@@ -50,8 +50,8 @@ pnpm create svedocs my-docs --template cloudflare
 
 | Template | Included routes | Best for |
 | --- | --- | --- |
-| `minimal` | Docs shell and content routes. | Learning the basics or embedding docs into an existing app. |
-| `docs` | Search, Ask AI fallback, sitemap, robots, and OG routes. | Most product documentation sites. |
+| `minimal` | Docs shell, sitemap, robots, and optional RSS routes. | Learning the basics or embedding docs into an existing app. |
+| `docs` | Search, Ask AI fallback, sitemap, robots, optional RSS, and OG routes. | Most product documentation sites. |
 | `cloudflare` | Everything in `docs`, plus Wrangler config and Cloudflare binding examples. | Cloudflare Pages and edge-first projects. |
 
 Remote template behavior can be controlled with environment variables:
@@ -115,7 +115,7 @@ Import the default theme CSS once in the root layout:
 <slot />
 ```
 
-Then add the routes your site needs. A minimal setup can render `DocsApp` from `svedocs/theme`; the `docs` and `cloudflare` templates show the complete search, Ask AI, sitemap, robots, and OG setup.
+Then add the routes your site needs. A minimal setup can render `DocsApp` from `svedocs/theme`; generated templates include sitemap, robots, and optional RSS routes, while `docs` and `cloudflare` also show the complete search, Ask AI, and OG setup.
 
 ## Add content
 

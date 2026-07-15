@@ -128,6 +128,8 @@ export default defineConfig({
 
 `home.visual` 可以继续使用内置的像素效果，也可以指向项目中的图片：`{ type: 'image', src: '/hero.png', alt: 'Preview' }`。
 
+默认根布局会在主题 CSS 生效前同步执行主题初始化器，优先读取已保存的 `svedocs-theme`，否则跟随系统配色。完整自定义布局和整页主题组件替换也会由 `DocsApp` 注入同一逻辑。如果应用外壳完全不使用 `DocsApp` 或 `RootLayout`，请在外壳中渲染一次 `svedocs/theme` 导出的 `ThemeInit`。
+
 ## 主题插槽
 
 `DocsApp` 提供命名插槽，可以只替换页面中的某个区域，不必重新实现路由、元数据、页头、页脚、搜索、Ask AI 和文档导航。

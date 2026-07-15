@@ -128,6 +128,8 @@ export default defineConfig({
 
 `home.visual` can stay as the built-in pixel module or point at a project image with `{ type: 'image', src: '/hero.png', alt: 'Preview' }`.
 
+The default root layout runs a synchronous theme initializer before theme CSS is applied, using the saved `svedocs-theme` preference or the system color scheme. Full custom layouts and full theme component replacements receive the same initializer from `DocsApp`. When rendering a custom application shell without `DocsApp` or `RootLayout`, render `ThemeInit` from `svedocs/theme` once in that shell.
+
 ## Theme slots
 
 `DocsApp` exposes named slots for changing parts of the page without rebuilding its routing, metadata, header, footer, search, Ask AI, or docs navigation.

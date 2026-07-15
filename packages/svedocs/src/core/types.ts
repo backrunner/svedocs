@@ -426,6 +426,12 @@ export interface SvedocsResolvedConfig {
   };
   seo: {
     sitemap: boolean;
+    rss: false | {
+      title: string;
+      description: string;
+      limit: number;
+      locale?: string;
+    };
     robots: boolean;
     defaultAuthor?: string;
     head: SvedocsResolvedSeoHead;
@@ -471,6 +477,8 @@ export interface SvedocsContentIssue {
     | 'broken-asset'
     | 'external-link-unchecked'
     | 'missing-translation'
+    | 'missing-site-url'
+    | 'sitemap-url-limit'
     | 'spa-risk'
     | 'empty-search'
     | 'package-bin-missing'

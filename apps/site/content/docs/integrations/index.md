@@ -15,14 +15,14 @@ You can build and preview a complete svedocs site without connecting an external
 | Search | Local MiniSearch records generated from your pages. | You need a hosted index, typo tolerance, analytics, or Cloudflare AI Search. |
 | Ask AI | Mock provider with local citations. | You have enough docs content to answer real questions and can enforce rate limits. |
 | Cloudflare | Local adapter config with remote bindings disabled. | You need edge SSR, AI Search, Workers AI, or Pages deployment. |
-| SEO | Generated metadata from config and frontmatter. | Public pages need canonical URLs, sitemap, robots, JSON-LD, and OG images. |
+| SEO | Generated metadata from config and frontmatter. | Public pages need canonical URLs, sitemap, optional RSS, robots, JSON-LD, and OG images. |
 | OG images | SVG route or build-time SVG assets. | You need PNG or custom Satori templates with explicit fonts. |
 
 ## Recommended order
 
 1. Write content and run `svedocs check`.
 2. Set `site.url`, descriptions, and canonical behavior.
-3. Add sitemap, robots, and OG routes.
+3. Add sitemap, robots, optional RSS, and OG routes.
 4. Enable local search and confirm useful section results.
 5. Choose a hosted search provider only if local search is not enough.
 6. Add Ask AI after search records and citations are high quality.
@@ -77,7 +77,7 @@ Use dry runs in CI until credentials are available. Setup commands print or writ
 
 [Cloudflare](/docs/integrations/cloudflare "card: Build presets, Wrangler output, AI Search bindings, Workers AI, and local development.")
 
-[SEO and OG](/docs/integrations/seo-og "card: Metadata, canonical URLs, sitemap, robots, JSON-LD, dynamic OG routes, and build-time assets.")
+[SEO and OG](/docs/integrations/seo-og "card: Metadata, canonical URLs, sitemap, RSS, robots, JSON-LD, dynamic OG routes, and build-time assets.")
 
 ## Choosing a path
 

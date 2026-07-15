@@ -1,6 +1,6 @@
 ---
 title: SEO and OG
-description: Generate metadata, canonical URLs, JSON-LD, sitemap, robots, and Open Graph images.
+description: Generate metadata, canonical URLs, JSON-LD, sitemap, RSS, robots, and Open Graph images.
 order: 4
 ---
 
@@ -28,11 +28,6 @@ head:
   meta:
     - name: google-site-verification
       content: page-token
-  links:
-    - rel: alternate
-      href: /feed.xml
-      type: application/rss+xml
-      title: RSS
   jsonLd:
     - "@type": FAQPage
       name: Search FAQ
@@ -56,19 +51,23 @@ The default root layout renders:
 
 When building a custom layout, use `createPageMetadata(config, page, pages)` from `svedocs/og`. Pass the complete page list so Open Graph locale alternates include only translations that exist.
 
-## Sitemap and robots
+## Sitemap, robots, and RSS
 
 ```ts title="src/routes/sitemap.xml/+server.ts"
 import { createSitemapResponse } from 'svedocs/og';
 import config from 'virtual:svedocs/config';
-import pages from 'virtual:svedocs/pages';
+import pages from 'virtual:svedocs/page-index';
+import type { RequestHandler } from './$types';
 
-export const GET = () => {
-  return createSitemapResponse(config, pages);
-};
+export const prerender = config.seo.sitemap;
+
+export const GET: RequestHandler = ({ request }) =>
+  createSitemapResponse(config, pages, request);
 ```
 
-`createRobotsResponse(config)` provides a matching `robots.txt` response. Both response helpers return `404` when the corresponding `seo.sitemap` or `seo.robots` flag is disabled.
+Sitemaps and robots are enabled by default. `createRobotsResponse(config, request)` provides the matching `robots.txt` response and omits its sitemap declaration when sitemap generation is disabled. Hidden and `noindex` pages are excluded. Generated templates prerender both endpoints, import the metadata-only page index, and retain cache headers plus ETag support for dynamic serving.
+
+RSS is disabled by default. Enable it with `seo.rss: true`, or configure its `title`, `description`, `limit`, and `locale` in an object. The generated `/feed.xml` route uses `createRssResponse(config, pages, request)`, prerenders only when RSS is enabled, and automatically adds the matching feed discovery link to page metadata.
 
 ## Dynamic OG route
 

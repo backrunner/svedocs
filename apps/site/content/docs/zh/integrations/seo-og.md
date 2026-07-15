@@ -1,6 +1,6 @@
 ---
 title: SEO 和 OG
-description: 生成元数据、canonical URL、JSON-LD、站点地图、robots 和 Open Graph 图片。
+description: 生成元数据、canonical URL、JSON-LD、站点地图、RSS、robots 和 Open Graph 图片。
 order: 4
 ---
 
@@ -28,11 +28,6 @@ head:
   meta:
     - name: google-site-verification
       content: page-token
-  links:
-    - rel: alternate
-      href: /feed.xml
-      type: application/rss+xml
-      title: RSS
   jsonLd:
     - "@type": FAQPage
       name: Search FAQ
@@ -56,19 +51,23 @@ head:
 
 自定义布局可以调用 `createPageMetadata(config, page, pages)`。传入完整页面列表后，Open Graph 的语言映射只会包含真实存在的译文。
 
-## 站点地图和 robots
+## 站点地图、robots 和 RSS
 
 ```ts title="src/routes/sitemap.xml/+server.ts"
 import { createSitemapResponse } from 'svedocs/og';
 import config from 'virtual:svedocs/config';
-import pages from 'virtual:svedocs/pages';
+import pages from 'virtual:svedocs/page-index';
+import type { RequestHandler } from './$types';
 
-export const GET = () => {
-  return createSitemapResponse(config, pages);
-};
+export const prerender = config.seo.sitemap;
+
+export const GET: RequestHandler = ({ request }) =>
+  createSitemapResponse(config, pages, request);
 ```
 
-`createRobotsResponse(config)` 可以生成对应的 `robots.txt` 响应。如果 `seo.sitemap` 或 `seo.robots` 被关闭，相应的响应函数会返回 `404`。
+sitemap 和 robots 默认开启。`createRobotsResponse(config, request)` 会生成对应的 `robots.txt`，并在 sitemap 关闭时移除其中的 sitemap 声明。隐藏页面和 `noindex` 页面不会进入 sitemap。生成模板会预渲染这两个端点，使用只含元数据的页面索引；动态服务时仍保留缓存头和 ETag。
+
+RSS 默认关闭。可以设置 `seo.rss: true`，也可以通过对象配置 `title`、`description`、`limit` 和 `locale`。生成的 `/feed.xml` 路由调用 `createRssResponse(config, pages, request)`，只在 RSS 开启时预渲染，并自动把对应的 Feed 发现链接加入页面元数据。
 
 ## 动态 OG 路由
 

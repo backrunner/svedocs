@@ -4,6 +4,7 @@
   import { createThemeContext, resolveLocalizedHref, resolveLocalizedText } from './headless.js';
   import SafeRenderError from './SafeRenderError.svelte';
   import RootLayout from './RootLayout.svelte';
+  import ThemeInit from './ThemeInit.svelte';
   import type { SvedocsThemeComponentMap } from './types.js';
 
   export let page: SvedocsPage;
@@ -166,6 +167,14 @@
     return glyph.split('\n').map((row) => row.split(''));
   }
 </script>
+
+{#if Root !== RootLayout}
+  <ThemeInit
+    defaultMode={config.theme.defaultMode}
+    languageTag={context.languageTag}
+    dir={context.locale?.dir ?? 'ltr'}
+  />
+{/if}
 
 <svelte:component this={Root} {config} {page} {pages} {tree} {search} {loadSearch} hasBackgroundSlot={showBackgroundSlot} {themeComponents}>
   <svelte:fragment slot="background">

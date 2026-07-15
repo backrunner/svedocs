@@ -173,14 +173,17 @@ export default defineConfig({
 export default defineConfig({
   seo: {
     sitemap: true,
+    rss: {
+      title: 'Acme 更新',
+      description: 'Acme 的文档与版本更新。',
+      limit: 50,
+      locale: 'zh'
+    },
     robots: true,
     defaultAuthor: 'Acme',
     head: {
       meta: [
         { name: 'google-site-verification', content: 'verification-token' }
-      ],
-      links: [
-        { rel: 'alternate', type: 'application/rss+xml', href: '/feed.xml', title: 'RSS' }
       ],
       jsonLd: [
         { '@type': 'Organization', name: 'Acme' }
@@ -199,6 +202,8 @@ export default defineConfig({
 设置 `seo.ogImage = false` 可以关闭自动 OG 图片生成。SVG 适合边缘运行时直接输出；如果需要更丰富的构建期图片，可以使用 PNG 或 Satori，并显式提供字体。
 
 `seo.head` 用来添加每个页面都需要的可序列化 `<head>` 内容，例如站点验证标签、Feed 链接、预加载链接和组织级 JSON-LD。页面 frontmatter 也可以定义 `head`，补充只属于当前页面的内容。
+
+sitemap 默认开启，RSS 默认关闭。设置 `rss: true` 会使用站点元数据和默认的 50 条上限，也可以使用上面的对象形式。启用后框架会自动添加 `<link rel="alternate">`。sitemap、robots 和 RSS 在开启时会被预渲染；动态响应同时支持缓存头和 ETag。
 
 ## 源码链接
 

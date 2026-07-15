@@ -38,7 +38,7 @@ pnpm dev
 | 主题 | 提供 Svelte 主题、Tailwind CSS v4 变量、明暗模式、代码块、差异对比、提示块、表单和文档布局。 |
 | 搜索 | 为本地 MiniSearch、Algolia、Typesense 和 Cloudflare AI Search 生成页面和小节记录。 |
 | Ask AI | 使用搜索记录作为引用，支持本地回答、Cloudflare AI Search、Workers AI 和 OpenAI 兼容服务。 |
-| SEO | 生成 canonical URL、多语言 alternate、JSON-LD、sitemap、robots 和 OG 图片。 |
+| SEO | 生成 canonical URL、多语言 alternate、JSON-LD、sitemap、可选 RSS、robots 和 OG 图片。 |
 | CLI | 用来创建、检查、构建、索引、升级和部署文档项目。 |
 
 ## 项目结构
@@ -58,6 +58,7 @@ my-docs/
     api/ask/+server.ts
     og/[...path]/+server.ts
     sitemap.xml/+server.ts
+    feed.xml/+server.ts
     robots.txt/+server.ts
   svedocs.config.ts
   vite.config.ts

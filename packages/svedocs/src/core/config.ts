@@ -32,6 +32,7 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
     ...(config.ai?.systemPrompt ? { systemPrompt: config.ai.systemPrompt } : {}),
     ...(config.ai?.welcomeMessage ? { welcomeMessage: config.ai.welcomeMessage } : {})
   };
+  const rss = resolveRssConfig(config);
 
   return {
     site: {
@@ -108,6 +109,7 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
     ai,
     seo: {
       sitemap: config.seo?.sitemap ?? true,
+      rss,
       robots: config.seo?.robots ?? true,
       ...(config.seo?.defaultAuthor ? { defaultAuthor: config.seo.defaultAuthor } : {}),
       head: {
@@ -143,6 +145,18 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
       translations: config.checks?.translations ?? false,
     },
     i18n: resolveSvedocsI18nConfig(config)
+  };
+}
+
+function resolveRssConfig(config: SvedocsConfig): SvedocsResolvedConfig['seo']['rss'] {
+  const input = config.seo?.rss;
+  if (!input) return false;
+  const options = typeof input === 'object' ? input : {};
+  return {
+    title: options.title ?? `${config.site?.name ?? 'svedocs'} RSS`,
+    description: options.description ?? config.site?.description ?? 'SvelteKit-native documentation updates.',
+    limit: options.limit ?? 50,
+    ...(options.locale ? { locale: options.locale } : {})
   };
 }
 

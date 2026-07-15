@@ -7,6 +7,7 @@
   import DocsShell from './DocsShell.svelte';
   import SafeRenderError from './SafeRenderError.svelte';
   import RootLayout from './RootLayout.svelte';
+  import ThemeInit from './ThemeInit.svelte';
   import type { SvedocsThemeComponentMap } from './types.js';
 
   export let page: SvedocsPage;
@@ -38,6 +39,14 @@
       && candidate.locale === current.locale);
   }
 </script>
+
+{#if Root !== RootLayout}
+  <ThemeInit
+    defaultMode={config.theme.defaultMode}
+    languageTag={context.languageTag}
+    dir={context.locale?.dir ?? 'ltr'}
+  />
+{/if}
 
 <svelte:component
   this={Root}

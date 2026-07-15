@@ -13,7 +13,7 @@ Integrated SvelteKit documentation framework package.
 - `svedocs/svelte`: `mdsvex`-based Svelte-compatible authoring helpers.
 - `svedocs/search`: weighted local search, scope filters, Cloudflare AI Search provider, and indexing sync.
 - `svedocs/ai`: Ask AI providers, SSE responses, and rate limiting helpers.
-- `svedocs/og`: SEO metadata, sitemap/robots, SVG/PNG/Satori OG generation.
+- `svedocs/og`: SEO metadata, sitemap/robots, opt-in RSS, SVG/PNG/Satori OG generation.
 - `svedocs/cloudflare`: build presets, wrangler config, and binding type helpers.
 
 All rendering, theme, search, AI, SEO, OG, and Cloudflare capabilities are intentionally kept inside this package.

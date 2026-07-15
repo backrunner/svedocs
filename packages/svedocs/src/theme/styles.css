@@ -585,6 +585,15 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
   stroke-linejoin: miter;
 }
 
+.sd-theme-toggle [data-theme-icon="light"],
+:root[data-theme="dark"] .sd-theme-toggle [data-theme-icon="dark"] {
+  display: none;
+}
+
+:root[data-theme="dark"] .sd-theme-toggle [data-theme-icon="light"] {
+  display: block;
+}
+
 .sd-theme-toggle:focus-visible,
 .sd-menu-button:focus-visible,
 .sd-button:focus-visible,

@@ -6,6 +6,7 @@
   import HomePage from './HomePage.svelte';
   import PageLayout from './PageLayout.svelte';
   import RouteRenderError from './RouteRenderError.svelte';
+  import ThemeInit from './ThemeInit.svelte';
   import type { SvedocsThemeComponentMap } from './types.js';
 
   export let page: SvedocsPage;
@@ -32,6 +33,11 @@
 </script>
 
 {#if customLayout}
+  <ThemeInit
+    defaultMode={config.theme.defaultMode}
+    languageTag={appContext.languageTag}
+    dir={appContext.locale?.dir ?? 'ltr'}
+  />
   <svelte:boundary>
     <svelte:component
       this={customLayout}
@@ -64,6 +70,13 @@
     {/snippet}
   </svelte:boundary>
   {:else if page.scopePath === '/' || page.frontmatter.layout === 'home'}
+    {#if Home !== HomePage}
+      <ThemeInit
+        defaultMode={config.theme.defaultMode}
+        languageTag={appContext.languageTag}
+        dir={appContext.locale?.dir ?? 'ltr'}
+      />
+    {/if}
     <svelte:boundary>
       <svelte:component
         this={Home}
@@ -112,6 +125,13 @@
       {/snippet}
     </svelte:boundary>
   {:else if page.kind === 'page' || page.frontmatter.layout === 'page'}
+    {#if Page !== PageLayout}
+      <ThemeInit
+        defaultMode={config.theme.defaultMode}
+        languageTag={appContext.languageTag}
+        dir={appContext.locale?.dir ?? 'ltr'}
+      />
+    {/if}
     <svelte:boundary>
       <svelte:component this={Page} {page} {pages} {tree} {search} {config} {loadSearch} content={components[page.id]} {hasBackgroundSlot} {themeComponents}>
         <svelte:fragment slot="background">
@@ -137,6 +157,13 @@
       {/snippet}
     </svelte:boundary>
   {:else}
+    {#if Docs !== DocsLayout}
+      <ThemeInit
+        defaultMode={config.theme.defaultMode}
+        languageTag={appContext.languageTag}
+        dir={appContext.locale?.dir ?? 'ltr'}
+      />
+    {/if}
     <svelte:boundary>
       <svelte:component this={Docs} {page} {pages} {tree} {search} {config} {loadSearch} content={components[page.id]} {hasBackgroundSlot} {hasDocHeaderSlot} {themeComponents}>
         <svelte:fragment slot="background">

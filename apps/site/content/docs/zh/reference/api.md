@@ -89,6 +89,7 @@ import {
   Footer,
   PageTools,
   HomePage,
+  ThemeInit,
   FormField,
   Input,
   Select,
@@ -133,7 +134,10 @@ import {
   createPageMetadata,
   createPageAlternates,
   createSitemapXml,
+  createSitemapResponse,
   createRobotsTxt,
+  createRssXml,
+  createRssResponse,
   createPageOgImageResponse,
   createOgImageInput,
   createOgImage

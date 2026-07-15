@@ -2,9 +2,10 @@
   import { onDestroy, onMount } from 'svelte';
   import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
   import { createJsonLdScript, createPageAlternates, createPageMetadata } from '../og/metadata.js';
-  import { createDomId, createMobileNavController, createThemeContext, createThemeInitScript, createThemeStyle } from './headless.js';
+  import { createDomId, createMobileNavController, createThemeContext, createThemeStyle } from './headless.js';
   import LayoutShell from './LayoutShell.svelte';
   import SafeRenderError from './SafeRenderError.svelte';
+  import ThemeInit from './ThemeInit.svelte';
   import type { SvedocsThemeComponentMap } from './types.js';
 
   export let config: SvedocsResolvedConfig;
@@ -43,7 +44,6 @@
     ...(loadSearch ? { loadSearch } : {}),
     ...(localeCode ? { localeCode } : {})
   });
-  $: themeInitScript = createThemeInitScript(config.theme.defaultMode, context.languageTag, context.locale?.dir ?? 'ltr');
   $: themeStyle = createThemeStyle(config);
   $: mobileMenuId = `sd-mobile-menu-${createDomId(page?.id ?? page?.routePath ?? 'site')}`;
   $: mobileTreePath = mobileCurrentPath || page?.routePath || '';
@@ -139,8 +139,13 @@
 
 <svelte:window on:keydown={mobileNav.handleWindowKeydown} />
 
+<ThemeInit
+  defaultMode={config.theme.defaultMode}
+  languageTag={context.languageTag}
+  dir={context.locale?.dir ?? 'ltr'}
+/>
+
 <svelte:head>
-  {@html themeInitScript}
   <title>{title}</title>
   <meta name="description" content={description} />
   {#if robots}

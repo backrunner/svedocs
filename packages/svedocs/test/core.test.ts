@@ -7,7 +7,7 @@ import { createAskResponse, createCloudflareAiSearchAiProvider, createCloudflare
 import { createCloudflareEnvDts, createWranglerJson, readSvedocsBuildMode, svedocsPagePrerender, svedocsSsr, svedocsTrailingSlash } from '../src/cloudflare';
 import { defineConfig, loadSvedocsConfigFile, validateSvedocsConfig } from '../src/config';
 import { checkPackagePublication, createPageTree, createSearchRecords, createSvedocsRouteEntries, flattenPageTree, loadSvedocsContent, resolveSvedocsConfig, resolveSvedocsHref, resolveSvedocsPageRoute } from '../src/core';
-import { createConfiguredOgImageFormat, createConfiguredOgImageTemplate, createConfiguredPageOgImageEntries, createJsonLdScript, createOgPng, createPageAlternates, createPageMetadata, createPageOgImagePath, createPageOgImageResponse, createRobotsResponse, createRobotsTxt, createSatoriOgSvg, createSitemapResponse, createSitemapXml, serializeJsonLd } from '../src/og';
+import { createConfiguredOgImageFormat, createConfiguredOgImageTemplate, createConfiguredPageOgImageEntries, createJsonLdScript, createOgPng, createPageAlternates, createPageMetadata, createPageOgImagePath, createPageOgImageResponse, createRobotsResponse, createRobotsTxt, createRssResponse, createRssXml, createSatoriOgSvg, createSitemapResponse, createSitemapXml, serializeJsonLd } from '../src/og';
 import { compileMarkdown, createDiffRows, createDiffSplitRows } from '../src/mdx/compile';
 import { createAlgoliaSearchProvider, createCloudflareAiSearchDocuments, createCloudflareAiSearchProvider, createConfiguredSearchProvider, createConfiguredSearchResponse, createSearchResponse, createTypesenseSearchProvider, searchRecords, syncCloudflareAiSearchIndex } from '../src/search';
 import { createFixturePage } from '../src/testing';
@@ -35,6 +35,8 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(config.theme.footer && config.theme.footer.text).toContain('MIT licensed');
     expect(config.seo.ogImage && config.seo.ogImage.outDir).toBe('static/og');
     expect(config.seo.ogImage && config.seo.ogImage.format).toBe('svg');
+    expect(config.seo.sitemap).toBe(true);
+    expect(config.seo.rss).toBe(false);
     expect(config.search.scope).toBe('current');
     expect(config.ai.enabled).toBe(false);
     expect(config.ai.scope).toBe('current');
@@ -1001,6 +1003,48 @@ describe('svedocs Batch 0 skeleton', () => {
     }
   });
 
+  it('keeps theme mode usable when browser preference APIs are blocked', () => {
+    const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+    const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+    const originalLocalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+    const root = { dataset: {} as Record<string, string>, style: {} as { colorScheme?: string } };
+
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: {
+        matchMedia() {
+          throw new Error('matchMedia is blocked');
+        }
+      }
+    });
+    Object.defineProperty(globalThis, 'document', {
+      configurable: true,
+      value: {
+        documentElement: root
+      }
+    });
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      get() {
+        throw new Error('localStorage is blocked');
+      }
+    });
+
+    try {
+      const controller = createThemeModeController('system');
+
+      expect(() => controller.mount()).not.toThrow();
+      expect(get(controller.mode)).toBe('light');
+      expect(() => controller.apply('dark')).not.toThrow();
+      expect(get(controller.mode)).toBe('dark');
+      expect(root.dataset.theme).toBe('dark');
+    } finally {
+      restoreGlobalProperty('window', originalWindow);
+      restoreGlobalProperty('document', originalDocument);
+      restoreGlobalProperty('localStorage', originalLocalStorage);
+    }
+  });
+
   it('generates virtual theme component imports from Vite plugin options', async () => {
     const plugin = svedocs({
       config: {
@@ -1548,6 +1592,17 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(createSitemapXml(config, [page])).toContain('<loc>https://fixture.test/docs/guide</loc>');
     expect(createSitemapXml(config, [page])).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
     expect(createRobotsTxt(config)).toContain('Sitemap: https://fixture.test/sitemap.xml');
+    expect(createRobotsTxt(resolveSvedocsConfig({ site: { url: 'https://fixture.test' }, seo: { sitemap: false } }))).not.toContain('Sitemap:');
+    const sitemapResponse = createSitemapResponse(config, [page]);
+    expect(sitemapResponse.headers.get('cache-control')).toContain('s-maxage=3600');
+    const sitemapEtag = sitemapResponse.headers.get('etag');
+    expect(sitemapEtag).toBeTruthy();
+    expect(createSitemapResponse(config, [page], new Request('https://fixture.test/sitemap.xml', {
+      headers: { 'if-none-match': sitemapEtag! }
+    })).status).toBe(304);
+    expect(createSitemapResponse(config, [page], new Request('https://fixture.test/sitemap.xml', {
+      headers: { 'if-none-match': sitemapEtag!.replace(/^W\//, '') }
+    })).status).toBe(304);
     expect(await (createSitemapResponse(resolveSvedocsConfig({ seo: { sitemap: false } }), [page])).text()).toBe('Sitemap is disabled.');
     expect(createSitemapResponse(resolveSvedocsConfig({ seo: { sitemap: false } }), [page]).status).toBe(404);
     expect(createRobotsResponse(resolveSvedocsConfig({ seo: { robots: false } })).status).toBe(404);
@@ -1568,6 +1623,94 @@ describe('svedocs Batch 0 skeleton', () => {
     );
     expect(satoriSvg).toContain('<svg');
     expect(satoriSvg).toContain('#11130f');
+  }, 15_000);
+
+  it('creates an opt-in RSS feed from discoverable pages', () => {
+    const config = resolveSvedocsConfig({
+      site: {
+        name: 'Fixture',
+        description: 'Fixture updates',
+        url: 'https://fixture.test'
+      },
+      seo: {
+        rss: {
+          title: 'Fixture feed',
+          limit: 1,
+          locale: 'en'
+        }
+      },
+      i18n: {
+        defaultLocale: 'en',
+        locales: [
+          { code: 'en', label: 'English', hreflang: 'en' },
+          { code: 'zh', label: 'Chinese', hreflang: 'zh-CN' }
+        ]
+      }
+    });
+    const current = createFixturePage({
+      id: 'current',
+      title: 'Current release',
+      routePath: '/releases/current',
+      scopePath: '/releases/current',
+      locale: 'en',
+      description: 'Current release notes.',
+      lastUpdated: '2026-06-02T00:00:00.000Z',
+      seo: {
+        title: 'Current release',
+        description: 'Current release notes.',
+        canonical: '/releases/current',
+        publishedTime: '2026-06-01T00:00:00.000Z'
+      }
+    });
+    const older = createFixturePage({
+      id: 'older',
+      title: 'Older release',
+      routePath: '/releases/older',
+      scopePath: '/releases/older',
+      locale: 'en',
+      lastUpdated: '2026-05-01T00:00:00.000Z'
+    });
+    const noindex = createFixturePage({
+      id: 'private',
+      title: 'Private release',
+      routePath: '/releases/private',
+      scopePath: '/releases/private',
+      locale: 'en',
+      lastUpdated: '2026-07-01T00:00:00.000Z',
+      seo: { title: 'Private release', robots: 'noindex,follow' }
+    });
+    const translated = createFixturePage({
+      id: 'translated',
+      title: 'Translated release',
+      routePath: '/zh/releases/current',
+      scopePath: '/releases/current',
+      locale: 'zh',
+      lastUpdated: '2026-07-02T00:00:00.000Z'
+    });
+
+    const rss = createRssXml(config, [older, noindex, translated, current]);
+    expect(rss).toContain('<title>Fixture feed</title>');
+    expect(rss).toContain('<link>https://fixture.test/releases/current</link>');
+    expect(rss).toContain('<language>en</language>');
+    expect(rss).not.toContain('Older release');
+    expect(rss).not.toContain('Private release');
+    expect(rss).not.toContain('Translated release');
+    expect(createPageMetadata(config, current).head.links).toContainEqual({
+      rel: 'alternate',
+      type: 'application/rss+xml',
+      href: 'https://fixture.test/feed.xml',
+      title: 'Fixture feed'
+    });
+    expect(createRssResponse(config, [current]).headers.get('content-type')).toContain('application/rss+xml');
+    expect(createRssResponse(resolveSvedocsConfig(), [current]).status).toBe(404);
+    expect(createSitemapXml(config, [current])).toContain('<loc>https://fixture.test/releases/current</loc>');
+    expect(createSitemapXml(config, [current, noindex])).not.toContain('/releases/private');
+
+    const singleLocaleRss = createRssXml(resolveSvedocsConfig({
+      site: { url: 'https://fixture.test' },
+      seo: { rss: { locale: 'en' } }
+    }), [older]);
+    expect(singleLocaleRss).toContain('<title>Older release</title>');
   });
 
   it('creates locale-aware SEO metadata and sitemap alternates', () => {
@@ -1711,7 +1854,7 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(metadata.openGraph.image).toBe('https://fixture.test/og/docs-guide.png');
     expect(createPageOgImagePath(page, createConfiguredOgImageFormat(config))).toBe('/og/docs-guide.png');
     expect(response.headers.get('content-type')).toContain('image/png');
-  });
+  }, 15_000);
 
   it('preserves custom Satori OG template functions in resolved config', async () => {
     const template = (input: { title: string }) => ({

@@ -119,6 +119,8 @@ describe('svedocs-cli Batch 0 shell', () => {
       const minimalPageRoute = await readFile(path.join(tmp, 'minimal-app', 'src/routes/+page.ts'), 'utf8');
       const minimalCatchAllRoute = await readFile(path.join(tmp, 'minimal-app', 'src/routes/[...path]/+page.ts'), 'utf8');
       const minimalErrorRoute = await readFile(path.join(tmp, 'minimal-app', 'src/routes/+error.svelte'), 'utf8');
+      const minimalSitemapRoute = await readFile(path.join(tmp, 'minimal-app', 'src/routes/sitemap.xml/+server.ts'), 'utf8');
+      const minimalFeedRoute = await readFile(path.join(tmp, 'minimal-app', 'src/routes/feed.xml/+server.ts'), 'utf8');
       const cloudflareWrangler = await readFile(path.join(tmp, 'edge-app', 'wrangler.toml'), 'utf8');
       const cloudflareSvelteConfig = await readFile(path.join(tmp, 'edge-app', 'svelte.config.js'), 'utf8');
       const cloudflarePageRoute = await readFile(path.join(tmp, 'edge-app', 'src/routes/+page.ts'), 'utf8');
@@ -126,6 +128,7 @@ describe('svedocs-cli Batch 0 shell', () => {
       const cloudflareErrorRoute = await readFile(path.join(tmp, 'edge-app', 'src/routes/+error.svelte'), 'utf8');
       const cloudflareRobotsRoute = await readFile(path.join(tmp, 'edge-app', 'src/routes/robots.txt/+server.ts'), 'utf8');
       const cloudflareSitemapRoute = await readFile(path.join(tmp, 'edge-app', 'src/routes/sitemap.xml/+server.ts'), 'utf8');
+      const cloudflareFeedRoute = await readFile(path.join(tmp, 'edge-app', 'src/routes/feed.xml/+server.ts'), 'utf8');
       const cloudflareOgRoute = await readFile(path.join(tmp, 'edge-app', 'src/routes/og/[...path]/+server.ts'), 'utf8');
       const cloudflareSearchApi = await readFile(path.join(tmp, 'edge-app', 'src/routes/api/search/+server.ts'), 'utf8');
       const cloudflareApi = await readFile(path.join(tmp, 'edge-app', 'src/routes/api/ask/+server.ts'), 'utf8');
@@ -146,6 +149,10 @@ describe('svedocs-cli Batch 0 shell', () => {
       expect(minimalCatchAllRoute).toContain('redirect(307, resolution.location)');
       expect(minimalErrorRoute).toContain('themeComponents.Error ?? ErrorPage');
       expect(minimalErrorRoute).toContain('virtual:svedocs/theme-components');
+      expect(minimalSitemapRoute).toContain('virtual:svedocs/page-index');
+      expect(minimalSitemapRoute).toContain('createSitemapResponse');
+      expect(minimalFeedRoute).toContain('export const prerender = Boolean(config.seo.rss)');
+      expect(minimalFeedRoute).toContain('createRssResponse');
       expect(await readFile(path.join(tmp, 'minimal-app', 'src/routes/+layout.ts'), 'utf8')).toContain('svedocsTrailingSlash');
       expect(cloudflareWrangler).toContain('pages_build_output_dir');
       expect(cloudflareWrangler).toContain('[[ai_search]]');
@@ -161,6 +168,9 @@ describe('svedocs-cli Batch 0 shell', () => {
       expect(cloudflareRobotsRoute).toContain('createRobotsResponse');
       expect(cloudflareSitemapRoute).toContain('export const prerender = config.seo.sitemap');
       expect(cloudflareSitemapRoute).toContain('createSitemapResponse');
+      expect(cloudflareSitemapRoute).toContain('virtual:svedocs/page-index');
+      expect(cloudflareFeedRoute).toContain('export const prerender = Boolean(config.seo.rss)');
+      expect(cloudflareFeedRoute).toContain('createRssResponse');
       expect(cloudflareOgRoute).toContain('createConfiguredPageOgImageEntries');
       expect(cloudflareOgRoute).toContain('export const prerender = isOgImageEnabled(config)');
       expect(cloudflareSearchApi).toContain('createConfiguredSearchResponse');

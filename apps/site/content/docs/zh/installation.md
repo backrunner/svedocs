@@ -50,8 +50,8 @@ pnpm create svedocs my-docs --template cloudflare
 
 | 模板 | 包含内容 | 适合场景 |
 | --- | --- | --- |
-| `minimal` | 文档外壳和内容路由。 | 学习基础能力，或把文档嵌进已有应用。 |
-| `docs` | 搜索、可本地回退的 Ask AI、sitemap、robots 和 OG 路由。 | 大多数产品文档站。 |
+| `minimal` | 文档外壳、sitemap、robots 和可选 RSS 路由。 | 学习基础能力，或把文档嵌进已有应用。 |
+| `docs` | 搜索、可本地回退的 Ask AI、sitemap、robots、可选 RSS 和 OG 路由。 | 大多数产品文档站。 |
 | `cloudflare` | `docs` 的全部内容，加 Wrangler 配置和 Cloudflare 绑定示例。 | Cloudflare Pages 和以边缘运行为主的项目。 |
 
 远程模板行为可以用环境变量控制：
@@ -115,7 +115,7 @@ export default {
 <slot />
 ```
 
-然后按需要添加路由。最小配置只要渲染 `svedocs/theme` 里的 `DocsApp`；`docs` 和 `cloudflare` 模板则展示了完整的搜索、Ask AI、sitemap、robots 和 OG 配置。
+然后按需要添加路由。最小配置只要渲染 `svedocs/theme` 里的 `DocsApp`；生成模板都包含 sitemap、robots 和可选 RSS 路由，`docs` 和 `cloudflare` 还展示了完整的搜索、Ask AI 和 OG 配置。
 
 ## 添加内容
 

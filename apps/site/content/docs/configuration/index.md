@@ -173,14 +173,17 @@ Choose from `mock`, `cloudflare-ai-search`, `cloudflare-workers-ai`, and `openai
 export default defineConfig({
   seo: {
     sitemap: true,
+    rss: {
+      title: 'Acme updates',
+      description: 'Documentation and release updates from Acme.',
+      limit: 50,
+      locale: 'en'
+    },
     robots: true,
     defaultAuthor: 'Acme',
     head: {
       meta: [
         { name: 'google-site-verification', content: 'verification-token' }
-      ],
-      links: [
-        { rel: 'alternate', type: 'application/rss+xml', href: '/feed.xml', title: 'RSS' }
       ],
       jsonLd: [
         { '@type': 'Organization', name: 'Acme' }
@@ -199,6 +202,8 @@ export default defineConfig({
 Set `seo.ogImage = false` to disable automatic OG generation. Use SVG for portable edge/runtime output. Use PNG or Satori when you need richer build-time images and can provide fonts.
 
 `seo.head` is for serializable head additions that should appear on every page, such as verification meta tags, feed links, preload links, and organization-level JSON-LD. Page frontmatter can also define `head` for page-specific additions.
+
+Sitemaps are enabled by default. RSS is disabled by default; set `rss: true` to use site metadata and the default 50-entry limit, or provide the object form above. Enabled feeds add their own `<link rel="alternate">` tag. Sitemap, robots, and RSS routes are prerendered when enabled and return cacheable responses with ETag support when served dynamically.
 
 ## Source links
 

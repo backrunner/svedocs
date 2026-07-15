@@ -22,7 +22,7 @@ order: 5
 
 1. 先写内容并运行 `svedocs check`。
 2. 设置 `site.url`、description 和 canonical 行为。
-3. 加入 sitemap、robots 和 OG 路由。
+3. 加入 sitemap、robots、可选 RSS 和 OG 路由。
 4. 启用本地搜索，并确认小节结果有用。
 5. 只有本地搜索不够时，再选择托管搜索服务。
 6. 搜索记录和引用质量稳定后，再加入 Ask AI。

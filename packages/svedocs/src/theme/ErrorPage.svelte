@@ -6,6 +6,7 @@
   import PageShell from './PageShell.svelte';
   import RootLayout from './RootLayout.svelte';
   import SafeRenderError from './SafeRenderError.svelte';
+  import ThemeInit from './ThemeInit.svelte';
   import type { SvedocsPageShellAction } from './types.js';
   import type { SvedocsThemeComponentMap } from './types.js';
 
@@ -42,6 +43,14 @@
     ...(docsEntry ? [{ label: context.t('error.docs'), href: docsEntry.routePath }] : [])
   ] as SvedocsPageShellAction[];
 </script>
+
+{#if Root !== RootLayout}
+  <ThemeInit
+    defaultMode={config.theme.defaultMode}
+    languageTag={context.languageTag}
+    dir={context.locale?.dir ?? 'ltr'}
+  />
+{/if}
 
 <svelte:boundary>
   <svelte:component

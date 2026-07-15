@@ -79,6 +79,13 @@ export interface SvedocsMarkdownOptions {
   shiki?: SvedocsShikiOptions;
 }
 
+export interface SvedocsRssOptions {
+  title?: string;
+  description?: string;
+  limit?: number;
+  locale?: string;
+}
+
 export interface SvedocsConfig {
   site?: {
     name?: string;
@@ -128,6 +135,7 @@ export interface SvedocsConfig {
   };
   seo?: {
     sitemap?: boolean;
+    rss?: boolean | SvedocsRssOptions;
     robots?: boolean;
     defaultAuthor?: string;
     head?: SvedocsSeoHead;
@@ -344,6 +352,17 @@ export const svedocsConfigSchema = z.object({
   seo: z
     .object({
       sitemap: z.boolean().optional(),
+      rss: z
+        .union([
+          z.boolean(),
+          z.object({
+            title: z.string().min(1).optional(),
+            description: z.string().min(1).optional(),
+            limit: z.number().int().positive().max(1000).optional(),
+            locale: z.string().min(1).optional()
+          })
+        ])
+        .optional(),
       robots: z.boolean().optional(),
       defaultAuthor: z.string().optional(),
       head: z

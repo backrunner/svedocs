@@ -17,6 +17,7 @@ export { default as Navbar } from './Navbar.svelte';
 export { default as SocialNav } from './SocialNav.svelte';
 export { default as MobileNav } from './MobileNav.svelte';
 export { default as ThemeToggle } from './ThemeToggle.svelte';
+export { default as ThemeInit } from './ThemeInit.svelte';
 export { default as SearchDialog } from './SearchDialog.svelte';
 export { default as AskAiPanel } from './AskAiPanel.svelte';
 export { default as FloatingToolbar } from './FloatingToolbar.svelte';

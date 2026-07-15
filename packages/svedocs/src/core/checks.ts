@@ -24,6 +24,25 @@ export async function checkSvedocsContent(
     });
   }
 
+  if (manifest.config.seo.rss && !manifest.config.site.url) {
+    issues.push({
+      code: 'missing-site-url',
+      severity: 'warning',
+      message: 'site.url is required to generate absolute sitemap and RSS URLs for production.'
+    });
+  }
+
+  const sitemapPageCount = manifest.pages.filter((page) => (
+    !page.hidden && !/(?:^|[\s,])(?:noindex|none)(?:$|[\s,])/i.test(page.seo.robots ?? '')
+  )).length;
+  if (manifest.config.seo.sitemap && sitemapPageCount > 50_000) {
+    issues.push({
+      code: 'sitemap-url-limit',
+      severity: 'error',
+      message: `Sitemap contains ${sitemapPageCount} URLs; split it into sitemap index files before exceeding 50,000 URLs.`
+    });
+  }
+
   for (const route of routeDuplicates) {
     issues.push({
       code: 'duplicate-route',

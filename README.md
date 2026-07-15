@@ -17,7 +17,7 @@
 
 > svedocs is under active development. The first stable release has not shipped yet, so package APIs, templates, docs, and deployment defaults may still change before launch.
 
-svedocs brings the moving parts of a modern docs site into one compact framework package: content discovery, Svelte-compatible Markdown rendering, navigation, search, Ask AI, SEO, Open Graph images, Cloudflare helpers, and a polished default theme.
+svedocs brings the moving parts of a modern docs site into one compact framework package: content discovery, Svelte-compatible Markdown rendering, navigation, search, Ask AI, SEO, sitemap and RSS generation, Open Graph images, Cloudflare helpers, and a polished default theme.
 
 It is built for teams that want documentation to feel native to SvelteKit instead of bolted on through a separate renderer, theme package, search adapter graph, and deployment layer.
 
@@ -26,7 +26,7 @@ It is built for teams that want documentation to feel native to SvelteKit instea
 | Capability | What svedocs provides |
 | --- | --- |
 | Native SvelteKit docs | Markdown, `.svx`, and `.mdx`-style authoring compiled through the Svelte stack. |
-| Unified content model | One manifest powers routes, sidebars, previous/next links, search records, SEO, sitemap entries, link checks, and OG routes. |
+| Unified content model | One manifest powers routes, sidebars, previous/next links, search records, SEO, sitemap and RSS entries, link checks, and OG routes. |
 | Edge-first deployment | Cloudflare edge SSR is the default path, with static and SPA builds available when needed. |
 | Search and Ask AI | Local MiniSearch for development, plus Algolia, Typesense, Cloudflare AI Search, Workers AI, and OpenAI-compatible providers. |
 | Default theme | Tailwind CSS v4 theme with dark mode, command/search UI, Ask AI, ToC, locales, versions, code tools, and a pixel-style homepage. |
@@ -110,7 +110,7 @@ content/
     index.md
 ```
 
-Frontmatter controls title, description, order, icon hints, locale, version, lifecycle status, and layout selection. The same parsed source drives rendering, navigation, search records, link checks, SEO metadata, sitemap entries, and Open Graph images.
+Frontmatter controls title, description, order, icon hints, locale, version, lifecycle status, and layout selection. The same parsed source drives rendering, navigation, search records, link checks, SEO metadata, sitemap and RSS entries, and Open Graph images.
 
 ## CLI
 

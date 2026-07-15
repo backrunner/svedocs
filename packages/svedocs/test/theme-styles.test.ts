@@ -10,4 +10,11 @@ describe('theme styles', () => {
     );
     expect(styles).not.toMatch(/\.sd-sidebar-list\[data-depth="0"\]\s+\.sd-sidebar-chevron\s*\{/);
   });
+
+  it('selects the theme toggle icon before hydration', async () => {
+    const styles = await readFile(new URL('../src/theme/styles.css', import.meta.url), 'utf8');
+
+    expect(styles).toContain('[data-theme-icon="light"]');
+    expect(styles).toContain(':root[data-theme="dark"] .sd-theme-toggle [data-theme-icon="dark"]');
+  });
 });

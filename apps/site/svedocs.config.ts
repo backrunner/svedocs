@@ -232,6 +232,12 @@ export default defineConfig({
   },
   seo: {
     defaultAuthor: 'svedocs team',
+    rss: {
+      title: 'svedocs updates',
+      description: 'Documentation and release updates from svedocs.',
+      limit: 50,
+      locale: 'en'
+    },
     ogImage: {
       template: 'default',
       format: 'svg',
