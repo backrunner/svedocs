@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build svedocs landing"
+  short_description: "Build a custom svedocs landing experience"
+  default_prompt: "Use $build-svedocs-landing to create or refine the documentation landing page."

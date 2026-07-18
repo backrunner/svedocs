@@ -1,0 +1,4 @@
+interface:
+  display_name: "Customize svedocs theme"
+  short_description: "Customize svedocs styling and theme components"
+  default_prompt: "Use $customize-svedocs-theme to adapt the documentation theme."

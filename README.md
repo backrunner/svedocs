@@ -57,6 +57,20 @@ pnpm create svedocs my-docs --template docs
 pnpm create svedocs my-docs --template cloudflare
 ```
 
+## Agent Skills
+
+The `skills/` directory ships focused Agent Skills grounded in the current framework APIs and generated project structure:
+
+| Skill | Use it for |
+| --- | --- |
+| `use-svedocs` | Create, integrate, maintain, and verify a svedocs site. |
+| `configure-svedocs` | Change the typed project configuration and provider setup. |
+| `customize-svedocs-theme` | Customize tokens, slots, components, and headless theme behavior. |
+| `build-svedocs-landing` | Build the default or localized documentation landing experience. |
+| `localize-svedocs` | Configure locales, translated content, links, search scope, and SEO alternates. |
+
+Each skill includes Codex UI metadata and focused references for progressive loading. Agent Skills-compatible tools can load the individual folders directly from this repository.
+
 ## Configuration
 
 Projects are configured with `svedocs.config.ts`:

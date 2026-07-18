@@ -1,0 +1,4 @@
+interface:
+  display_name: "Localize svedocs"
+  short_description: "Add locales, translations, and localized routes"
+  default_prompt: "Use $localize-svedocs to add or maintain multilingual documentation."

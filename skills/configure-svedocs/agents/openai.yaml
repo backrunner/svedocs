@@ -1,0 +1,4 @@
+interface:
+  display_name: "Configure svedocs"
+  short_description: "Configure svedocs safely from one typed config"
+  default_prompt: "Use $configure-svedocs to update the svedocs project configuration."

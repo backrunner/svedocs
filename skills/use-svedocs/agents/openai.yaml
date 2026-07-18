@@ -1,0 +1,4 @@
+interface:
+  display_name: "Use svedocs"
+  short_description: "Build and maintain svedocs documentation sites"
+  default_prompt: "Use $use-svedocs to create or maintain a svedocs documentation site."
