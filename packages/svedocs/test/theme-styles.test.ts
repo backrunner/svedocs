@@ -2,6 +2,15 @@ import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
 describe('theme styles', () => {
+  it.each(['styles.css', 'base.css'])('smoothly scrolls to anchors in %s', async (file) => {
+    const styles = await readFile(new URL(`../src/theme/${file}`, import.meta.url), 'utf8');
+
+    expect(styles).toMatch(/html\s*\{[^}]*scroll-behavior:\s*smooth;/s);
+    expect(styles).toMatch(
+      /@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?scroll-behavior:\s*auto !important;/
+    );
+  });
+
   it('scopes root sidebar chevron alignment to direct menu items', async () => {
     const styles = await readFile(new URL('../src/theme/styles.css', import.meta.url), 'utf8');
 

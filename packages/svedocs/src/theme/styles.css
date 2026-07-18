@@ -50,7 +50,7 @@ html:has(.sd-root[data-theme="dark"]),
 }
 
 html {
-  scroll-behavior: auto;
+  scroll-behavior: smooth;
   background: var(--sd-bg);
   color: var(--sd-ink);
   overflow-y: auto;
