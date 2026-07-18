@@ -98,8 +98,10 @@ export function remarkSvedocsCodeBlocks(
       }
 
       if (!shiki) return;
-      const themes = options.themes ?? { light: 'github-light', dark: 'github-dark' };
-      const useDualTheme = Boolean(themes.light && themes.dark);
+      const themes = options.theme !== undefined
+        ? undefined
+        : options.themes ?? { light: 'github-light', dark: 'github-dark' };
+      const useDualTheme = Boolean(themes?.light && themes?.dark);
       const renderLineNumbers = showLineNumbers && !block.noLineNumbers;
       const wrapLines = typeof block.wrap === 'boolean' ? block.wrap : globalWrap;
       transforms.push(
@@ -108,10 +110,10 @@ export function remarkSvedocsCodeBlocks(
               lang: normalizeShikiLanguage(block.language),
               ...(useDualTheme
                 ? {
-                    themes: { light: themes.light!, dark: themes.dark! },
+                    themes: { light: themes!.light!, dark: themes!.dark! },
                     defaultColor: false
                   }
-                : { theme: options.theme ?? themes.dark ?? 'github-dark' }),
+                : { theme: options.theme ?? themes?.dark ?? 'github-dark' }),
               ...(options.transformers ? { transformers: options.transformers as never[] } : {})
             } as never)
           .then((html) => {

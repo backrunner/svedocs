@@ -12,7 +12,9 @@
   --sd-font-display: var(--font-sans);
 }
 
-:root[data-theme="dark"] {
+:root[data-theme="dark"],
+html:has(.sd-root[data-theme="dark"]),
+.sd-root[data-theme="dark"] {
   color-scheme: dark;
   --sd-bg: #111;
   --sd-ink: #f4f4f4;

@@ -357,10 +357,14 @@ async function loadPageComponent(
         source,
         createMdsvexOptionsFromConfig(rawConfig),
         {
-          codeThemes: {
-            light: manifestConfig.theme.codeTheme.light,
-            dark: manifestConfig.theme.codeTheme.dark
-          },
+          ...(manifestConfig.theme.defaultMode === 'system'
+            ? {
+                codeThemes: {
+                  light: manifestConfig.theme.codeTheme.light,
+                  dark: manifestConfig.theme.codeTheme.dark
+                }
+              }
+            : { codeTheme: manifestConfig.theme.codeTheme[manifestConfig.theme.defaultMode] }),
           codeCopyButton: manifestConfig.theme.code.copyButton,
           ...(headingAnchorLabel ? { headingAnchorLabel } : {}),
           resolveHref: (href) => resolveSvedocsHref({

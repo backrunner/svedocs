@@ -33,7 +33,9 @@
   --sd-scrollbar-track: transparent;
 }
 
-:root[data-theme="dark"] {
+:root[data-theme="dark"],
+html:has(.sd-root[data-theme="dark"]),
+.sd-root[data-theme="dark"] {
   color-scheme: dark;
   --sd-bg: #11130f;
   --sd-ink: #f4f1e8;
@@ -586,11 +588,11 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
 }
 
 .sd-theme-toggle [data-theme-icon="light"],
-:root[data-theme="dark"] .sd-theme-toggle [data-theme-icon="dark"] {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-theme-toggle [data-theme-icon="dark"] {
   display: none;
 }
 
-:root[data-theme="dark"] .sd-theme-toggle [data-theme-icon="light"] {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-theme-toggle [data-theme-icon="light"] {
   display: block;
 }
 
@@ -2809,23 +2811,23 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
   text-decoration: var(--shiki-light-text-decoration, none);
 }
 
-:root[data-theme="dark"] .sd-code,
-:root[data-theme="dark"] .sd-prose pre {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code,
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-prose pre {
   background: #1e1e1e;
   border-color: color-mix(in srgb, var(--sd-line) 90%, transparent);
   box-shadow: none;
 }
 
-:root[data-theme="dark"] .sd-code.shiki,
-:root[data-theme="dark"] .sd-prose pre.shiki {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code.shiki,
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-prose pre.shiki {
   background-color: #1e1e1e !important;
   color: var(--shiki-dark, #d4d4d4) !important;
 }
 
-:root[data-theme="dark"] .sd-code.shiki .line > .sd-line-content > span,
-:root[data-theme="dark"] .sd-prose pre.shiki .line > .sd-line-content > span,
-:root[data-theme="dark"] .sd-code.shiki .line > span:not(.sd-line-no):not(.sd-line-content),
-:root[data-theme="dark"] .sd-prose pre.shiki .line > span:not(.sd-line-no):not(.sd-line-content) {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code.shiki .line > .sd-line-content > span,
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-prose pre.shiki .line > .sd-line-content > span,
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code.shiki .line > span:not(.sd-line-no):not(.sd-line-content),
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-prose pre.shiki .line > span:not(.sd-line-no):not(.sd-line-content) {
   color: var(--shiki-dark, inherit) !important;
   font-style: var(--shiki-dark-font-style, normal) !important;
   font-weight: var(--shiki-dark-font-weight, inherit) !important;
@@ -2898,7 +2900,7 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
   pointer-events: none;
 }
 
-:root[data-theme="dark"] .sd-code .sd-line-no {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code .sd-line-no {
   border-right-color: color-mix(in srgb, currentColor 16%, transparent);
 }
 
@@ -2959,8 +2961,8 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
   box-shadow: inset 2px 0 0 var(--sd-accent-2);
 }
 
-:root[data-theme="dark"] .sd-code .sd-line-add { background: color-mix(in srgb, #3fb950 18%, transparent); }
-:root[data-theme="dark"] .sd-code .sd-line-remove { background: color-mix(in srgb, #ff7b72 18%, transparent); }
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code .sd-line-add { background: color-mix(in srgb, #3fb950 18%, transparent); }
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code .sd-line-remove { background: color-mix(in srgb, #ff7b72 18%, transparent); }
 
 .sd-code-header {
   display: flex;
@@ -2975,12 +2977,12 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
   line-height: 1;
 }
 
-:root[data-theme="dark"] .sd-code-header {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code-header {
   background: #181818;
   border-bottom-color: color-mix(in srgb, currentColor 14%, transparent);
 }
 
-:root[data-theme="dark"] .sd-code-language {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code-language {
   background: color-mix(in srgb, currentColor 8%, transparent);
   border-color: color-mix(in srgb, currentColor 16%, transparent);
 }
@@ -3066,8 +3068,8 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
 
 .sd-code-stat-add { color: #2ea043; }
 .sd-code-stat-remove { color: #d1242f; }
-:root[data-theme="dark"] .sd-code-stat-add { color: #3fb950; }
-:root[data-theme="dark"] .sd-code-stat-remove { color: #ff7b72; }
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code-stat-add { color: #3fb950; }
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code-stat-remove { color: #ff7b72; }
 
 .sd-code-copy {
   display: inline-flex;
@@ -3112,7 +3114,7 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
   background: color-mix(in srgb, #2ea043 10%, transparent);
 }
 
-:root[data-theme="dark"] .sd-code-copy[data-state="copied"] {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code-copy[data-state="copied"] {
   color: #3fb950;
   background: color-mix(in srgb, #3fb950 16%, transparent);
 }
@@ -3252,37 +3254,37 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
   white-space: pre;
 }
 
-:root[data-theme="dark"] .sd-diff-pane {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-diff-pane {
   background: color-mix(in srgb, #1e1e1e 88%, var(--sd-panel));
 }
 
-:root[data-theme="dark"] .sd-diff-column-label {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-diff-column-label {
   background: color-mix(in srgb, currentColor 5%, transparent);
   border-bottom-color: color-mix(in srgb, currentColor 13%, transparent);
   color: color-mix(in srgb, currentColor 58%, transparent);
 }
 
-:root[data-theme="dark"] .sd-diff-pane[data-side="old"] {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-diff-pane[data-side="old"] {
   border-right-color: color-mix(in srgb, currentColor 12%, transparent);
 }
 
-:root[data-theme="dark"] .sd-diff-cell {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-diff-cell {
   border-top-color: color-mix(in srgb, currentColor 8%, transparent);
 }
 
-:root[data-theme="dark"] .sd-diff-add {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-diff-add {
   background: color-mix(in srgb, #3fb950 17%, transparent);
 }
 
-:root[data-theme="dark"] .sd-diff-remove {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-diff-remove {
   background: color-mix(in srgb, #ff7b72 17%, transparent);
 }
 
-:root[data-theme="dark"] .sd-diff-add .sd-diff-line-no {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-diff-add .sd-diff-line-no {
   color: #3fb950;
 }
 
-:root[data-theme="dark"] .sd-diff-remove .sd-diff-line-no {
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-diff-remove .sd-diff-line-no {
   color: #ff7b72;
 }
 

@@ -130,6 +130,8 @@ export default defineConfig({
 
 默认根布局会在主题 CSS 生效前同步执行主题初始化器，优先读取已保存的 `svedocs-theme`，否则跟随系统配色。完整自定义布局和整页主题组件替换也会由 `DocsApp` 注入同一逻辑。如果应用外壳完全不使用 `DocsApp` 或 `RootLayout`，请在外壳中渲染一次 `svedocs/theme` 导出的 `ThemeInit`。
 
+将 `theme.defaultMode` 设置为 `light` 或 `dark` 可以锁定站点的配色模式。固定模式只应用所选的 design token，不渲染主题切换按钮，不注入主题初始化脚本，并使用所选的代码主题生成代码块。默认的 `system` 模式会保留切换按钮、已保存偏好和系统配色同步。
+
 ## 主题插槽
 
 `DocsApp` 提供命名插槽，可以只替换页面中的某个区域，不必重新实现路由、元数据、页头、页脚、搜索、Ask AI 和文档导航。

@@ -241,10 +241,14 @@ function createMarkdownCompileOptions(
     ...(rawConfig?.markdown?.remarkPlugins ? { remarkPlugins: rawConfig.markdown.remarkPlugins } : {}),
     ...(rawConfig?.markdown?.rehypePlugins ? { rehypePlugins: rawConfig.markdown.rehypePlugins } : {}),
     ...(rawConfig?.markdown?.shiki?.transformers ? { shikiTransformers: rawConfig.markdown.shiki.transformers } : {}),
-    codeThemes: {
-      light: resolvedConfig.theme.codeTheme.light,
-      dark: resolvedConfig.theme.codeTheme.dark
-    },
+    ...(resolvedConfig.theme.defaultMode === 'system'
+      ? {
+          codeThemes: {
+            light: resolvedConfig.theme.codeTheme.light,
+            dark: resolvedConfig.theme.codeTheme.dark
+          }
+        }
+      : { codeTheme: resolvedConfig.theme.codeTheme[resolvedConfig.theme.defaultMode] }),
     codeLineNumbers: resolvedConfig.theme.code.lineNumbers,
     codeWrap: resolvedConfig.theme.code.wrap,
     codeCopyButton: resolvedConfig.theme.code.copyButton

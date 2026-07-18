@@ -23,9 +23,10 @@
   $: FooterComponent = themeComponents.Footer ?? Footer;
   $: PageToolsComponent = themeComponents.PageTools ?? PageTools;
   $: ErrorComponent = SafeRenderError;
+  $: fixedTheme = context.config.theme.defaultMode === 'system' ? undefined : context.config.theme.defaultMode;
 </script>
 
-<div class:sd-has-background-slot={hasBackgroundSlot} class="sd-root" data-surface={context.surface} style={themeStyle} data-theme-component="layout">
+<div class:sd-has-background-slot={hasBackgroundSlot} class="sd-root" data-surface={context.surface} data-theme={fixedTheme} style={themeStyle} data-theme-component="layout">
   <a class="sd-skip" href="#content">{context.t('nav.skipToContent')}</a>
   {#if hasBackgroundSlot}
     <div class="sd-background-slot" aria-hidden="true">

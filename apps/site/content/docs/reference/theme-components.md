@@ -346,6 +346,8 @@ The default footer hides on docs article pages and composes `FooterLinks`. A cus
 
 `ThemeToggle` reads and writes `document.documentElement.dataset.theme`, updates `color-scheme`, and stores the selected mode in `localStorage`.
 
+The default navbar omits `ThemeToggle` when `defaultMode` is `light` or `dark`; those fixed modes do not persist preferences or subscribe to system color changes.
+
 | Prop | Notes |
 | --- | --- |
 | `defaultMode` | `light`, `dark`, or `system`; defaults to `system`. |

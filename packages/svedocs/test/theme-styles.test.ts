@@ -15,6 +15,13 @@ describe('theme styles', () => {
     const styles = await readFile(new URL('../src/theme/styles.css', import.meta.url), 'utf8');
 
     expect(styles).toContain('[data-theme-icon="light"]');
-    expect(styles).toContain(':root[data-theme="dark"] .sd-theme-toggle [data-theme-icon="dark"]');
+    expect(styles).toContain(':is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-theme-toggle [data-theme-icon="dark"]');
+  });
+
+  it('supports fixed dark tokens on the rendered theme root', async () => {
+    const styles = await readFile(new URL('../src/theme/styles.css', import.meta.url), 'utf8');
+
+    expect(styles).toContain('.sd-root[data-theme="dark"] {');
+    expect(styles).toContain('html:has(.sd-root[data-theme="dark"])');
   });
 });

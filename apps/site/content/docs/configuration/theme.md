@@ -130,6 +130,8 @@ export default defineConfig({
 
 The default root layout runs a synchronous theme initializer before theme CSS is applied, using the saved `svedocs-theme` preference or the system color scheme. Full custom layouts and full theme component replacements receive the same initializer from `DocsApp`. When rendering a custom application shell without `DocsApp` or `RootLayout`, render `ThemeInit` from `svedocs/theme` once in that shell.
 
+Set `theme.defaultMode` to `light` or `dark` to lock the site to one color mode. Fixed modes apply only the selected design tokens, omit the theme toggle, skip the theme bootstrap script, and compile code blocks with the selected code theme. The default `system` mode keeps the toggle, saved preference, and system color scheme synchronization.
+
 ## Theme slots
 
 `DocsApp` exposes named slots for changing parts of the page without rebuilding its routing, metadata, header, footer, search, Ask AI, or docs navigation.

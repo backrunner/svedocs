@@ -11,7 +11,7 @@ import { createConfiguredOgImageFormat, createConfiguredOgImageTemplate, createC
 import { compileMarkdown, createDiffRows, createDiffSplitRows } from '../src/mdx/compile';
 import { createAlgoliaSearchProvider, createCloudflareAiSearchDocuments, createCloudflareAiSearchProvider, createConfiguredSearchProvider, createConfiguredSearchResponse, createSearchResponse, createTypesenseSearchProvider, searchRecords, syncCloudflareAiSearchIndex } from '../src/search';
 import { createFixturePage } from '../src/testing';
-import { createAskAiController, createPageToolsController, createSearchController, createThemeContext, createThemeInitScript, createThemeModeController, resolveLocaleCodeFromPath, resolveLocalizedHref, resolveLocalizedNavItem } from '../src/theme/headless';
+import { createAskAiController, createPageToolsController, createSearchController, createThemeContext, createThemeInitScript, createThemeModeController, createThemeStyle, resolveLocaleCodeFromPath, resolveLocalizedHref, resolveLocalizedNavItem } from '../src/theme/headless';
 import { svedocs } from '../src/vite';
 
 describe('svedocs Batch 0 skeleton', () => {
@@ -44,6 +44,33 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(config.i18n.messages.en!['search.placeholder']).toBe('Search docs');
     expect(config.i18n.messages.en!['home.primaryAction']).toBe('Read docs');
     expect(config.checks.translations).toBe(false);
+  });
+
+  it('uses one fixed theme without bootstrap or switching behavior', () => {
+    const light = resolveSvedocsConfig({ theme: { defaultMode: 'light' } });
+    const dark = resolveSvedocsConfig({ theme: { defaultMode: 'dark' } });
+
+    expect(createThemeInitScript('light')).toBe('');
+    expect(createThemeInitScript('dark')).toBe('');
+    expect(createThemeStyle(light)).toContain('--sd-bg:#f8f7f2');
+    expect(createThemeStyle(light)).not.toContain('--sd-bg:#11130f');
+    expect(createThemeStyle(dark)).toContain('--sd-bg:#11130f');
+    expect(createThemeStyle(dark)).not.toContain('--sd-bg:#f8f7f2');
+
+    const controller = createThemeModeController('dark');
+    controller.toggle();
+    controller.apply('light');
+    controller.setPreference('system');
+    expect(get(controller.mode)).toBe('dark');
+    expect(get(controller.preference)).toBe('dark');
+  });
+
+  it('compiles fixed-mode code blocks with one Shiki theme', async () => {
+    const compiled = await compileMarkdown('```ts\nconst value = 1;\n```', { codeTheme: 'github-dark' });
+
+    expect(compiled.html).not.toContain('shiki-themes github-light github-dark');
+    expect(compiled.html).not.toContain('--shiki-light:');
+    expect(compiled.html).toContain('class="shiki github-dark sd-code"');
   });
 
   it('resolves localized shell messages with defaults, overrides, fallback, and interpolation', () => {

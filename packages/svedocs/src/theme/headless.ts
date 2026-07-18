@@ -105,7 +105,35 @@ export function createRuntimeScope(mode: 'current' | 'all', page: SvedocsPage | 
 
 export function createThemeStyle(config: SvedocsResolvedConfig): string {
   const accent = resolveColor(config.theme.palette.accent, '#007f68');
+  const modeTokens = config.theme.defaultMode === 'dark'
+    ? [
+        '--sd-bg:#11130f',
+        '--sd-ink:#f4f1e8',
+        '--sd-muted:#aaa698',
+        '--sd-line:#2f332d',
+        '--sd-grid-line:color-mix(in srgb, var(--sd-line) 45%, transparent)',
+        '--sd-panel:#181b16',
+        '--sd-accent:#50d6b3',
+        '--sd-accent-2:#ff8a66',
+        '--sd-scrollbar-thumb:color-mix(in srgb, var(--sd-ink) 34%, transparent)',
+        '--sd-scrollbar-thumb-hover:color-mix(in srgb, var(--sd-accent) 70%, var(--sd-ink))'
+      ]
+    : config.theme.defaultMode === 'light'
+      ? [
+          '--sd-bg:#f8f7f2',
+          '--sd-ink:#161612',
+          '--sd-muted:#68675f',
+          '--sd-line:#dedbd0',
+          '--sd-grid-line:color-mix(in srgb, var(--sd-line) 42%, transparent)',
+          '--sd-panel:#fffdf7',
+          '--sd-accent:#007f68',
+          '--sd-accent-2:#d64735',
+          '--sd-scrollbar-thumb:color-mix(in srgb, var(--sd-ink) 30%, transparent)',
+          '--sd-scrollbar-thumb-hover:color-mix(in srgb, var(--sd-accent) 62%, var(--sd-ink))'
+        ]
+      : [];
   return [
+    ...modeTokens,
     `--font-sans:${config.theme.fonts.sans}`,
     `--font-mono:${config.theme.fonts.mono}`,
     `--sd-font-display:${config.theme.fonts.display}`,
@@ -115,6 +143,7 @@ export function createThemeStyle(config: SvedocsResolvedConfig): string {
 }
 
 export function createThemeInitScript(defaultMode: 'light' | 'dark' | 'system', languageTag = 'en', dir: 'ltr' | 'rtl' = 'ltr'): string {
+  if (defaultMode !== 'system') return '';
   return `<script>(function(){try{var d=${serializeInlineScriptValue(defaultMode)};var l=${serializeInlineScriptValue(languageTag)};var r=${serializeInlineScriptValue(dir)};var s;try{s=localStorage.getItem('svedocs-theme')}catch(e){}var p=s==='dark'||s==='light'||s==='system'?s:d;var m=typeof matchMedia==='function'&&matchMedia('(prefers-color-scheme: dark)').matches;var t=p==='system'?(m?'dark':'light'):p;var h=document.documentElement;h.dataset.theme=t;h.style.colorScheme=t;h.lang=l;h.dir=r;}catch(e){}})();<\/script>`;
 }
 
@@ -816,7 +845,8 @@ export function createTocController(initial: { page: SvedocsPage }): SvedocsTocC
 }
 
 export function createThemeModeController(defaultMode: 'light' | 'dark' | 'system' = 'system'): SvedocsThemeModeController {
-  const mode = writable<'light' | 'dark'>('light');
+  const fixedMode = defaultMode === 'system' ? undefined : defaultMode;
+  const mode = writable<'light' | 'dark'>(fixedMode ?? 'light');
   const preference = writable<'light' | 'dark' | 'system'>(defaultMode);
   let media: MediaQueryList | undefined;
 
@@ -839,20 +869,27 @@ export function createThemeModeController(defaultMode: 'light' | 'dark' | 'syste
   }
 
   function setPreference(nextPreference: 'light' | 'dark' | 'system'): void {
+    if (fixedMode) {
+      preference.set(fixedMode);
+      return;
+    }
     preference.set(nextPreference);
     writeStoredThemePreference(nextPreference);
     applyResolvedMode(resolveMode(nextPreference));
   }
 
   function apply(nextMode: 'light' | 'dark'): void {
+    if (fixedMode) return;
     setPreference(nextMode);
   }
 
   function toggle(): void {
+    if (fixedMode) return;
     apply(get(mode) === 'dark' ? 'light' : 'dark');
   }
 
   function syncFromSystem(): void {
+    if (fixedMode) return;
     const stored = readStoredThemePreference();
     const nextPreference = stored === 'dark' || stored === 'light' || stored === 'system' ? stored : defaultMode;
     preference.set(nextPreference);
@@ -864,6 +901,7 @@ export function createThemeModeController(defaultMode: 'light' | 'dark' | 'syste
   }
 
   function mount(): () => void {
+    if (fixedMode) return () => undefined;
     const current = typeof document !== 'undefined' ? document.documentElement.dataset.theme : undefined;
     mode.set(current === 'dark' ? 'dark' : 'light');
     try {

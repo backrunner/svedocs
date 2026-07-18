@@ -346,6 +346,8 @@ svedocs({
 
 `ThemeToggle` 读写 `document.documentElement.dataset.theme`，更新 `color-scheme`，并把用户选择写入 `localStorage`。
 
+当 `defaultMode` 为 `light` 或 `dark` 时，默认导航栏不会渲染 `ThemeToggle`；固定模式不会保存偏好，也不会订阅系统配色变化。
+
 | 属性 | 说明 |
 | --- | --- |
 | `defaultMode` | `light`、`dark` 或 `system`，默认 `system`。 |

@@ -45,7 +45,9 @@
       <ScopeSwitcher page={context.page} pages={context.pages} locales={context.config.i18n.locales} {context} />
     </div>
     <svelte:component this={Social} {context} />
-    <svelte:component this={Toggle} defaultMode={context.config.theme.defaultMode} {context} />
+    {#if context.config.theme.defaultMode === 'system'}
+      <svelte:component this={Toggle} defaultMode={context.config.theme.defaultMode} {context} />
+    {/if}
     <svelte:component this={Mobile} items={mobileTree} currentPath={mobileCurrentPath} {themeComponents} {context} />
   </div>
   <button

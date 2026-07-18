@@ -9,6 +9,8 @@
 </script>
 
 <svelte:head>
-  <meta name="color-scheme" content="light dark" />
-  {@html script}
+  <meta name="color-scheme" content={defaultMode === 'system' ? 'light dark' : defaultMode} />
+  {#if script}
+    {@html script}
+  {/if}
 </svelte:head>
