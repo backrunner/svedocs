@@ -2793,22 +2793,24 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
 .sd-code.shiki,
 .sd-prose pre.shiki {
   background-color: #fbfbfa !important;
-  color: var(--shiki-light, var(--sd-ink)) !important;
+}
+
+.sd-code.shiki[style*="--shiki-light:"],
+.sd-prose pre.shiki[style*="--shiki-light:"] {
+  color: var(--shiki-light) !important;
 }
 
 .sd-code.shiki code,
 .sd-prose pre.shiki code {
-  color: inherit;
+  color: inherit !important;
 }
 
-.sd-code.shiki .line > .sd-line-content > span,
-.sd-prose pre.shiki .line > .sd-line-content > span,
-.sd-code.shiki .line > span:not(.sd-line-no):not(.sd-line-content),
-.sd-prose pre.shiki .line > span:not(.sd-line-no):not(.sd-line-content) {
-  color: var(--shiki-light, inherit);
-  font-style: var(--shiki-light-font-style, normal);
-  font-weight: var(--shiki-light-font-weight, inherit);
-  text-decoration: var(--shiki-light-text-decoration, none);
+.sd-code.shiki [style*="--shiki-light:"],
+.sd-prose pre.shiki [style*="--shiki-light:"] {
+  color: var(--shiki-light) !important;
+  font-style: var(--shiki-light-font-style, normal) !important;
+  font-weight: var(--shiki-light-font-weight, inherit) !important;
+  text-decoration: var(--shiki-light-text-decoration, none) !important;
 }
 
 :is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code,
@@ -2821,14 +2823,16 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
 :is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code.shiki,
 :is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-prose pre.shiki {
   background-color: #1e1e1e !important;
-  color: var(--shiki-dark, #d4d4d4) !important;
 }
 
-:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code.shiki .line > .sd-line-content > span,
-:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-prose pre.shiki .line > .sd-line-content > span,
-:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code.shiki .line > span:not(.sd-line-no):not(.sd-line-content),
-:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-prose pre.shiki .line > span:not(.sd-line-no):not(.sd-line-content) {
-  color: var(--shiki-dark, inherit) !important;
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code.shiki[style*="--shiki-dark:"],
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-prose pre.shiki[style*="--shiki-dark:"] {
+  color: var(--shiki-dark) !important;
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code.shiki [style*="--shiki-dark:"],
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-prose pre.shiki [style*="--shiki-dark:"] {
+  color: var(--shiki-dark) !important;
   font-style: var(--shiki-dark-font-style, normal) !important;
   font-weight: var(--shiki-dark-font-weight, inherit) !important;
   text-decoration: var(--shiki-dark-text-decoration, none) !important;

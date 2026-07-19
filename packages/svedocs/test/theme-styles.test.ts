@@ -33,4 +33,13 @@ describe('theme styles', () => {
     expect(styles).toContain('.sd-root[data-theme="dark"] {');
     expect(styles).toContain('html:has(.sd-root[data-theme="dark"])');
   });
+
+  it('forces Shiki token colors over global text styles', async () => {
+    const styles = await readFile(new URL('../src/theme/styles.css', import.meta.url), 'utf8');
+
+    expect(styles).toContain('.sd-code.shiki [style*="--shiki-light:"]');
+    expect(styles).toContain('color: var(--shiki-light) !important;');
+    expect(styles).toContain('.sd-code.shiki [style*="--shiki-dark:"]');
+    expect(styles).toContain('color: var(--shiki-dark) !important;');
+  });
 });

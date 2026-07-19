@@ -104,6 +104,10 @@ export function remarkSvedocsCodeBlocks(
       const useDualTheme = Boolean(themes?.light && themes?.dark);
       const renderLineNumbers = showLineNumbers && !block.noLineNumbers;
       const wrapLines = typeof block.wrap === 'boolean' ? block.wrap : globalWrap;
+      const transformers = [
+        ...(options.transformers ?? []),
+        forceShikiTextColorTransformer
+      ];
       transforms.push(
           shiki
             .codeToHtml(node.value, {
@@ -114,7 +118,7 @@ export function remarkSvedocsCodeBlocks(
                     defaultColor: false
                   }
                 : { theme: options.theme ?? themes?.dark ?? 'github-dark' }),
-              ...(options.transformers ? { transformers: options.transformers as never[] } : {})
+              transformers: transformers as never[]
             } as never)
           .then((html) => {
             parent.children[childIndex] = {
@@ -138,6 +142,32 @@ export function remarkSvedocsCodeBlocks(
 
     await Promise.all(transforms);
   };
+}
+
+const forceShikiTextColorTransformer = {
+  name: 'svedocs:force-text-color',
+  pre(node: { properties?: Record<string, unknown> }) {
+    protectShikiTextColor(node.properties);
+  },
+  span(node: { properties?: Record<string, unknown> }) {
+    protectShikiTextColor(node.properties);
+  }
+};
+
+function protectShikiTextColor(properties: Record<string, unknown> | undefined): void {
+  if (!properties || typeof properties.style !== 'string') return;
+  const style = properties.style;
+
+  properties.style = style
+    .split(';')
+    .map((declaration) => {
+      const separator = declaration.indexOf(':');
+      if (separator < 0 || declaration.slice(0, separator).trim().toLowerCase() !== 'color') {
+        return declaration;
+      }
+      return /!important\s*$/i.test(declaration) ? declaration : `${declaration} !important`;
+    })
+    .join(';');
 }
 
 function parseCodeInfo(info: string): Omit<SvedocsCodeBlock, 'id' | 'raw'> {

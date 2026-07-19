@@ -71,6 +71,8 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(compiled.html).not.toContain('shiki-themes github-light github-dark');
     expect(compiled.html).not.toContain('--shiki-light:');
     expect(compiled.html).toContain('class="shiki github-dark sd-code"');
+    expect(compiled.html).toMatch(/<pre[^>]+style="[^"]*color:#e1e4e8 !important[^"]*"/);
+    expect(compiled.html).toContain('style="color:#F97583 !important"');
   });
 
   it('resolves localized shell messages with defaults, overrides, fallback, and interpolation', () => {
