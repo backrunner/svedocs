@@ -21,6 +21,8 @@ svedocs create my-docs --template cloudflare
 
 生成项目的 `package.json` 会声明 `svedocs` 和 `svedocs-cli` 依赖。它们都是普通的 npm 依赖，因此 `--install` 会通过选中的包管理器从 registry 安装，不会从 create 包里复制框架代码。
 
+创建命令还会把当前 svedocs Agent Skills 安装到 `.agents/skills`，供 Codex 作为仓库级 skills 自动发现。无论使用 GitHub 模板还是内置回退模板，这一步都独立于 `--install` 执行。
+
 模板会优先从 GitHub 拉取，默认来源是 `backrunner/svedocs@main`，因此模板修复不必等待 CLI 重新发布。GitHub 不可用时会改用 CLI 内置模板。设置 `SVEDOCS_TEMPLATE_SOURCE=bundled` 可以强制使用内置模板；设置 `SVEDOCS_TEMPLATE_SOURCE=github` 可以在拉取失败时直接报错；设置 `SVEDOCS_TEMPLATE_REF=<branch|tag|sha>` 可以固定远程模板版本。
 
 模板：

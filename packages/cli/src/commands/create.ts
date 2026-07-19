@@ -105,6 +105,7 @@ export async function runCreateSvedocsCli(args: string[], runtime: CreateSvedocs
   try {
     await mkdir(destination, { recursive: true });
     await cp(source.directory, destination, { recursive: true, force: Boolean(options.force), errorOnExist: false });
+    await installProjectSkills(destination);
     await rewriteTemplatePackageJson(destination, target, packageManager);
     let installMessage: string | undefined;
     if (options.install) {
@@ -187,6 +188,29 @@ async function resolveBundledTemplateSource(template: string): Promise<ResolvedT
     }
   }
   throw new Error(`Template "${template}" was not found. Checked: ${candidates.join(', ')}`);
+}
+
+async function installProjectSkills(destination: string): Promise<void> {
+  const source = await resolveBundledSkillsSource();
+  const target = path.join(destination, '.agents', 'skills');
+  await mkdir(target, { recursive: true });
+  await cp(source, target, { recursive: true, force: true, errorOnExist: false });
+}
+
+async function resolveBundledSkillsSource(): Promise<string> {
+  const candidates = [
+    new URL('./skills', import.meta.url),
+    new URL('../../../../skills', import.meta.url)
+  ].map((url) => fileURLToPath(url));
+  for (const candidate of candidates) {
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {
+      // Source runs use the repository copy; built packages carry dist/skills.
+    }
+  }
+  throw new Error(`Bundled Agent Skills were not found. Checked: ${candidates.join(', ')}`);
 }
 
 function readTemplateSourceMode(env: NodeJS.ProcessEnv): TemplateSourceMode {
@@ -285,6 +309,7 @@ function renderCreateSuccess(input: {
   return [
     `Created ${input.template} svedocs project at ${input.destination}`,
     `Template source: ${input.templateSource}.`,
+    'Agent Skills: .agents/skills.',
     `Package manager: ${describePackageManagerSource(input.packageManager)}.`,
     ...(input.installMessage ? [input.installMessage] : []),
     '',

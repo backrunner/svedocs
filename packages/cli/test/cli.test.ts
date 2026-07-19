@@ -136,6 +136,9 @@ describe('svedocs-cli Batch 0 shell', () => {
 
       expect(minimal.ok).toBe(true);
       expect(cloudflare.ok).toBe(true);
+      expect(minimal.message).toContain('Agent Skills: .agents/skills.');
+      await expectProjectSkills(path.join(tmp, 'minimal-app'));
+      await expectProjectSkills(path.join(tmp, 'edge-app'));
       expect(minimalConfig).toContain('defineConfig');
       expect(minimalPackage).toContain('"name": "minimal-app"');
       expect(minimalPackage).toContain('"packageManager": "pnpm@11.1.2"');
@@ -291,6 +294,7 @@ describe('svedocs-cli Batch 0 shell', () => {
 
       expect(created.ok).toBe(true);
       expect(created.message).toContain('Template source: GitHub example/docs@template-ref.');
+      await expectProjectSkills(path.join(tmp, 'remote-app'));
       expect(packageJson).toContain('"name": "remote-app"');
       expect(readme).toBe('Remote template readme');
       expect(fetched.some((url) => url.includes('api.github.com/repos/example/docs/git/trees/template-ref'))).toBe(true);
@@ -312,6 +316,7 @@ describe('svedocs-cli Batch 0 shell', () => {
       const packageJson = await readFile(path.join(tmp, 'app', 'package.json'), 'utf8');
 
       expect(packageJson).toContain('"name": "app"');
+      await expectProjectSkills(path.join(tmp, 'app'));
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }
@@ -708,6 +713,7 @@ describe('svedocs-cli Batch 0 shell', () => {
         const created = await runCreateSvedocsCli([template, '--template', template]);
         expect(created.ok).toBe(true);
         const target = path.join(tmp, template);
+        await expectProjectSkills(target);
         const packageJsonPath = path.join(target, 'package.json');
         await rewriteTemplateDependencies(packageJsonPath, svedocsTarball, cliTarball);
         await runCommand('pnpm', ['install', '--ignore-scripts'], target);
@@ -727,6 +733,25 @@ describe('svedocs-cli Batch 0 shell', () => {
     }
   }, 240_000);
 });
+
+const projectSkillNames = [
+  'build-svedocs-landing',
+  'configure-svedocs',
+  'customize-svedocs-theme',
+  'localize-svedocs',
+  'use-svedocs'
+];
+
+async function expectProjectSkills(projectRoot: string): Promise<void> {
+  const skillsRoot = path.join(projectRoot, '.agents', 'skills');
+  expect((await readdir(skillsRoot)).sort()).toEqual(projectSkillNames);
+  for (const name of projectSkillNames) {
+    const skill = await readFile(path.join(skillsRoot, name, 'SKILL.md'), 'utf8');
+    const metadata = await readFile(path.join(skillsRoot, name, 'agents', 'openai.yaml'), 'utf8');
+    expect(skill).toContain(`name: ${name}`);
+    expect(metadata).toContain(`$${name}`);
+  }
+}
 
 function fakePackageManagers(versions: Partial<Record<'pnpm' | 'npm' | 'yarn' | 'bun', string>>) {
   return {

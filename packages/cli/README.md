@@ -33,4 +33,6 @@ Create templates are fetched from GitHub first (`backrunner/svedocs@main`) and f
 
 Generated projects get `svedocs` and `svedocs-cli` from the template `package.json` dependency entries. They are installed from the package registry by the selected package manager only when create is run with `--install`.
 
+Every generated project also receives the current svedocs Agent Skills under `.agents/skills`. Codex discovers these repository-scoped skills automatically and can use them for framework setup, configuration, theme and landing customization, and localization.
+
 `svedocs upgrade` checks the project dependency span, upgrades both `svedocs` and `svedocs-cli`, and runs the detected package manager by default. Use `--no-install` to only rewrite `package.json`, `--dry-run` to preview the plan, or `--check-only` to run compatibility checks without changing dependencies.

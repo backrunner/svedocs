@@ -69,7 +69,7 @@ The `skills/` directory ships focused Agent Skills grounded in the current frame
 | `build-svedocs-landing` | Build the default or localized documentation landing experience. |
 | `localize-svedocs` | Configure locales, translated content, links, search scope, and SEO alternates. |
 
-Each skill includes Codex UI metadata and focused references for progressive loading. Agent Skills-compatible tools can load the individual folders directly from this repository.
+Each skill includes Codex UI metadata and focused references for progressive loading. Agent Skills-compatible tools can load the individual folders directly from this repository. `create-svedocs` also installs the current set into every generated project's `.agents/skills` directory for automatic repository-level discovery.
 
 ## Configuration
 

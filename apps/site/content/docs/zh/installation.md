@@ -25,6 +25,8 @@ pnpm dev
 
 `create-svedocs` 会把命令交给 `svedocs-cli`。CLI 优先从 GitHub 下载模板；GitHub 不可用时改用内置副本，然后更新项目名和包管理器。需要同时安装依赖时，加上 `--install`。
 
+每个模板还会把当前 svedocs Agent Skills 写入 `.agents/skills`。Codex 会把它们作为仓库级 skills 自动发现，因此创建完成后即可使用项目专属的接入、配置、主题、Landing 和多语言指引。
+
 模板使用普通的 npm 软件源依赖：
 
 ```json title="package.json"

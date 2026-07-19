@@ -21,6 +21,8 @@ The create command first checks `npm_config_user_agent`, then the current projec
 
 Generated projects receive `svedocs` and `svedocs-cli` through the template `package.json`. The template dependency specs are normal npm package specs, so `--install` installs them through the selected package manager rather than copying framework code from the create package.
 
+Create also installs the current svedocs Agent Skills into `.agents/skills` for repository-level discovery. This happens for GitHub templates and the bundled fallback, independently of `--install`.
+
 Templates are fetched from GitHub first (`backrunner/svedocs@main`) so template fixes can ship without republishing the CLI. If GitHub is unavailable, create falls back to the bundled templates. Set `SVEDOCS_TEMPLATE_SOURCE=bundled` to force bundled templates, `SVEDOCS_TEMPLATE_SOURCE=github` to fail instead of falling back, or `SVEDOCS_TEMPLATE_REF=<branch|tag|sha>` to pin a remote template version.
 
 Templates:
