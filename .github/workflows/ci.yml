@@ -61,4 +61,5 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter svedocs build
       - run: pnpm test:templates
