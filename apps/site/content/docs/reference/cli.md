@@ -23,7 +23,7 @@ Generated projects receive `svedocs` and `svedocs-cli` through the template `pac
 
 Create also installs the current svedocs Agent Skills into `.agents/skills` for repository-level discovery. This happens for GitHub templates and the bundled fallback, independently of `--install`.
 
-Templates are fetched from GitHub first (`backrunner/svedocs@main`) so template fixes can ship without republishing the CLI. If GitHub is unavailable, create falls back to the bundled templates. Set `SVEDOCS_TEMPLATE_SOURCE=bundled` to force bundled templates, `SVEDOCS_TEMPLATE_SOURCE=github` to fail instead of falling back, or `SVEDOCS_TEMPLATE_REF=<branch|tag|sha>` to pin a remote template version.
+Templates default to the copy bundled with the running CLI, keeping template APIs and package versions aligned. Use `--channel beta` for beta packages, or `--channel latest` to prefer latest and fall back to a compatible beta release when latest is unavailable. Set `SVEDOCS_TEMPLATE_SOURCE=github` only when opting into a remote template, and pin it with `SVEDOCS_TEMPLATE_REF=<tag|sha>`.
 
 Templates:
 

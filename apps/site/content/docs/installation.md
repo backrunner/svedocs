@@ -23,7 +23,7 @@ pnpm install
 pnpm dev
 ```
 
-The `create-svedocs` package forwards the command to `svedocs-cli`. The CLI downloads the selected template from GitHub, uses its bundled copy if GitHub is unavailable, and updates the project name and package manager. Pass `--install` when you also want it to install dependencies.
+The `create-svedocs` package forwards the command to `svedocs-cli`. The CLI uses its bundled template, aligns framework and CLI dependency versions, and updates the project name and package manager. Pass `--channel beta` to build from beta packages, or `--channel latest` to prefer latest with automatic beta fallback. Pass `--install` when you also want it to install dependencies.
 
 Every template also includes the current svedocs Agent Skills under `.agents/skills`. Codex discovers them as repository-scoped skills and can use the project-specific setup, configuration, theme, landing, and localization guidance immediately.
 

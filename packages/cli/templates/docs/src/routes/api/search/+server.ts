@@ -6,8 +6,10 @@ import type { RequestHandler } from './$types';
 
 export const prerender = false;
 
-export const GET: RequestHandler = ({ request }) => {
+export const GET: RequestHandler = ({ platform, request }) => {
   return createConfiguredSearchResponse(config, records, request, {
-    env: getRuntimeEnv()
+    env: getRuntimeEnv(platform?.env, {
+      ignoreDevBindings: [config.cloudflare.aiSearch.binding, 'SVEDOCS_AI_SEARCH']
+    })
   });
 };

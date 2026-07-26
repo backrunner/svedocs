@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Command } from 'commander';
 import {
@@ -16,7 +16,6 @@ import { checkUpgradeCompatibility, type CompatibilityReport } from './upgrade-c
 import {
   applyDependencyChanges,
   createDependencyChanges,
-  createPackageManagerUpgradeCommands,
   findDependency,
   readInstalledDependencyVersion,
   type DependencyChange,
@@ -164,19 +163,23 @@ async function runPackageManagerUpgrade(input: {
     return fail('upgrade', input.args, formatErrorMessage(error));
   }
 
-  const commands = createPackageManagerUpgradeCommands(packageManager.name, input.target);
-  for (const command of commands) {
-    const [bin, ...commandArgs] = command;
-    const result = await spawnCommand(bin, commandArgs, {}, { cwd: input.project.root });
-    if (!result.ok) {
-      return fail('upgrade', input.args, renderUpgradeReport({
-        heading: `svedocs upgrade failed while running ${formatCommand(command)}.`,
-        target: input.target,
-        changes: input.changes,
-        compatibility: input.compatibility,
-        footer: result.message
-      }));
-    }
+  const snapshots = await snapshotDependencyFiles(input.project.root);
+  const changed = applyDependencyChanges(input.project.pkg, input.changes);
+  if (changed) {
+    await writeFile(input.project.packageJsonPath, `${JSON.stringify(input.project.pkg, null, 2)}\n`, 'utf8');
+  }
+  const command = createInstallCommand(packageManager.name);
+  const [bin, ...commandArgs] = command;
+  const result = await spawnCommand(bin!, commandArgs, {}, { cwd: input.project.root });
+  if (!result.ok) {
+    await restoreDependencyFiles(snapshots);
+    return fail('upgrade', input.args, renderUpgradeReport({
+      heading: `svedocs upgrade failed while running ${formatCommand(command)}.`,
+      target: input.target,
+      changes: input.changes,
+      compatibility: input.compatibility,
+      footer: `${result.message}\nRestored package.json and lockfiles.`
+    }));
   }
 
   return ok('upgrade', input.args, renderUpgradeReport({
@@ -186,8 +189,35 @@ async function runPackageManagerUpgrade(input: {
     compatibility: input.compatibility,
     footer: [
       'Ran:',
-      ...commands.map((command) => `  ${formatCommand(command)}`)
+      `  ${formatCommand(command)}`
     ].join('\n')
+  }));
+}
+
+interface FileSnapshot {
+  path: string;
+  content?: Buffer;
+}
+
+async function snapshotDependencyFiles(root: string): Promise<FileSnapshot[]> {
+  const files = ['package.json', 'pnpm-lock.yaml', 'package-lock.json', 'yarn.lock', 'bun.lock', 'bun.lockb'];
+  return Promise.all(files.map(async (name) => {
+    const filePath = path.join(root, name);
+    try {
+      return { path: filePath, content: await readFile(filePath) };
+    } catch {
+      return { path: filePath };
+    }
+  }));
+}
+
+async function restoreDependencyFiles(snapshots: FileSnapshot[]): Promise<void> {
+  await Promise.all(snapshots.map(async (snapshot) => {
+    if (snapshot.content) {
+      await writeFile(snapshot.path, snapshot.content);
+    } else {
+      await rm(snapshot.path, { force: true });
+    }
   }));
 }
 

@@ -23,7 +23,7 @@ pnpm install
 pnpm dev
 ```
 
-`create-svedocs` 会把命令交给 `svedocs-cli`。CLI 优先从 GitHub 下载模板；GitHub 不可用时改用内置副本，然后更新项目名和包管理器。需要同时安装依赖时，加上 `--install`。
+`create-svedocs` 会把命令交给 `svedocs-cli`。CLI 使用当前版本内置的模板，并让 framework 与 CLI 依赖保持同一版本。使用 `--channel beta` 可以基于 beta 包构建；使用 `--channel latest` 会优先使用 latest，不可用时自动回退到兼容 beta。需要同时安装依赖时，加上 `--install`。
 
 每个模板还会把当前 svedocs Agent Skills 写入 `.agents/skills`。Codex 会把它们作为仓库级 skills 自动发现，因此创建完成后即可使用项目专属的接入、配置、主题、Landing 和多语言指引。
 

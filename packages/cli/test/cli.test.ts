@@ -83,6 +83,42 @@ describe('svedocs-cli Batch 0 shell', () => {
     }
   });
 
+  it('restores dependency files when an upgrade install fails', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-upgrade-rollback-'));
+    const binDir = path.join(tmp, 'bin');
+    const packageJsonPath = path.join(tmp, 'package.json');
+    const lockPath = path.join(tmp, 'pnpm-lock.yaml');
+    const previousPath = process.env.PATH;
+    try {
+      await mkdir(binDir, { recursive: true });
+      const originalPackage = `${JSON.stringify({
+        name: 'upgrade-app',
+        dependencies: { svedocs: '0.1.0' },
+        devDependencies: { 'svedocs-cli': '0.1.0' }
+      }, null, 2)}\n`;
+      await writeFile(packageJsonPath, originalPackage, 'utf8');
+      await writeFile(lockPath, 'original-lock\n', 'utf8');
+      await writeFile(path.join(binDir, 'pnpm'), [
+        '#!/usr/bin/env node',
+        'const fs = require("node:fs");',
+        'if (process.argv.includes("--version")) { console.log("11.1.2"); process.exit(0); }',
+        'fs.writeFileSync("pnpm-lock.yaml", "changed-lock\\n");',
+        'process.exit(1);'
+      ].join('\n'), { mode: 0o755 });
+      process.env.PATH = `${binDir}${path.delimiter}${previousPath ?? ''}`;
+
+      const result = await withCwd(tmp, () => runSvedocsCli(['upgrade', '0.2.0', '--package-manager', 'pnpm']));
+
+      expect(result.ok).toBe(false);
+      expect(result.message).toContain('Restored package.json and lockfiles');
+      expect(await readFile(packageJsonPath, 'utf8')).toBe(originalPackage);
+      expect(await readFile(lockPath, 'utf8')).toBe('original-lock\n');
+    } finally {
+      process.env.PATH = previousPath;
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('checks upgrade compatibility without changing dependencies', async () => {
     const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-upgrade-check-'));
     try {
@@ -143,8 +179,13 @@ describe('svedocs-cli Batch 0 shell', () => {
       expect(minimalPackage).toContain('"name": "minimal-app"');
       expect(minimalPackage).toContain('"packageManager": "pnpm@11.1.2"');
       expect(minimalPackage).toContain('"build:ssg": "svedocs ssg"');
-      expect(minimalPackage).toContain('"svedocs-cli": "latest"');
-      expect(minimalSvelteConfig).toContain('remoteBindings: false');
+      expect(minimalPackage).toContain('"svedocs-cli": "0.1.0-beta.11"');
+      expect(minimalSvelteConfig).toContain(
+        "const remoteBindings = process.env.SVEDOCS_REMOTE_BINDINGS === 'true'"
+      );
+      expect(minimalSvelteConfig).toContain(
+        'platformProxy: { remoteBindings, persist: false }'
+      );
       expect(minimalSvelteConfig).toContain("fallback: '200.html'");
       expect(minimalPageRoute).toContain('svedocsPagePrerender');
       expect(minimalCatchAllRoute).toContain('createSvedocsRouteEntries');
@@ -159,7 +200,12 @@ describe('svedocs-cli Batch 0 shell', () => {
       expect(await readFile(path.join(tmp, 'minimal-app', 'src/routes/+layout.ts'), 'utf8')).toContain('svedocsTrailingSlash');
       expect(cloudflareWrangler).toContain('pages_build_output_dir');
       expect(cloudflareWrangler).toContain('[[ai_search]]');
-      expect(cloudflareSvelteConfig).toContain('remoteBindings: false');
+      expect(cloudflareSvelteConfig).toContain(
+        "const remoteBindings = process.env.SVEDOCS_REMOTE_BINDINGS === 'true'"
+      );
+      expect(cloudflareSvelteConfig).toContain(
+        'platformProxy: { remoteBindings, persist: false }'
+      );
       expect(cloudflareSvelteConfig).toContain("fallback: '200.html'");
       expect(cloudflarePageRoute).toContain('svedocsPagePrerender');
       expect(cloudflareCatchAllRoute).toContain('createSvedocsRouteEntries');
@@ -192,6 +238,85 @@ describe('svedocs-cli Batch 0 shell', () => {
     expect(detectPackageManagerFromEnv({ npm_config_user_agent: 'npm/11.6.2 node/v24.0.0' })).toBe('npm');
     expect(detectPackageManagerFromEnv({ npm_config_user_agent: 'yarn/4.12.0 npm/? node/v24.0.0' })).toBe('yarn');
     expect(detectPackageManagerFromEnv({ npm_config_user_agent: 'bun/1.3.0 npm/? node/v24.0.0' })).toBe('bun');
+  });
+
+  it('supports beta scaffolds and falls back from an unavailable latest channel', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-create-channel-'));
+    const previous = process.cwd();
+    process.chdir(tmp);
+    try {
+      const requested: string[] = [];
+      const runtime = {
+        ...fakePackageManagers({ pnpm: '11.1.2' }),
+        async resolveReleaseVersion(channel: 'latest' | 'beta') {
+          requested.push(channel);
+          return channel === 'latest' ? undefined : '0.2.0-beta.4';
+        }
+      };
+      const fallback = await runCreateSvedocsCli([
+        'fallback-app', '--template', 'minimal', '--channel', 'latest'
+      ], runtime);
+      const beta = await runCreateSvedocsCli([
+        'beta-app', '--template', 'minimal', '--channel', 'beta'
+      ], runtime);
+      const fallbackPackage = JSON.parse(await readFile(path.join(tmp, 'fallback-app/package.json'), 'utf8')) as {
+        dependencies: Record<string, string>;
+        devDependencies: Record<string, string>;
+      };
+      const betaPackage = JSON.parse(await readFile(path.join(tmp, 'beta-app/package.json'), 'utf8')) as typeof fallbackPackage;
+
+      expect(fallback.ok).toBe(true);
+      expect(beta.ok).toBe(true);
+      expect(requested).toEqual(['latest', 'beta', 'beta']);
+      expect(fallbackPackage.dependencies.svedocs).toBe('0.2.0-beta.4');
+      expect(fallbackPackage.devDependencies['svedocs-cli']).toBe('0.2.0-beta.4');
+      expect(betaPackage.dependencies.svedocs).toBe('0.2.0-beta.4');
+    } finally {
+      process.chdir(previous);
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('resolves the shared beta dist-tag when registry latest versions do not match', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-create-registry-channel-'));
+    const previous = process.cwd();
+    process.chdir(tmp);
+    try {
+      const requested: string[] = [];
+      const latestVersions: Record<string, string> = {
+        svedocs: '1.0.0',
+        'svedocs-cli': '1.1.0',
+        'create-svedocs': '1.0.0'
+      };
+      const result = await runCreateSvedocsCli([
+        'registry-app', '--template', 'minimal', '--channel', 'latest'
+      ], {
+        ...fakePackageManagers({ pnpm: '11.1.2' }),
+        async fetch(input) {
+          const url = String(input);
+          requested.push(url);
+          const packageName = /\/package\/([^/]+)\/dist-tags$/.exec(url)?.[1]
+            ?? /\/([^/]+)\/latest$/.exec(url)?.[1];
+          if (!packageName) return new Response(null, { status: 404 });
+          return url.endsWith('/dist-tags')
+            ? Response.json({ beta: '0.2.0-beta.4' })
+            : Response.json({ version: latestVersions[packageName] });
+        }
+      });
+      const pkg = JSON.parse(await readFile(path.join(tmp, 'registry-app/package.json'), 'utf8')) as {
+        dependencies: Record<string, string>;
+        devDependencies: Record<string, string>;
+      };
+
+      expect(result.ok).toBe(true);
+      expect(requested.filter((url) => url.endsWith('/latest'))).toHaveLength(3);
+      expect(requested.filter((url) => url.endsWith('/dist-tags'))).toHaveLength(3);
+      expect(pkg.dependencies.svedocs).toBe('0.2.0-beta.4');
+      expect(pkg.devDependencies['svedocs-cli']).toBe('0.2.0-beta.4');
+    } finally {
+      process.chdir(previous);
+      await rm(tmp, { recursive: true, force: true });
+    }
   });
 
   it('uses the invoking package manager and falls back when pnpm is unavailable', async () => {
@@ -243,6 +368,24 @@ describe('svedocs-cli Batch 0 shell', () => {
       expect(blocked.ok).toBe(false);
       expect(blocked.message).toContain('already exists');
       expect(forced.ok).toBe(true);
+    } finally {
+      process.chdir(previous);
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects a create target that is an existing file', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-create-file-target-'));
+    const previous = process.cwd();
+    process.chdir(tmp);
+    try {
+      await writeFile('docs-app', 'keep-me\n', 'utf8');
+
+      const result = await runCreateSvedocsCli(['docs-app', '--template', 'docs', '--force']);
+
+      expect(result.ok).toBe(false);
+      expect(result.message).toContain('exists and is not a directory');
+      expect(await readFile('docs-app', 'utf8')).toBe('keep-me\n');
     } finally {
       process.chdir(previous);
       await rm(tmp, { recursive: true, force: true });
@@ -453,7 +596,8 @@ describe('svedocs-cli Batch 0 shell', () => {
     const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-og-'));
     try {
       const result = await withCwd(fixtureRoot(), () => runSvedocsCli(['og', '--out', tmp]));
-      const output = await readFile(path.join(tmp, 'docs-guide.svg'), 'utf8');
+      const outputName = (await readdir(tmp)).find((file) => file.startsWith('docs-guide') && file.endsWith('.svg'));
+      const output = await readFile(path.join(tmp, outputName!), 'utf8');
 
       expect(result.ok).toBe(true);
       expect(output).toContain('<svg');
@@ -467,7 +611,8 @@ describe('svedocs-cli Batch 0 shell', () => {
     const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-og-png-'));
     try {
       const result = await withCwd(fixtureRoot(), () => runSvedocsCli(['og', '--format', 'png', '--out', tmp]));
-      const output = await readFile(path.join(tmp, 'docs-guide.png'));
+      const outputName = (await readdir(tmp)).find((file) => file.startsWith('docs-guide') && file.endsWith('.png'));
+      const output = await readFile(path.join(tmp, outputName!));
 
       expect(result.ok).toBe(true);
       expect([...output.slice(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
@@ -491,7 +636,9 @@ describe('svedocs-cli Batch 0 shell', () => {
       process.env.PATH = `${binDir}${path.delimiter}${previousPath ?? ''}`;
       try {
         const result = await withCwd(fixture, () => runSvedocsCli(['build', '--mode', 'static', '--outDir', 'custom-build']));
-        const output = await readFile(path.join(fixture, 'static/og/docs-guide.svg'), 'utf8');
+        const ogDir = path.join(fixture, 'static/og');
+        const outputName = (await readdir(ogDir)).find((file) => file.startsWith('docs-guide') && file.endsWith('.svg'));
+        const output = await readFile(path.join(ogDir, outputName!), 'utf8');
 
         expect(result.ok).toBe(true);
         expect(result.message).toContain('Generated 3 OG SVG files');
@@ -573,7 +720,8 @@ describe('svedocs-cli Batch 0 shell', () => {
       );
       const font = new URL('../../../node_modules/.pnpm/katex@0.16.47/node_modules/katex/dist/fonts/KaTeX_Main-Regular.ttf', import.meta.url).pathname;
       const result = await withCwd(tmp, () => runSvedocsCli(['og', '--renderer', 'satori', '--font', font, '--out', path.join(tmp, 'og')]));
-      const output = await readFile(path.join(tmp, 'og', 'docs.svg'), 'utf8');
+      const outputName = (await readdir(path.join(tmp, 'og'))).find((file) => file.startsWith('docs-') && file.endsWith('.svg'));
+      const output = await readFile(path.join(tmp, 'og', outputName!), 'utf8');
 
       expect(result.ok).toBe(true);
       expect(output).toContain('#123456');

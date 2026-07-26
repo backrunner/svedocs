@@ -8,6 +8,7 @@ CLI package for `svedocs` and `create-svedocs`.
 
 - `create-svedocs [dir] --template minimal|docs|cloudflare`
 - `create-svedocs [dir] --package-manager auto|pnpm|npm|yarn|bun --install`
+- `create-svedocs [dir] --channel auto|latest|beta`
 - `svedocs create [dir] --template minimal|docs|cloudflare`
 - `svedocs upgrade [latest|version|tag]`
 - `svedocs upgrade 0.2.0 --no-install`
@@ -29,7 +30,7 @@ CLI package for `svedocs` and `create-svedocs`.
 
 The CLI loads `svedocs.config.ts`, `svedocs.config.mts`, `svedocs.config.js`, or `svedocs.config.mjs` before running content-aware commands.
 
-Create templates are fetched from GitHub first (`backrunner/svedocs@main`) and fall back to the bundled templates when GitHub is unavailable. Set `SVEDOCS_TEMPLATE_SOURCE=bundled` to force the bundled copy, or `SVEDOCS_TEMPLATE_REF=<branch|tag|sha>` to pin a remote template version.
+Create uses the template bundled with the running CLI, so its APIs match the selected package version. Set `SVEDOCS_TEMPLATE_SOURCE=github` to opt into a remote template and use `SVEDOCS_TEMPLATE_REF=<tag|sha>` to pin it. `--channel beta` builds against the current beta packages; `--channel latest` automatically falls back to a mutually compatible beta release when latest is unavailable.
 
 Generated projects get `svedocs` and `svedocs-cli` from the template `package.json` dependency entries. They are installed from the package registry by the selected package manager only when create is run with `--install`.
 

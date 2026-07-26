@@ -1,8 +1,9 @@
-import { access, cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { access, cp, mkdir, mkdtemp, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
+import cliPackage from '../../package.json';
 import {
   createInstallCommand,
   createPackageManagerField,
@@ -20,9 +21,11 @@ export interface CreateSvedocsRuntime {
   env?: NodeJS.ProcessEnv;
   fetch?: typeof fetch;
   readPackageManagerVersion?: (name: PackageManagerName) => Promise<string | undefined>;
+  resolveReleaseVersion?: (channel: 'latest' | 'beta') => Promise<string | undefined>;
 }
 
 type TemplateSourceMode = 'auto' | 'github' | 'bundled';
+type ReleaseChannel = 'auto' | 'latest' | 'beta';
 
 type ResolvedTemplateSource = {
   directory: string;
@@ -56,6 +59,7 @@ export function renderCreateSvedocsHelp(): string {
     '                       auto, pnpm, npm, yarn, or bun',
     '  --pm <name>           Alias for --package-manager',
     '  --install             Install dependencies after creating the project',
+    '  --channel <name>      auto, latest, or beta. latest falls back to beta',
     '  --force               Allow writing into an existing directory'
   ].join('\n');
 }
@@ -68,6 +72,7 @@ export async function runCreateSvedocsCli(args: string[], runtime: CreateSvedocs
     .option('--package-manager <name>', 'package manager to use: auto, pnpm, npm, yarn, or bun', 'auto')
     .option('--pm <name>', 'alias for --package-manager')
     .option('--install', 'install dependencies after creating the project', false)
+    .option('--channel <name>', 'dependency release channel: auto, latest, or beta', 'auto')
     .option('--force', 'allow writing into an existing directory')
     .exitOverride();
   try {
@@ -76,18 +81,33 @@ export async function runCreateSvedocsCli(args: string[], runtime: CreateSvedocs
     return fail('create', args, error instanceof Error ? error.message : String(error));
   }
   const target = program.args[0] ?? 'svedocs-app';
-  const options = program.opts<{ template: string; packageManager: string; pm?: string; install?: boolean; force?: boolean }>();
+  const options = program.opts<{ template: string; packageManager: string; pm?: string; install?: boolean; force?: boolean; channel: string }>();
   const template = options.template;
   if (!templateNames.includes(template as typeof templateNames[number])) {
     return fail('create', args, `Unknown template "${template}". Use minimal, docs, or cloudflare.`);
   }
-  let source: ResolvedTemplateSource;
+  if (!isReleaseChannel(options.channel)) {
+    return fail('create', args, `Unknown release channel "${options.channel}". Use auto, latest, or beta.`);
+  }
+  let releaseVersion: string;
   try {
-    source = await resolveTemplateSource(template, runtime);
+    releaseVersion = await resolveCreateReleaseVersion(options.channel, runtime);
   } catch (error) {
-    return fail('create', args, error instanceof Error ? error.message : String(error));
+    return fail('create', args, formatErrorMessage(error));
   }
   const destination = path.resolve(process.cwd(), target);
+  let destinationState: DestinationState;
+  try {
+    destinationState = await inspectDestination(destination);
+  } catch (error) {
+    return fail('create', args, `Could not inspect ${destination}: ${formatErrorMessage(error)}`);
+  }
+  if (destinationState === 'other') {
+    return fail('create', args, `${destination} exists and is not a directory.`);
+  }
+  if (!options.force && destinationState === 'non-empty-directory') {
+    return fail('create', args, `${destination} already exists and is not empty. Re-run with --force to merge template files.`);
+  }
   let packageManager: PackageManagerChoice;
   try {
     packageManager = await resolvePackageManager({
@@ -99,21 +119,29 @@ export async function runCreateSvedocsCli(args: string[], runtime: CreateSvedocs
   } catch (error) {
     return fail('create', args, error instanceof Error ? error.message : String(error));
   }
-  if (!options.force && !await isEmptyOrMissingDirectory(destination)) {
-    return fail('create', args, `${destination} already exists and is not empty. Re-run with --force to merge template files.`);
-  }
+  let source: ResolvedTemplateSource;
   try {
-    await mkdir(destination, { recursive: true });
-    await cp(source.directory, destination, { recursive: true, force: Boolean(options.force), errorOnExist: false });
-    await installProjectSkills(destination);
-    await rewriteTemplatePackageJson(destination, target, packageManager);
+    source = await resolveTemplateSource(template, runtime);
+  } catch (error) {
+    return fail('create', args, error instanceof Error ? error.message : String(error));
+  }
+  await mkdir(path.dirname(destination), { recursive: true });
+  const staging = await mkdtemp(path.join(path.dirname(destination), `.${path.basename(destination)}-svedocs-`));
+  try {
+    if (await pathExists(destination)) {
+      await cp(destination, staging, { recursive: true, force: true, errorOnExist: false });
+    }
+    await cp(source.directory, staging, { recursive: true, force: Boolean(options.force), errorOnExist: false });
+    await installProjectSkills(staging);
+    await rewriteTemplatePackageJson(staging, target, packageManager, releaseVersion);
     let installMessage: string | undefined;
     if (options.install) {
       const installCommand = createInstallCommand(packageManager.name);
-      const result = await spawnCommand(installCommand[0]!, installCommand.slice(1), {}, { cwd: destination });
+      const result = await spawnCommand(installCommand[0]!, installCommand.slice(1), {}, { cwd: staging });
       if (!result.ok) return fail('create', args, result.message);
       installMessage = `Installed dependencies with ${packageManager.name}.`;
     }
+    await commitStagedDirectory(staging, destination);
     return ok('create', args, renderCreateSuccess({
       destination,
       packageManager,
@@ -123,29 +151,128 @@ export async function runCreateSvedocsCli(args: string[], runtime: CreateSvedocs
       ...(installMessage ? { installMessage } : {})
     }));
   } finally {
+    await rm(staging, { recursive: true, force: true });
     await source.cleanup?.();
   }
 }
 
-async function isEmptyOrMissingDirectory(directory: string): Promise<boolean> {
+type DestinationState = 'missing' | 'empty-directory' | 'non-empty-directory' | 'other';
+
+async function inspectDestination(directory: string): Promise<DestinationState> {
   try {
-    return (await readdir(directory)).length === 0;
-  } catch {
+    const details = await stat(directory);
+    if (!details.isDirectory()) return 'other';
+    return (await readdir(directory)).length === 0 ? 'empty-directory' : 'non-empty-directory';
+  } catch (error) {
+    if (isNodeErrorCode(error, 'ENOENT')) return 'missing';
+    throw error;
+  }
+}
+
+function isNodeErrorCode(error: unknown, code: string): boolean {
+  return error instanceof Error && 'code' in error && error.code === code;
+}
+
+async function pathExists(target: string): Promise<boolean> {
+  try {
+    await access(target);
     return true;
+  } catch {
+    return false;
+  }
+}
+
+async function commitStagedDirectory(staging: string, destination: string): Promise<void> {
+  if (!await pathExists(destination)) {
+    await rename(staging, destination);
+    return;
+  }
+  const backup = `${staging}-backup`;
+  await rename(destination, backup);
+  try {
+    await rename(staging, destination);
+    await rm(backup, { recursive: true, force: true });
+  } catch (error) {
+    if (!await pathExists(destination)) await rename(backup, destination);
+    throw error;
   }
 }
 
 async function rewriteTemplatePackageJson(
   directory: string,
   target: string,
-  packageManager: PackageManagerChoice
+  packageManager: PackageManagerChoice,
+  releaseVersion: string
 ): Promise<void> {
   const packageJsonPath = path.join(directory, 'package.json');
   const pkg = JSON.parse(await readFile(packageJsonPath, 'utf8')) as Record<string, unknown>;
   pkg.name = createPackageName(target);
+  rewriteSvedocsDependencies(pkg, releaseVersion);
   const packageManagerField = createPackageManagerField(packageManager);
   if (packageManagerField) pkg.packageManager = packageManagerField;
   await writeFile(packageJsonPath, `${JSON.stringify(pkg, null, 2)}\n`, 'utf8');
+}
+
+function rewriteSvedocsDependencies(pkg: Record<string, unknown>, releaseVersion: string): void {
+  for (const sectionName of ['dependencies', 'devDependencies'] as const) {
+    const section = pkg[sectionName];
+    if (!section || typeof section !== 'object' || Array.isArray(section)) continue;
+    const dependencies = section as Record<string, unknown>;
+    if (typeof dependencies.svedocs === 'string') dependencies.svedocs = releaseVersion;
+    if (typeof dependencies['svedocs-cli'] === 'string') dependencies['svedocs-cli'] = releaseVersion;
+  }
+}
+
+function isReleaseChannel(value: string): value is ReleaseChannel {
+  return value === 'auto' || value === 'latest' || value === 'beta';
+}
+
+async function resolveCreateReleaseVersion(
+  channel: ReleaseChannel,
+  runtime: CreateSvedocsRuntime
+): Promise<string> {
+  if (channel === 'auto' && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(cliPackage.version)) {
+    return cliPackage.version;
+  }
+  const resolver = runtime.resolveReleaseVersion
+    ?? ((releaseChannel: 'latest' | 'beta') => resolveRegistryReleaseVersion(releaseChannel, runtime.fetch ?? fetch));
+  if (channel === 'beta') {
+    const beta = await resolver('beta');
+    if (!beta) throw new Error('No compatible svedocs beta release is available.');
+    return beta;
+  }
+  const latest = await resolver('latest');
+  if (latest) return latest;
+  const beta = await resolver('beta');
+  if (beta) return beta;
+  throw new Error('No compatible svedocs latest or beta release is available.');
+}
+
+async function resolveRegistryReleaseVersion(
+  channel: 'latest' | 'beta',
+  fetcher: typeof fetch
+): Promise<string | undefined> {
+  const packages = ['svedocs', 'svedocs-cli', 'create-svedocs'];
+  const versions = await Promise.all(packages.map(async (name) => {
+    if (channel === 'beta') {
+      const tagsResponse = await fetcher(`https://registry.npmjs.org/-/package/${name}/dist-tags`, {
+        headers: { accept: 'application/json' },
+        signal: AbortSignal.timeout(5_000)
+      });
+      if (!tagsResponse.ok) return undefined;
+      const tags = await tagsResponse.json() as Record<string, unknown>;
+      return typeof tags.beta === 'string' ? tags.beta : undefined;
+    }
+    const response = await fetcher(`https://registry.npmjs.org/${name}/latest`, {
+      headers: { accept: 'application/json' },
+      signal: AbortSignal.timeout(5_000)
+    });
+    if (!response.ok) return undefined;
+    const metadata = await response.json() as { version?: unknown };
+    return typeof metadata.version === 'string' ? metadata.version : undefined;
+  }));
+  const version = versions[0];
+  return version && versions.every((candidate) => candidate === version) ? version : undefined;
 }
 
 function createPackageName(target: string): string {
@@ -159,16 +286,11 @@ function createPackageName(target: string): string {
 async function resolveTemplateSource(template: string, runtime: CreateSvedocsRuntime): Promise<ResolvedTemplateSource> {
   const env = { ...process.env, ...runtime.env };
   const mode = readTemplateSourceMode(env);
-  if (mode !== 'bundled') {
+  if (mode === 'github') {
     try {
       return await downloadGitHubTemplate(template, env, runtime.fetch ?? fetch);
     } catch (error) {
-      if (mode === 'github') throw error;
-      const bundled = await resolveBundledTemplateSource(template);
-      return {
-        ...bundled,
-        description: `${bundled.description} fallback (${formatErrorMessage(error)})`
-      };
+      throw error;
     }
   }
   return resolveBundledTemplateSource(template);
@@ -214,7 +336,7 @@ async function resolveBundledSkillsSource(): Promise<string> {
 }
 
 function readTemplateSourceMode(env: NodeJS.ProcessEnv): TemplateSourceMode {
-  const value = env.SVEDOCS_TEMPLATE_SOURCE ?? 'auto';
+  const value = env.SVEDOCS_TEMPLATE_SOURCE ?? 'bundled';
   if (value === 'auto' || value === 'github' || value === 'bundled') return value;
   throw new Error('Invalid SVEDOCS_TEMPLATE_SOURCE. Use auto, github, or bundled.');
 }

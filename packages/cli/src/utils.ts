@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import spawn from 'cross-spawn';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -11,7 +11,7 @@ export async function spawnCommand(
   return new Promise((resolve) => {
     const child = spawn(command, args, {
       stdio: 'inherit',
-      shell: process.platform === 'win32',
+      shell: false,
       cwd: options.cwd,
       env: { ...process.env, ...env }
     });

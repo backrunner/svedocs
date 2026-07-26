@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { loadSvedocsConfig } from 'svedocs/config';
-import { createOgImage, createOgImageInput } from 'svedocs/og';
+import { createOgImage, createOgImageInput, createPageOgImagePath } from 'svedocs/og';
 import { loadProjectManifest } from '../project.js';
 import { fail, ok, type CliResult } from '../result.js';
 import { readOgFonts, readOption } from '../utils.js';
@@ -65,10 +65,13 @@ async function generateOgAssets(input: {
   const { out, format, renderer, fonts, args } = input;
   await mkdir(out, { recursive: true });
   const written: string[] = [];
+  const destinations = new Set<string>();
   for (const page of manifest.pages) {
     if (page.hidden) continue;
-    const fileName = `${page.routePath === '/' ? 'index' : page.routePath.replace(/^\/+/, '').replace(/[^a-zA-Z0-9]+/g, '-')}.${format}`;
+    const fileName = createPageOgImagePath(page, format as 'svg' | 'png').replace(/^\/og\//, '');
     const destination = path.join(out, fileName);
+    if (destinations.has(destination)) return fail('og', args, `Duplicate OG output path: ${destination}`);
+    destinations.add(destination);
     const asset = await createOgImage(createOgImageInput(manifest.config, page), {
       format: format as 'svg' | 'png',
       renderer: renderer as 'svg' | 'satori',

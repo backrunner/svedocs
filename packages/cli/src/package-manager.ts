@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import spawn from 'cross-spawn';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -130,13 +130,13 @@ export async function readPackageManagerVersion(name: PackageManagerName): Promi
   return new Promise((resolve) => {
     const child = spawn(name, ['--version'], {
       stdio: ['ignore', 'pipe', 'pipe'],
-      shell: process.platform === 'win32'
+      shell: false
     });
     let output = '';
-    child.stdout.on('data', (chunk) => {
+    child.stdout?.on('data', (chunk) => {
       output += String(chunk);
     });
-    child.stderr.on('data', (chunk) => {
+    child.stderr?.on('data', (chunk) => {
       output += String(chunk);
     });
     child.on('close', (code) => {

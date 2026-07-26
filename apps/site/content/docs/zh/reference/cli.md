@@ -23,7 +23,7 @@ svedocs create my-docs --template cloudflare
 
 创建命令还会把当前 svedocs Agent Skills 安装到 `.agents/skills`，供 Codex 作为仓库级 skills 自动发现。无论使用 GitHub 模板还是内置回退模板，这一步都独立于 `--install` 执行。
 
-模板会优先从 GitHub 拉取，默认来源是 `backrunner/svedocs@main`，因此模板修复不必等待 CLI 重新发布。GitHub 不可用时会改用 CLI 内置模板。设置 `SVEDOCS_TEMPLATE_SOURCE=bundled` 可以强制使用内置模板；设置 `SVEDOCS_TEMPLATE_SOURCE=github` 可以在拉取失败时直接报错；设置 `SVEDOCS_TEMPLATE_REF=<branch|tag|sha>` 可以固定远程模板版本。
+默认使用当前 CLI 内置的模板，确保模板 API 与依赖版本一致。使用 `--channel beta` 可以基于 beta 包构建；使用 `--channel latest` 会优先选择 latest，并在 latest 不可用时自动回退到兼容的 beta 版本。只有显式设置 `SVEDOCS_TEMPLATE_SOURCE=github` 才会使用远程模板，并应通过 `SVEDOCS_TEMPLATE_REF=<tag|sha>` 固定版本。
 
 模板：
 
