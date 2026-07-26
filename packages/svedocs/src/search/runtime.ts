@@ -134,6 +134,7 @@ export function readSearchQuery(request: Request): SearchQuery {
   return {
     query: url.searchParams.get('q') ?? url.searchParams.get('query') ?? '',
     limit: clampLimit(Number(url.searchParams.get('limit') ?? 10)),
+    signal: request.signal,
     ...(locale ? { locale } : {}),
     ...(kind ? { kind } : {})
   };

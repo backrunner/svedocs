@@ -1,8 +1,9 @@
 import { readFile, stat } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import fg from 'fast-glob';
 import matter from 'gray-matter';
-import type { SvedocsConfig } from '../config.js';
+import { validateSvedocsConfig, type SvedocsConfig } from '../config.js';
 import { compileMarkdown, type CompileMarkdownOptions } from '../mdx/compile.js';
 import { checkSvedocsContent } from './checks.js';
 import { defaultSvedocsMessages, isResolvedConfig, resolveSvedocsConfig } from './config.js';
@@ -30,7 +31,7 @@ export async function loadSvedocsContent(options: {
   const rawConfig = isResolvedConfig(options.config) ? undefined : options.config;
   const config = isResolvedConfig(options.config)
     ? options.config
-    : resolveSvedocsConfig(options.config ?? {});
+    : resolveSvedocsConfig(validateSvedocsConfig(options.config ?? {}));
   const markdownOptions = createMarkdownCompileOptions(rawConfig, config);
   const files = await fg(config.content.include, {
     cwd: projectRoot,
@@ -38,13 +39,13 @@ export async function loadSvedocsContent(options: {
     ignore: config.content.exclude,
     onlyFiles: true
   });
-  const entries = files
+  const entries = assignUniquePageIds(files
     .filter((file) => isContentFile(file))
     .sort()
     .map((file) => {
       const kind = inferKind(file, config);
       return { file, kind, route: createRouteInfo(file, kind, config) };
-    });
+    }));
   const routeTargets: SvedocsRouteTarget[] = entries.map(({ file, kind, route }) => ({
     kind,
     sourcePath: file,
@@ -75,12 +76,12 @@ function isContentFile(file: string): boolean {
 
 async function loadContentFile(
   projectRoot: string,
-  entry: { file: string; kind: 'doc' | 'page'; route: SvedocsRouteInfo },
+  entry: { file: string; id: string; kind: 'doc' | 'page'; route: SvedocsRouteInfo },
   routeTargets: SvedocsRouteTarget[],
   config: SvedocsResolvedConfig,
   markdownOptions: CompileMarkdownOptions
 ): Promise<SvedocsPage> {
-  const { file, kind, route } = entry;
+  const { file, id, kind, route } = entry;
   const sourcePath = path.join(projectRoot, file);
   const raw = await readFile(sourcePath, 'utf8');
   const fileStats = await stat(sourcePath);
@@ -131,7 +132,7 @@ async function loadContentFile(
   const canonical = stringFrontmatter(frontmatter.canonical) ?? createPageCanonicalUrl(config, routePath);
   const image = stringFrontmatter(frontmatter.image);
   const page: SvedocsPage = {
-    id: createPageId(file),
+    id,
     sourcePath: file,
     routePath,
     scopePath: route.scopePath,
@@ -344,6 +345,18 @@ function findLocalePath(locale: string, config: SvedocsResolvedConfig): string |
 
 function createPageId(file: string): string {
   return normalizePath(file).replace(/\.(md|mdx|svx)$/, '').replace(/[^a-zA-Z0-9]+/g, '-');
+}
+
+function assignUniquePageIds<T extends { file: string }>(entries: T[]): Array<T & { id: string }> {
+  const candidates = entries.map((entry) => createPageId(entry.file));
+  const counts = new Map<string, number>();
+  for (const candidate of candidates) counts.set(candidate, (counts.get(candidate) ?? 0) + 1);
+  return entries.map((entry, index) => {
+    const candidate = candidates[index] ?? createPageId(entry.file);
+    if ((counts.get(candidate) ?? 0) === 1) return { ...entry, id: candidate };
+    const digest = createHash('sha256').update(normalizePath(entry.file)).digest('hex').slice(0, 10);
+    return { ...entry, id: `${candidate}-${digest}` };
+  });
 }
 
 function titleFromRoute(routePath: string): string {

@@ -3,6 +3,8 @@ import { filterSearchRecords } from '../search.js';
 import type { SearchScope } from '../search.js';
 import type { AiProvider, AskResult, ChatMessage, CreateAskResponseOptions } from './types.js';
 
+const maxAskRequestBytes = 64 * 1024;
+
 export async function createAskResponse(
   provider: AiProvider,
   request: Request,
@@ -11,13 +13,51 @@ export async function createAskResponse(
   const options = Array.isArray(recordsOrOptions) ? { records: recordsOrOptions } : recordsOrOptions;
   const stream = options.stream ?? wantsStream(request);
   try {
-    const body = await request.json().catch(() => ({})) as {
+    const rawBody = await readLimitedRequestText(request, maxAskRequestBytes);
+    if (rawBody === undefined) {
+      return askErrorResponse('Ask AI request is too large.', 413, stream);
+    }
+    let parsed: unknown;
+    try {
+      parsed = rawBody ? JSON.parse(rawBody) : {};
+    } catch {
+      return askErrorResponse('Invalid JSON request body.', 400, stream);
+    }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return askErrorResponse('Invalid Ask AI request.', 400, stream);
+    }
+    const body = parsed as {
       question?: string;
       messages?: ChatMessage[];
       locale?: string;
       kind?: string;
-    };
+    } & Record<string, unknown>;
+    if (body.question !== undefined && typeof body.question !== 'string') {
+      return askErrorResponse('Question must be a string.', 400, stream);
+    }
+    if (body.question && body.question.length > 4_000) {
+      return askErrorResponse('Question is too long.', 413, stream);
+    }
+    if (body.messages !== undefined && !Array.isArray(body.messages)) {
+      return askErrorResponse('Messages must be an array.', 400, stream);
+    }
+    if (body.messages?.some((message) => !isValidMessage(message))) {
+      return askErrorResponse('Messages contain an invalid entry.', 400, stream);
+    }
+    if (body.locale !== undefined && typeof body.locale !== 'string') {
+      return askErrorResponse('Locale must be a string.', 400, stream);
+    }
+    if (body.kind !== undefined && typeof body.kind !== 'string') {
+      return askErrorResponse('Kind must be a string.', 400, stream);
+    }
+    if (body.messages && body.messages.length > 30) {
+      return askErrorResponse('Message history is too long.', 413, stream);
+    }
     const messages = sanitizeMessages(body.messages);
+    if (messages.some((message) => message.content.length > 8_000)
+      || messages.reduce((total, message) => total + message.content.length, 0) > 32_000) {
+      return askErrorResponse('Message history is too long.', 413, stream);
+    }
     const lastUserMessage = [...messages].reverse().find((message) => message.role === 'user');
     const question = (body.question?.trim() ?? lastUserMessage?.content.trim() ?? '');
     if (!question) {
@@ -40,7 +80,8 @@ export async function createAskResponse(
       scope,
       ...(messages.length > 0 ? { messages } : {}),
       ...(options.systemPrompt ? { systemPrompt: options.systemPrompt } : {}),
-      ...(options.maxResults ? { maxResults: options.maxResults } : {})
+      ...(options.maxResults ? { maxResults: options.maxResults } : {}),
+      signal: request.signal
     };
     if (stream && provider.stream) {
       return streamProviderResponse(await provider.stream(askInput));
@@ -48,8 +89,43 @@ export async function createAskResponse(
     const result = await provider.ask(askInput);
     return stream ? streamAskResult(result) : jsonResponse(result);
   } catch (error) {
-    return askErrorResponse(error instanceof Error ? error.message : 'Ask AI failed.', 500, stream);
+    console.error('svedocs Ask AI provider failure', error);
+    return askErrorResponse('Ask AI failed. Please try again later.', 500, stream);
   }
+}
+
+async function readLimitedRequestText(request: Request, maxBytes: number): Promise<string | undefined> {
+  const contentLength = Number(request.headers.get('content-length'));
+  if (Number.isFinite(contentLength) && contentLength > maxBytes) return undefined;
+  const reader = request.body?.getReader();
+  if (!reader) return '';
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel().catch(() => undefined);
+      return undefined;
+    }
+    chunks.push(value);
+  }
+  const body = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(body);
+}
+
+function isValidMessage(message: unknown): message is ChatMessage {
+  if (!message || typeof message !== 'object' || Array.isArray(message)) return false;
+  const candidate = message as { role?: unknown; content?: unknown };
+  return (candidate.role === 'user' || candidate.role === 'assistant')
+    && typeof candidate.content === 'string';
 }
 
 function sanitizeMessages(messages: ChatMessage[] | undefined): ChatMessage[] {
@@ -104,9 +180,7 @@ function wantsStream(request: Request): boolean {
 function createRateLimitKey(request: Request, key: CreateAskResponseOptions['rateLimitKey']): string {
   if (typeof key === 'function') return key(request);
   if (typeof key === 'string') return key;
-  return request.headers.get('cf-connecting-ip')
-    ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    ?? 'anonymous';
+  return request.headers.get('cf-connecting-ip') ?? 'anonymous';
 }
 
 function streamProviderResponse(result: Response | ReadableStream<Uint8Array>): Response {

@@ -53,6 +53,7 @@ const themeComponentNameSet = new Set<string>(themeComponentNames);
 
 const virtualModules = new Set([
   'virtual:svedocs/config',
+  'virtual:svedocs/server-config',
   'virtual:svedocs/pages',
   'virtual:svedocs/page-index',
   'virtual:svedocs/page-loaders',
@@ -150,6 +151,7 @@ export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
       const data = manifest ?? (await loadSvedocsContent(createContentOptions(root, options.config)));
       const key = id.replace('\0virtual:svedocs/', '');
       if (key === 'config') return `export default ${JSON.stringify(data.config)};`;
+      if (key === 'server-config') return createServerConfigModule(data.config, resolvedConfigFile);
       if (key === 'pages') return `export default ${JSON.stringify(data.pages)};`;
       if (key === 'page-index') return `export default ${JSON.stringify(createPageIndex(data.pages))};`;
       if (key === 'page-loaders') return createPageLoadersModule(data.pages);
@@ -183,6 +185,19 @@ export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
       return undefined;
     }
   };
+}
+
+function createServerConfigModule(
+  config: SvedocsContentManifest['config'],
+  configFile: string | undefined
+): string {
+  if (!configFile) return `export default ${JSON.stringify(config)};`;
+  return [
+    `import * as userConfigModule from ${JSON.stringify(configFile)};`,
+    `import { loadSvedocsConfig } from 'svedocs/config';`,
+    `const userConfig = userConfigModule.default ?? userConfigModule.config ?? {};`,
+    `export default loadSvedocsConfig(userConfig);`
+  ].join('\n');
 }
 
 function createContentOptions(root: string, config: SvedocsConfig | undefined) {

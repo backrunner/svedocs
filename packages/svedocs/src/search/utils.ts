@@ -46,6 +46,21 @@ export function uniqueStrings(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
+export function sanitizeNavigationUrl(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return '#';
+  if (trimmed.startsWith('#') || trimmed.startsWith('?')) return trimmed;
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? trimmed : '#';
+  } catch {}
+  try {
+    const base = new URL('https://svedocs.invalid/');
+    return new URL(trimmed, base).origin === base.origin ? trimmed : '#';
+  } catch {}
+  return '#';
+}
+
 export function jsonResponse(value: unknown, status = 200): Response {
   return new Response(JSON.stringify(value), {
     status,

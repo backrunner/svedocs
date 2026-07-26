@@ -28,11 +28,13 @@ export function checkLink(
       href: link.href
     };
   }
-  if (target.hash && !knownAnchors(target.page).has(target.hash)) {
+  if (target.invalidHash || (target.hash && !knownAnchors(target.page).has(target.hash))) {
     return {
       code: 'broken-anchor',
       severity: 'error',
-      message: `${page.sourcePath}:${link.line} links to missing anchor #${target.hash} on ${target.page.routePath}.`,
+      message: target.invalidHash
+        ? `${page.sourcePath}:${link.line} contains an invalid percent-encoded anchor in ${link.href}.`
+        : `${page.sourcePath}:${link.line} links to missing anchor #${target.hash} on ${target.page.routePath}.`,
       pageId: page.id,
       sourcePath: page.sourcePath,
       href: link.href
@@ -45,26 +47,28 @@ function resolveLinkTarget(
   page: SvedocsPage,
   link: SvedocsLinkReference,
   context: ReturnType<typeof createLinkCheckContext>
-): { page: SvedocsPage | undefined; hash?: string } {
+): { page: SvedocsPage | undefined; hash?: string; invalidHash?: boolean } {
   const parts = splitHref(link.href);
-  if (!parts.pathname && parts.hash) return { page, hash: parts.hash };
+  if (!parts.pathname && parts.hash) return { page, hash: parts.hash, ...(parts.invalidHash ? { invalidHash: true } : {}) };
   const resolved = resolveSvedocsHref({
     href: link.href,
     page,
     pages: context.pages,
     config: context.config
   });
-  return { page: resolved.page, ...(parts.hash ? { hash: parts.hash } : {}) };
+  return { page: resolved.page, ...(parts.hash ? { hash: parts.hash } : {}), ...(parts.invalidHash ? { invalidHash: true } : {}) };
 }
 
-function splitHref(href: string): { pathname: string; hash?: string } {
+function splitHref(href: string): { pathname: string; hash?: string; invalidHash?: boolean } {
   const [withoutHash = '', hashWithQuery] = href.trim().split('#');
   const [pathname = ''] = withoutHash.split('?');
   const [hash] = (hashWithQuery ?? '').split('?');
-  return {
-    pathname,
-    ...(hash ? { hash: decodeURIComponent(hash) } : {})
-  };
+  if (!hash) return { pathname };
+  try {
+    return { pathname, hash: decodeURIComponent(hash) };
+  } catch {
+    return { pathname, hash, invalidHash: true };
+  }
 }
 
 function knownAnchors(page: SvedocsPage): Set<string> {

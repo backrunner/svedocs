@@ -1,22 +1,47 @@
-import type { AiRateLimiter, AiRateLimitStore, CloudflareKvNamespace } from './types.js';
+import type { AiRateLimiter, AiRateLimitStore, CloudflareKvNamespace, CloudflareRateLimitBinding } from './types.js';
 
 export function createMemoryRateLimiter(input: {
   windowMs: number;
   max: number;
 }): AiRateLimiter {
   const buckets = new Map<string, { count: number; resetAt: number }>();
-  return createStoreRateLimiter({
-    windowMs: input.windowMs,
-    max: input.max,
-    store: {
-      async get(key) {
-        return buckets.get(key);
-      },
-      async put(key, value) {
-        buckets.set(key, value);
+  return {
+    check({ key }) {
+      const now = Date.now();
+      const existing = buckets.get(key);
+      if (!existing || existing.resetAt <= now) {
+        buckets.set(key, { count: 1, resetAt: now + input.windowMs });
+        if (buckets.size > 10_000) {
+          for (const [storedKey, bucket] of buckets) if (bucket.resetAt <= now) buckets.delete(storedKey);
+        }
+        return { allowed: true };
       }
+      existing.count += 1;
+      return existing.count > input.max
+        ? { allowed: false, retryAfter: Math.ceil((existing.resetAt - now) / 1000) }
+        : { allowed: true };
     }
-  });
+  };
+}
+
+export function createCloudflareRateLimitLimiter(binding: CloudflareRateLimitBinding): AiRateLimiter {
+  return {
+    async check({ key }) {
+      const result = await binding.limit({ key: `svedocs:ai:${key}` });
+      return { allowed: result.success };
+    }
+  };
+}
+
+export function resolveCloudflareRateLimiter(
+  env: Record<string, unknown> | undefined,
+  fallback: AiRateLimiter,
+  bindingName = 'SVEDOCS_RATE_LIMITER'
+): AiRateLimiter {
+  const binding = env?.[bindingName];
+  if (!binding || typeof binding !== 'object' || !('limit' in binding)
+    || typeof (binding as { limit?: unknown }).limit !== 'function') return fallback;
+  return createCloudflareRateLimitLimiter(binding as CloudflareRateLimitBinding);
 }
 
 export function createStoreRateLimiter(input: {

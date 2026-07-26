@@ -135,6 +135,7 @@
   });
 
   onDestroy(() => {
+    internalController.hide();
     unsubscribeController?.();
   });
 </script>

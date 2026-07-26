@@ -117,6 +117,7 @@
   });
 
   onDestroy(() => {
+    internalController.hide();
     unsubscribeController?.();
     releaseScrollLock?.();
   });
@@ -159,9 +160,19 @@
   >
     <label class="sd-search-box">
       <span class="sd-visually-hidden">{t('search.query')}</span>
-      <input value={query} placeholder={t('search.placeholder')} on:input={handleInput} bind:this={input} />
+      <input
+        value={query}
+        placeholder={t('search.placeholder')}
+        role="combobox"
+        aria-autocomplete="list"
+        aria-controls="svedocs-search-results"
+        aria-expanded={open}
+        aria-activedescendant={results[activeIndex] ? `svedocs-search-option-${activeIndex}` : undefined}
+        on:input={handleInput}
+        bind:this={input}
+      />
     </label>
-    <div class="sd-search-results" role="listbox" aria-label={t('search.results')}>
+    <div id="svedocs-search-results" class="sd-search-results" role="listbox" aria-label={t('search.results')}>
       {#if remoteStatus === 'loading'}
         <p class="sd-empty-state">{t('search.loading')}</p>
       {/if}
@@ -177,6 +188,7 @@
       {#if results.length > 0}
         {#each results as result, index}
           <a
+            id={`svedocs-search-option-${index}`}
             class:sd-active={index === activeIndex}
             href={result.url}
             role="option"

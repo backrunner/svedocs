@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { get } from 'svelte/store';
 import { createAskResponse, createCloudflareAiSearchAiProvider, createCloudflareKvRateLimiter, createConfiguredAiProvider, createConfiguredAskResponse, createMemoryRateLimiter, createMockAiProvider, createOpenAiCompatibleProvider, createWorkersAiProvider } from '../src/ai';
 import { createCloudflareEnvDts, createWranglerJson, readSvedocsBuildMode, svedocsPagePrerender, svedocsSsr, svedocsTrailingSlash } from '../src/cloudflare';
@@ -755,7 +755,7 @@ describe('svedocs Batch 0 skeleton', () => {
     });
     searchController.show();
     searchController.setQuery('anything');
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 175));
 
     expect(get(searchController.remoteError)).toBe('搜索请求返回 503。');
 
@@ -799,6 +799,70 @@ describe('svedocs Batch 0 skeleton', () => {
     });
     emptyWelcomeController.show();
     expect(get(emptyWelcomeController.messages)).toEqual([]);
+  });
+
+  it('debounces remote search and rejects unsafe result URLs', async () => {
+    let calls = 0;
+    const controller = createSearchController({
+      provider: 'algolia',
+      buildMode: 'edge',
+      async fetcher() {
+        calls += 1;
+        return Response.json({
+          results: [
+            {
+              id: 'unsafe',
+              title: 'Unsafe',
+              url: 'javascript:alert(1)',
+              excerpt: 'Unsafe URL',
+              score: 1,
+              metadata: {}
+            },
+            {
+              id: 'backslash',
+              title: 'Backslash',
+              url: '/\\evil.example/path',
+              excerpt: 'Protocol-relative URL',
+              score: 0.5,
+              metadata: {}
+            }
+          ]
+        });
+      }
+    });
+    controller.show();
+    controller.setQuery('a');
+    controller.setQuery('ab');
+    controller.setQuery('abc');
+    await new Promise((resolve) => setTimeout(resolve, 175));
+
+    expect(calls).toBe(1);
+    expect(get(controller.results).map((result) => result.url)).toEqual(['#', '#']);
+  });
+
+  it('cancels an in-flight Ask AI request when the conversation resets', async () => {
+    const config = resolveSvedocsConfig({ ai: { enabled: true, provider: 'mock' } });
+    let aborted = false;
+    const controller = createAskAiController({
+      config,
+      buildMode: 'edge',
+      async fetcher(_input, init) {
+        return new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            aborted = true;
+            reject(new DOMException('Aborted', 'AbortError'));
+          }, { once: true });
+        });
+      }
+    });
+    const pending = controller.send('install');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    controller.reset();
+    await pending;
+
+    expect(aborted).toBe(true);
+    expect(get(controller.loading)).toBe(false);
+    expect(get(controller.messages).filter((message) => !message.welcome)).toEqual([]);
   });
 
   it('reads CRLF Ask AI event streams in the headless controller', async () => {
@@ -1115,6 +1179,31 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(loaded).toContain('"RenderError": C9');
   });
 
+  it('loads server-only virtual config from the source module to preserve functions', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-server-config-'));
+    try {
+      await mkdir(path.join(tmp, 'content/docs'), { recursive: true });
+      await writeFile(path.join(tmp, 'content/docs/index.md'), '# Home\n\nWelcome.', 'utf8');
+      await writeFile(path.join(tmp, 'svedocs.config.mjs'), [
+        'export default {',
+        '  site: { url: "https://example.test" },',
+        '  seo: { ogImage: { template: (input) => ({ type: "div", props: { children: input.title } }) } }',
+        '};'
+      ].join('\n'), 'utf8');
+      const plugin = svedocs() as unknown as {
+        configResolved(config: { root: string }): Promise<void>;
+        load(id: string): Promise<string> | string;
+      };
+      await plugin.configResolved({ root: tmp });
+      const loaded = await plugin.load('\0virtual:svedocs/server-config');
+
+      expect(loaded).toContain('svedocs.config.mjs');
+      expect(loaded).toContain('loadSvedocsConfig(userConfig)');
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('fails fast when Vite theme component override keys are unknown', () => {
     expect(() => svedocs({
       config: {
@@ -1137,6 +1226,9 @@ describe('svedocs Batch 0 skeleton', () => {
         content: {
           docs: 'content/docs',
           pages: 'content/pages'
+        },
+        seo: {
+          sitemap: false
         }
       }
     });
@@ -1155,6 +1247,49 @@ describe('svedocs Batch 0 skeleton', () => {
       focusLines: [2]
     });
       expect(manifest.issues).toEqual([]);
+  });
+
+  it('validates raw content config before resolving it', async () => {
+    await expect(loadSvedocsContent({
+      projectRoot: new URL('fixtures/basic', import.meta.url).pathname,
+      config: { ai: { maxResults: -1 } }
+    })).rejects.toThrow();
+  });
+
+  it('disambiguates colliding page IDs and OG asset paths', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-collision-'));
+    try {
+      await mkdir(path.join(tmp, 'content/docs/a'), { recursive: true });
+      await writeFile(path.join(tmp, 'content/docs/a-b.md'), '# Flat\n\nFlat page.', 'utf8');
+      await writeFile(path.join(tmp, 'content/docs/a/b.md'), '# Nested\n\nNested page.', 'utf8');
+      const manifest = await loadSvedocsContent({
+        projectRoot: tmp,
+        config: { site: { url: 'https://example.test' } }
+      });
+      const ids = manifest.pages.map((page) => page.id);
+      const ogPaths = manifest.pages.map((page) => createPageOgImagePath(page));
+
+      expect(new Set(ids).size).toBe(2);
+      expect(new Set(ogPaths).size).toBe(2);
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('reports malformed percent-encoded anchors without aborting content loading', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-bad-anchor-'));
+    try {
+      await mkdir(path.join(tmp, 'content/docs'), { recursive: true });
+      await writeFile(path.join(tmp, 'content/docs/index.md'), '# Home\n\n[Broken](#bad%ZZ)', 'utf8');
+      const manifest = await loadSvedocsContent({
+        projectRoot: tmp,
+        config: { site: { url: 'https://example.test' } }
+      });
+
+      expect(manifest.issues.some((issue) => issue.code === 'broken-anchor' && issue.message.includes('invalid'))).toBe(true);
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
   });
 
   it('loads serializable SEO head injections from frontmatter', async () => {
@@ -1366,6 +1501,9 @@ describe('svedocs Batch 0 skeleton', () => {
         },
         checks: {
           translations: true
+        },
+        seo: {
+          sitemap: false
         }
       }
     });
@@ -1601,7 +1739,7 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(metadata.openGraph.locale).toBe('en');
     expect(metadata.jsonLd.dateModified).toBe('2026-05-18T00:00:00.000Z');
     expect(metadata.jsonLd.inLanguage).toBe('en');
-    expect(metadata.openGraph.image).toBe('https://fixture.test/og/docs-guide.svg');
+    expect(metadata.openGraph.image).toBe(`https://fixture.test${createPageOgImagePath(page)}`);
       expect(metadata.keywords).toEqual(['docs', 'guide']);
       expect(metadata.robots).toBe('index,follow');
       expect(metadata.head.meta).toEqual([
@@ -1616,7 +1754,7 @@ describe('svedocs Batch 0 skeleton', () => {
         { '@type': 'Organization', name: 'Fixture Org' },
         { '@type': 'BreadcrumbList', name: 'Guide breadcrumb' }
       ]);
-    expect(createPageOgImagePath(page)).toBe('/og/docs-guide.svg');
+    expect(createPageOgImagePath(page)).toMatch(/^\/og\/docs-guide-[a-f0-9]{16}\.svg$/);
     expect((await createPageOgImageResponse(config, page)).headers.get('content-type')).toContain('image/svg+xml');
     expect(createSitemapXml(config, [page])).toContain('<loc>https://fixture.test/docs/guide</loc>');
     expect(createSitemapXml(config, [page])).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
@@ -1880,8 +2018,8 @@ describe('svedocs Batch 0 skeleton', () => {
     const response = await createPageOgImageResponse(config, page);
 
     expect(createConfiguredOgImageFormat(config)).toBe('png');
-    expect(metadata.openGraph.image).toBe('https://fixture.test/og/docs-guide.png');
-    expect(createPageOgImagePath(page, createConfiguredOgImageFormat(config))).toBe('/og/docs-guide.png');
+    expect(metadata.openGraph.image).toBe(`https://fixture.test${createPageOgImagePath(page, 'png')}`);
+    expect(createPageOgImagePath(page, createConfiguredOgImageFormat(config))).toMatch(/^\/og\/docs-guide-[a-f0-9]{16}\.png$/);
     expect(response.headers.get('content-type')).toContain('image/png');
   }, 15_000);
 
@@ -2569,6 +2707,66 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(streamResponse.headers.get('content-type')).toContain('text/event-stream');
     expect(await streamResponse.text()).toContain('event: citations');
     expect(limited.status).toBe(429);
+  });
+
+  it('enforces Ask AI input budgets and hides provider failures', async () => {
+    const invalid = await createAskResponse(
+      createMockAiProvider(),
+      new Request('https://example.test/api/ask', {
+        method: 'POST',
+        body: JSON.stringify({ question: 42 })
+      })
+    );
+    const oversized = await createAskResponse(
+      createMockAiProvider(),
+      new Request('https://example.test/api/ask', {
+        method: 'POST',
+        body: JSON.stringify({ question: 'x'.repeat(4_001) })
+      })
+    );
+    const invalidMessages = await createAskResponse(
+      createMockAiProvider(),
+      new Request('https://example.test/api/ask', {
+        method: 'POST',
+        body: JSON.stringify({ question: 'deploy', messages: 'invalid', locale: 42 })
+      })
+    );
+    const oversizedBody = await createAskResponse(
+      createMockAiProvider(),
+      new Request('https://example.test/api/ask', {
+        method: 'POST',
+        body: JSON.stringify({ question: 'deploy', padding: 'x'.repeat(64 * 1024) })
+      })
+    );
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const failed = await createAskResponse(
+      { name: 'failing', async ask() { throw new Error('upstream-secret-response'); } },
+      new Request('https://example.test/api/ask', {
+        method: 'POST',
+        body: JSON.stringify({ question: 'deploy' })
+      })
+    );
+    const failureBody = await failed.text();
+    errorSpy.mockRestore();
+
+    expect(invalid.status).toBe(400);
+    expect(oversized.status).toBe(413);
+    expect(invalidMessages.status).toBe(400);
+    expect(oversizedBody.status).toBe(413);
+    expect(failed.status).toBe(500);
+    expect(failureBody).not.toContain('upstream-secret-response');
+  });
+
+  it('keeps memory rate limits atomic under concurrent checks', async () => {
+    const limiter = createMemoryRateLimiter({ windowMs: 60_000, max: 1 });
+    const request = new Request('https://example.test/api/ask');
+    const results = await Promise.all([
+      limiter.check({ key: 'same-client', request }),
+      limiter.check({ key: 'same-client', request })
+    ]);
+
+    expect(results.filter((result) => result.allowed)).toHaveLength(1);
+    expect(results.filter((result) => !result.allowed)).toHaveLength(1);
   });
 
   it('scopes Ask AI local citations from request metadata', async () => {

@@ -32,6 +32,7 @@ export interface AskInput {
   records?: SvedocsSearchRecord[];
   scope?: SearchScope;
   maxResults?: number;
+  signal?: AbortSignal;
 }
 
 export interface AskResult {
@@ -54,6 +55,10 @@ export interface AiRateLimiter {
 export interface AiRateLimitStore {
   get(key: string): Promise<{ count: number; resetAt: number } | undefined>;
   put(key: string, value: { count: number; resetAt: number }, ttlSeconds: number): Promise<void>;
+}
+
+export interface CloudflareRateLimitBinding {
+  limit(input: { key: string }): Promise<{ success: boolean }>;
 }
 
 export interface CreateAskResponseOptions {

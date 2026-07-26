@@ -5,6 +5,7 @@ export interface SearchQuery {
   limit?: number;
   locale?: string;
   kind?: string;
+  signal?: AbortSignal;
 }
 
 export interface SearchScope {

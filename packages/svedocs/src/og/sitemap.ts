@@ -83,7 +83,7 @@ function createSitemapLocation(config: SvedocsResolvedConfig, page: SvedocsPage)
   const location = page.seo.canonical
     ? createAbsoluteUrl(config, page.seo.canonical) ?? page.seo.canonical
     : createAbsoluteUrl(config, routePath) ?? routePath;
-  if (!config.site.url || !/^https?:\/\//.test(location)) return location;
+  if (!config.site.url || !/^https?:\/\//.test(location)) return undefined;
   try {
     return new URL(location).origin === new URL(config.site.url).origin ? location : undefined;
   } catch {

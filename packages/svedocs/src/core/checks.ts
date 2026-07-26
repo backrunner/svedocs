@@ -1,4 +1,6 @@
 import { access, readFile } from 'node:fs/promises';
+import { lookup } from 'node:dns/promises';
+import { isIP } from 'node:net';
 import path from 'node:path';
 import { checkLink, createLinkCheckContext } from './links.js';
 import type { SvedocsContentIssue, SvedocsContentManifest, SvedocsLinkReference, SvedocsPage } from './types.js';
@@ -9,6 +11,9 @@ export async function checkSvedocsContent(
   projectRoot = process.cwd()
 ): Promise<SvedocsContentIssue[]> {
   const issues: SvedocsContentIssue[] = [];
+  const externalChecks = new Map<string, Promise<ExternalLinkStatus>>();
+  const runExternalCheck = createConcurrencyGate(8);
+  const pendingExternalIssues: Array<Promise<SvedocsContentIssue | undefined>> = [];
   const routeDuplicates = findDuplicates(manifest.pages.map((page) => page.routePath));
   const canonicalDuplicates = findDuplicates(
     manifest.pages
@@ -24,11 +29,11 @@ export async function checkSvedocsContent(
     });
   }
 
-  if (manifest.config.seo.rss && !manifest.config.site.url) {
+  if ((manifest.config.seo.rss || manifest.config.seo.sitemap) && !manifest.config.site.url) {
     issues.push({
       code: 'missing-site-url',
       severity: 'warning',
-      message: 'site.url is required to generate absolute sitemap and RSS URLs for production.'
+      message: 'site.url is required for absolute sitemap and RSS URLs; relative discovery URLs are omitted.'
     });
   }
 
@@ -84,12 +89,28 @@ export async function checkSvedocsContent(
       });
     }
     for (const link of page.links) {
-      const issue = checkLink(page, link, linkContext)
-        ?? await checkAssetLink(projectRoot, page.sourcePath, link, manifest.config.checks.assets)
-        ?? await checkExternalLink(link, manifest.config.checks.externalLinks, page.id, page.sourcePath);
-      if (issue) issues.push(issue);
+      const linkIssue = checkLink(page, link, linkContext);
+      if (linkIssue) {
+        issues.push(linkIssue);
+        continue;
+      }
+      const assetIssue = await checkAssetLink(projectRoot, page.sourcePath, link, manifest.config.checks.assets);
+      if (assetIssue) {
+        issues.push(assetIssue);
+        continue;
+      }
+      pendingExternalIssues.push(checkExternalLink(
+        link,
+        manifest.config.checks.externalLinks,
+        page.id,
+        page.sourcePath,
+        externalChecks,
+        runExternalCheck
+      ));
     }
   }
+
+  issues.push(...(await Promise.all(pendingExternalIssues)).filter((issue): issue is SvedocsContentIssue => Boolean(issue)));
 
   return issues;
 }
@@ -237,38 +258,102 @@ async function checkExternalLink(
   link: SvedocsLinkReference,
   enabled: boolean,
   pageId: string,
-  sourcePath: string
+  sourcePath: string,
+  cache: Map<string, Promise<ExternalLinkStatus>>,
+  run: <T>(task: () => Promise<T>) => Promise<T>
 ): Promise<SvedocsContentIssue | undefined> {
   if (!enabled || link.kind !== 'external' || !/^https?:\/\//.test(link.href)) return undefined;
+  let pending = cache.get(link.href);
+  if (!pending) {
+    pending = run(() => checkExternalLinkStatus(link.href));
+    cache.set(link.href, pending);
+  }
+  const result = await pending;
+  if (result.ok) return undefined;
+  return {
+    code: 'external-link-unchecked',
+    severity: 'warning',
+    message: result.status
+      ? `${sourcePath}:${link.line} external link returned ${result.status}: ${link.href}.`
+      : `${sourcePath}:${link.line} external link could not be verified: ${link.href}.`,
+    pageId,
+    sourcePath,
+    href: link.href
+  };
+}
+
+function createConcurrencyGate(limit: number): <T>(task: () => Promise<T>) => Promise<T> {
+  let active = 0;
+  const queue: Array<() => void> = [];
+  return async <T>(task: () => Promise<T>): Promise<T> => {
+    if (active >= limit) await new Promise<void>((resolve) => queue.push(resolve));
+    active += 1;
+    try {
+      return await task();
+    } finally {
+      active -= 1;
+      queue.shift()?.();
+    }
+  };
+}
+
+interface ExternalLinkStatus {
+  ok: boolean;
+  status?: number;
+}
+
+async function checkExternalLinkStatus(href: string): Promise<ExternalLinkStatus> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 4_000);
   try {
-    const response = await fetch(link.href, {
-      method: 'HEAD',
-      redirect: 'follow',
-      signal: controller.signal
-    });
-    if (response.ok || response.status === 405) return undefined;
-    return {
-      code: 'external-link-unchecked',
-      severity: 'warning',
-      message: `${sourcePath}:${link.line} external link returned ${response.status}: ${link.href}.`,
-      pageId,
-      sourcePath,
-      href: link.href
-    };
+    const response = await fetchPublicExternalLink(href, controller.signal);
+    return response.ok || response.status === 405 ? { ok: true } : { ok: false, status: response.status };
   } catch {
-    return {
-      code: 'external-link-unchecked',
-      severity: 'warning',
-      message: `${sourcePath}:${link.line} external link could not be verified: ${link.href}.`,
-      pageId,
-      sourcePath,
-      href: link.href
-    };
+    return { ok: false };
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function fetchPublicExternalLink(input: string, signal: AbortSignal): Promise<Response> {
+  let current = new URL(input);
+  for (let redirects = 0; redirects <= 5; redirects += 1) {
+    await assertPublicUrl(current);
+    const response = await fetch(current, { method: 'HEAD', redirect: 'manual', signal });
+    if (response.status < 300 || response.status >= 400) return response;
+    const location = response.headers.get('location');
+    if (!location) return response;
+    current = new URL(location, current);
+  }
+  throw new Error('External link exceeded the redirect limit.');
+}
+
+async function assertPublicUrl(url: URL): Promise<void> {
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error('Unsupported external link protocol.');
+  const hostname = url.hostname.replace(/^\[|\]$/g, '').toLowerCase();
+  if (hostname === 'localhost' || hostname.endsWith('.localhost')) throw new Error('Local external link target is blocked.');
+  const addresses = isIP(hostname)
+    ? [hostname]
+    : (await lookup(hostname, { all: true, verbatim: true })).map((entry) => entry.address);
+  if (addresses.length === 0 || addresses.some(isPrivateAddress)) {
+    throw new Error('Private external link target is blocked.');
+  }
+}
+
+function isPrivateAddress(address: string): boolean {
+  const normalized = address.toLowerCase();
+  if (normalized === '::' || normalized === '::1' || normalized.startsWith('fc') || normalized.startsWith('fd')
+    || /^fe[89ab]/.test(normalized)) return true;
+  if (normalized.startsWith('::ffff:')) return isPrivateAddress(normalized.slice(7));
+  if (isIP(normalized) !== 4) return false;
+  const parts = normalized.split('.').map(Number);
+  const [a = 0, b = 0] = parts;
+  return a === 0 || a === 10 || a === 127 || a >= 224
+    || (a === 100 && b >= 64 && b <= 127)
+    || (a === 169 && b === 254)
+    || (a === 172 && b >= 16 && b <= 31)
+    || (a === 192 && b === 168)
+    || (a === 198 && (b === 18 || b === 19));
 }
 
 function extractExportTargets(value: unknown): string[] {

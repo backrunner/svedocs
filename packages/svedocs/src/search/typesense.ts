@@ -1,7 +1,7 @@
 import type { SvedocsSearchRecord } from '../core.js';
 import { matchesSearchScope } from './local.js';
 import type { SearchProvider, SearchQuery, SearchResult } from './types.js';
-import { createExcerpt, stringMetadata, stringifyMetadata } from './utils.js';
+import { createExcerpt, sanitizeNavigationUrl, stringMetadata, stringifyMetadata } from './utils.js';
 
 export interface TypesenseSearchProviderOptions {
   host: string;
@@ -50,7 +50,8 @@ export function createTypesenseSearchProvider(options: TypesenseSearchProviderOp
       const response = await requestFetch(createTypesenseSearchUrl(options, query), {
         headers: {
           'x-typesense-api-key': options.apiKey
-        }
+        },
+        signal: query.signal ? AbortSignal.any([query.signal, AbortSignal.timeout(10_000)]) : AbortSignal.timeout(10_000)
       });
       if (!response.ok) {
         throw new Error(`Typesense search returned ${response.status}: ${(await response.text()).slice(0, 500)}`);
@@ -94,8 +95,8 @@ function createTypesenseResult(hit: TypesenseHit, index: number, query: string):
 function createTypesenseUrl(document: TypesenseDocument, metadata: Record<string, string>): string {
   const url = stringMetadata(document.url) ?? stringMetadata(metadata.url) ?? '#';
   const anchor = stringMetadata(document.anchor) ?? stringMetadata(metadata.anchor);
-  if (!anchor || url.includes('#')) return url;
-  return `${url}#${anchor}`;
+  if (!anchor || url.includes('#')) return sanitizeNavigationUrl(url);
+  return sanitizeNavigationUrl(`${url}#${anchor}`);
 }
 
 function normalizeTypesenseMetadata(document: TypesenseDocument): Record<string, string> {

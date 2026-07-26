@@ -51,6 +51,7 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
           authorization: `Bearer ${options.apiKey}`,
           ...(options.headers ?? {})
         },
+        signal: input.signal ? AbortSignal.any([input.signal, AbortSignal.timeout(30_000)]) : AbortSignal.timeout(30_000),
         body: JSON.stringify({
           model: options.model,
           ...(typeof options.temperature === 'number' ? { temperature: options.temperature } : {}),
@@ -62,7 +63,7 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleProvider
         })
       });
       if (!response.ok) {
-        throw new Error(`OpenAI-compatible provider returned ${response.status}: ${(await response.text()).slice(0, 500)}`);
+        throw new Error(`OpenAI-compatible provider returned ${response.status}`);
       }
       const payload = await response.json() as ChatCompletionResponse;
       return {

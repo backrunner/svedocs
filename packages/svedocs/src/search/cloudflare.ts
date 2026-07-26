@@ -11,7 +11,7 @@ import type {
   SearchProvider
 } from './types.js';
 import { matchesSearchScope } from './local.js';
-import { createExcerpt, stringMetadata, stringifyMetadata } from './utils.js';
+import { createExcerpt, sanitizeNavigationUrl, stringMetadata, stringifyMetadata } from './utils.js';
 
 export function createCloudflareAiSearchProvider(input: {
   binding: CloudflareAiSearchInstance | CloudflareAiSearchNamespace;
@@ -121,7 +121,7 @@ function createResultFromItem(
   return {
     id: item.id ?? `cloudflare:${index}`,
     title: item.title ?? stringMetadata(metadata.title) ?? 'Result',
-    url: item.url ?? stringMetadata(metadata.url) ?? '#',
+    url: sanitizeNavigationUrl(item.url ?? stringMetadata(metadata.url) ?? '#'),
     ...(section ? { section } : {}),
     excerpt: createExcerpt(item.content ?? item.text ?? fallbackContent, query),
     score: typeof item.score === 'number' ? item.score : 1 / (index + 1),
@@ -149,7 +149,7 @@ function createResultFromChunk(
       stringMetadata(chunk.item?.filename) ??
       stringMetadata(chunk.item?.key) ??
       'Result',
-    url: stringMetadata(metadata.url) ?? stringMetadata(metadata.source_url) ?? '#',
+    url: sanitizeNavigationUrl(stringMetadata(metadata.url) ?? stringMetadata(metadata.source_url) ?? '#'),
     ...(section ? { section } : {}),
     excerpt: createExcerpt(chunk.text ?? chunk.content ?? stringMetadata(metadata.content) ?? fallbackContent, query),
     score: typeof chunk.score === 'number' ? chunk.score : 1 / (index + 1),

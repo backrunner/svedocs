@@ -1,7 +1,7 @@
 import type { SvedocsSearchRecord } from '../core.js';
 import { matchesSearchScope } from './local.js';
 import type { SearchProvider, SearchQuery, SearchResult } from './types.js';
-import { createExcerpt, stringMetadata, stringifyMetadata } from './utils.js';
+import { createExcerpt, sanitizeNavigationUrl, stringMetadata, stringifyMetadata } from './utils.js';
 
 export interface AlgoliaSearchProviderOptions {
   appId: string;
@@ -55,7 +55,8 @@ export function createAlgoliaSearchProvider(options: AlgoliaSearchProviderOption
           hitsPerPage: query.limit ?? 10,
           ...(filters ? { filters } : {}),
           attributesToSnippet: ['content:30']
-        })
+        }),
+        signal: query.signal ? AbortSignal.any([query.signal, AbortSignal.timeout(10_000)]) : AbortSignal.timeout(10_000)
       });
       if (!response.ok) {
         throw new Error(`Algolia search returned ${response.status}: ${(await response.text()).slice(0, 500)}`);
@@ -99,8 +100,8 @@ function createAlgoliaResult(hit: AlgoliaHit, index: number, query: string): Sea
 
 function createAlgoliaUrl(hit: AlgoliaHit): string {
   const url = hit.url ?? '#';
-  if (!hit.anchor || url.includes('#')) return url;
-  return `${url}#${hit.anchor}`;
+  if (!hit.anchor || url.includes('#')) return sanitizeNavigationUrl(url);
+  return sanitizeNavigationUrl(`${url}#${hit.anchor}`);
 }
 
 function readSnippet(hit: AlgoliaHit): string | undefined {

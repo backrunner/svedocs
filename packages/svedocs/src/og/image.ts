@@ -7,7 +7,10 @@ export const defaultOgTemplate = {
 } as const;
 
 export function createPageOgImagePath(page: SvedocsPage, format: 'svg' | 'png' = 'svg'): string {
-  const name = page.routePath === '/' ? 'index' : page.routePath.replace(/^\/+/, '').replace(/[^a-zA-Z0-9]+/g, '-');
+  const route = page.routePath === '/' ? 'index' : page.routePath;
+  const readable = route.replace(/^\/+/, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '') || 'page';
+  const digest = stableRouteDigest(page.routePath);
+  const name = page.routePath === '/' ? 'index' : `${readable}-${digest}`;
   return `/og/${name}.${format}`;
 }
 
@@ -30,9 +33,26 @@ export function isOgImageEnabled(config: SvedocsResolvedConfig): boolean {
 }
 
 export function createPageOgImageEntries(pages: SvedocsPage[], format: 'svg' | 'png' = 'svg'): Array<{ path: string }> {
-  return pages
+  const entries = pages
     .filter((page) => !page.hidden)
     .map((page) => ({ path: createPageOgImagePath(page, format).replace(/^\/og\//, '') }));
+  if (new Set(entries.map((entry) => entry.path)).size !== entries.length) {
+    throw new Error('Duplicate OG image path detected.');
+  }
+  return entries;
+}
+
+function stableRouteDigest(value: string): string {
+  let first = 0xdeadbeef ^ value.length;
+  let second = 0x41c6ce57 ^ value.length;
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index);
+    first = Math.imul(first ^ code, 2654435761);
+    second = Math.imul(second ^ code, 1597334677);
+  }
+  first = Math.imul(first ^ (first >>> 16), 2246822507) ^ Math.imul(second ^ (second >>> 13), 3266489909);
+  second = Math.imul(second ^ (second >>> 16), 2246822507) ^ Math.imul(first ^ (first >>> 13), 3266489909);
+  return `${(second >>> 0).toString(16).padStart(8, '0')}${(first >>> 0).toString(16).padStart(8, '0')}`;
 }
 
 export function createConfiguredPageOgImageEntries(config: SvedocsResolvedConfig, pages: SvedocsPage[]): Array<{ path: string }> {
@@ -249,7 +269,7 @@ function toArrayBuffer(value: Uint8Array): ArrayBuffer {
 
 function importOptionalOgModule<T>(specifier: string): Promise<T> {
   if (typeof process !== 'undefined' && process.versions?.node) {
-    return import(specifier) as Promise<T>;
+    return import(/* @vite-ignore */ specifier) as Promise<T>;
   }
   // Keep optional Node-only OG renderers out of edge bundles unless the caller actually uses them.
   const dynamicImport = new Function('specifier', 'return import(specifier)') as (value: string) => Promise<T>;

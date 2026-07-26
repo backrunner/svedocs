@@ -5,6 +5,7 @@ import { resolveSvedocsHref } from '../core/routes.js';
 import type { SvedocsMessageKey, SvedocsMessages, SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTranslate } from '../core/types.js';
 import { filterSearchRecords, searchRecords } from '../search/local.js';
 import type { SearchResult, SearchScope } from '../search/types.js';
+import { sanitizeNavigationUrl } from '../search/utils.js';
 import type {
   SvedocsAskAiCitation,
   SvedocsAskAiController,
@@ -281,12 +282,14 @@ export function createSearchController(initial: SvedocsSearchControllerOptions =
   let recordsVersion = 0;
   let remoteKey = '';
   let remoteRequestId = 0;
+  let remoteAbort: AbortController | undefined;
+  let remoteTimer: ReturnType<typeof setTimeout> | undefined;
 
   const usesRemoteSearch = derived(options, ($options) => isRemoteSearch($options));
   const localResults = derived([query, loadedRecords, options], ([$query, $records, $options]) => (
     $query.trim()
-      ? searchRecords($records, { query: $query, limit: 8, ...$options.scope })
-      : createDefaultSearchResults($records, $options.scope)
+      ? searchRecords($records, { query: $query, limit: 8, ...$options.scope }).map(sanitizeSearchResult)
+      : createDefaultSearchResults($records, $options.scope).map(sanitizeSearchResult)
   ));
   const results = derived(
     [usesRemoteSearch, query, remoteStatus, remoteResults, localResults],
@@ -336,6 +339,7 @@ export function createSearchController(initial: SvedocsSearchControllerOptions =
     open.set(false);
     setQuery('');
     activeIndex.set(0);
+    cancelRemoteRequest();
   }
 
   function setQuery(value: string): void {
@@ -346,6 +350,7 @@ export function createSearchController(initial: SvedocsSearchControllerOptions =
       remoteStatus.set('idle');
       remoteError.set('');
       remoteKey = '';
+      cancelRemoteRequest();
       return;
     }
     syncRemoteResults();
@@ -395,7 +400,7 @@ export function createSearchController(initial: SvedocsSearchControllerOptions =
     }
   }
 
-  async function loadRemoteResults(currentQuery: string, scope: SearchScope, requestId: number): Promise<void> {
+  async function loadRemoteResults(currentQuery: string, scope: SearchScope, requestId: number, signal: AbortSignal): Promise<void> {
     const currentOptions = get(options);
     remoteResults.set([]);
     remoteStatus.set('loading');
@@ -403,14 +408,14 @@ export function createSearchController(initial: SvedocsSearchControllerOptions =
     try {
       const fetcher = currentOptions.fetcher ?? globalThis.fetch;
       if (!fetcher) throw new Error(currentOptions.t('search.fetchUnavailable'));
-      const response = await fetcher(createSearchUrl(currentOptions.endpoint, currentQuery, scope, currentOptions.provider, currentOptions.origin));
+      const response = await fetcher(createSearchUrl(currentOptions.endpoint, currentQuery, scope, currentOptions.provider, currentOptions.origin), { signal });
       if (!response.ok) throw new Error(currentOptions.t('search.requestError', { status: response.status }));
       const payload = await response.json() as { results?: SearchResult[] };
       if (requestId !== remoteRequestId) return;
-      remoteResults.set(payload.results ?? []);
+      remoteResults.set((payload.results ?? []).map(sanitizeSearchResult));
       remoteStatus.set('ready');
     } catch (error) {
-      if (requestId !== remoteRequestId) return;
+      if (requestId !== remoteRequestId || signal.aborted) return;
       remoteResults.set([]);
       remoteError.set(error instanceof Error ? error.message : currentOptions.t('search.failed'));
       remoteStatus.set('error');
@@ -424,7 +429,25 @@ export function createSearchController(initial: SvedocsSearchControllerOptions =
     const nextKey = createRemoteKey(currentOptions.provider, currentOptions.endpoint, currentQuery, currentOptions.scope);
     if (nextKey === remoteKey) return;
     remoteKey = nextKey;
-    void loadRemoteResults(currentQuery, currentOptions.scope, ++remoteRequestId);
+    cancelRemoteRequest();
+    const requestId = ++remoteRequestId;
+    remoteTimer = setTimeout(() => {
+      remoteTimer = undefined;
+      remoteAbort = new AbortController();
+      void loadRemoteResults(currentQuery, currentOptions.scope, requestId, remoteAbort.signal);
+    }, 150);
+  }
+
+  function cancelRemoteRequest(): void {
+    if (remoteTimer) clearTimeout(remoteTimer);
+    remoteTimer = undefined;
+    remoteAbort?.abort();
+    remoteAbort = undefined;
+    remoteRequestId += 1;
+  }
+
+  function sanitizeSearchResult(result: SearchResult): SearchResult {
+    return { ...result, url: sanitizeNavigationUrl(result.url) };
   }
 
   return {
@@ -458,11 +481,19 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
   let loadRecordsSource = initial.loadRecords;
   let recordsVersion = 0;
   let messageId = 0;
+  let askAbort: AbortController | undefined;
+  let conversationVersion = 0;
+  let scopeKey = JSON.stringify(initial.scope ?? {});
 
   function setOptions(nextOptions: Partial<SvedocsAskAiControllerOptions>): void {
     const recordsChanged = Object.hasOwn(nextOptions, 'records') && nextOptions.records !== recordsSource;
     const loadRecordsChanged = Object.hasOwn(nextOptions, 'loadRecords') && nextOptions.loadRecords !== loadRecordsSource;
     options.update((current) => normalizeAskOptions({ ...current, ...nextOptions }));
+    const nextScopeKey = JSON.stringify(get(options).scope);
+    if (nextScopeKey !== scopeKey) {
+      scopeKey = nextScopeKey;
+      reset();
+    }
     if (loadRecordsChanged) {
       loadRecordsSource = nextOptions.loadRecords;
       recordsRequest = undefined;
@@ -493,9 +524,11 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
 
   function hide(): void {
     open.set(false);
+    cancelAskRequest();
   }
 
   function reset(): void {
+    cancelAskRequest();
     const currentOptions = get(options);
     const welcomeMessage = currentOptions.welcomeMessage ?? currentOptions.config.ai.welcomeMessage;
     messages.set(welcomeMessage ? [{ id: nextId(), role: 'assistant', content: welcomeMessage, welcome: true }] : []);
@@ -515,6 +548,9 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
     const assistantMsg: SvedocsAskAiMessage = { id: nextId(), role: 'assistant', content: '', citations: [] };
     messages.update((current) => [...current, userMsg, assistantMsg]);
     loading.set(true);
+    const requestVersion = conversationVersion;
+    const requestController = new AbortController();
+    askAbort = requestController;
 
     const transcript = get(messages)
       .filter((message) => !message.welcome && !(message.role === 'assistant' && message.id === assistantMsg.id))
@@ -522,6 +558,7 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
 
     if (currentOptions.buildMode !== 'edge') {
       const sourceRecords = await ensureRecords();
+      if (requestVersion !== conversationVersion) return;
       updateAssistant(assistantMsg.id, createLocalAskDraft(value, sourceRecords, currentOptions.scope, currentOptions.t));
       loading.set(false);
       return;
@@ -536,6 +573,7 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
           'content-type': 'application/json',
           accept: 'text/event-stream'
         },
+        signal: requestController.signal,
         body: JSON.stringify({
           question: value,
           messages: transcript,
@@ -544,7 +582,7 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
       });
 
       if (response.headers.get('content-type')?.includes('text/event-stream')) {
-        await readAskStream(response, assistantMsg.id, currentOptions.t);
+        await readAskStream(response, assistantMsg.id, currentOptions.t, requestVersion);
         const streamedMessage = findMessage(assistantMsg.id);
         if (!response.ok) {
           throw new Error(streamedMessage?.error ?? currentOptions.t('ask.requestError', { status: response.status }));
@@ -561,15 +599,17 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
         answer?: string;
         citations?: SvedocsAskAiCitation[];
       };
+      if (requestVersion !== conversationVersion) return;
       updateAssistant(assistantMsg.id, {
         content: result.answer ?? '',
-        citations: result.citations ?? []
+        citations: sanitizeCitations(result.citations ?? [])
       });
     } catch (requestError) {
+      if (requestVersion !== conversationVersion || requestController.signal.aborted) return;
       const sourceRecords = await ensureRecords();
       const fallbackCitations = rankRecords(sourceRecords, value.toLowerCase(), currentOptions.scope).slice(0, 3).map((result) => ({
         title: result.title,
-        url: result.url,
+        url: sanitizeNavigationUrl(result.url),
         ...(result.section ? { section: result.section } : {})
       }));
       const fallback = fallbackCitations.length > 0
@@ -584,7 +624,10 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
         error: requestError instanceof Error ? requestError.message : currentOptions.t('ask.failed')
       });
     } finally {
-      loading.set(false);
+      if (requestVersion === conversationVersion) {
+        askAbort = undefined;
+        loading.set(false);
+      }
     }
   }
 
@@ -615,7 +658,7 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
   function createLocalAskDraft(question: string, records: SvedocsSearchRecord[], scope: SearchScope, t: SvedocsTranslate): Partial<SvedocsAskAiMessage> {
     const citations = rankRecords(records, question.toLowerCase(), scope).slice(0, 3).map((result) => ({
       title: result.title,
-      url: result.url,
+      url: sanitizeNavigationUrl(result.url),
       ...(result.section ? { section: result.section } : {})
     }));
     return {
@@ -640,7 +683,7 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
   }
 
   function setCitations(id: number, citations: SvedocsAskAiCitation[]): void {
-    messages.update((current) => current.map((message) => (message.id === id ? { ...message, citations } : message)));
+    messages.update((current) => current.map((message) => (message.id === id ? { ...message, citations: sanitizeCitations(citations) } : message)));
   }
 
   function setError(id: number, error: string): void {
@@ -651,7 +694,7 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
     return searchRecords(records, { query, limit: 5, ...scope });
   }
 
-  async function readAskStream(response: Response, assistantId: number, t: SvedocsTranslate): Promise<void> {
+  async function readAskStream(response: Response, assistantId: number, t: SvedocsTranslate, requestVersion: number): Promise<void> {
     const reader = response.body?.getReader();
     if (!reader) return;
     const decoder = new TextDecoder();
@@ -659,6 +702,10 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+      if (requestVersion !== conversationVersion) {
+        await reader.cancel();
+        return;
+      }
       buffer += decoder.decode(value, { stream: true });
       let boundary = findAskEventBoundary(buffer);
       while (boundary) {
@@ -669,6 +716,17 @@ export function createAskAiController(initial: SvedocsAskAiControllerOptions): S
     }
     buffer += decoder.decode();
     if (buffer.trim()) readAskEvent(buffer, assistantId, t);
+  }
+
+  function cancelAskRequest(): void {
+    conversationVersion += 1;
+    askAbort?.abort();
+    askAbort = undefined;
+    loading.set(false);
+  }
+
+  function sanitizeCitations(citations: SvedocsAskAiCitation[]): SvedocsAskAiCitation[] {
+    return citations.map((citation) => ({ ...citation, url: sanitizeNavigationUrl(citation.url) }));
   }
 
   function findAskEventBoundary(value: string): { index: number; length: number } | undefined {
@@ -1088,7 +1146,7 @@ function normalizeChunkCitations(chunks: Array<{ title?: string; url?: string; m
     const section = stringValue(metadata.section);
     return {
       title: stringValue(chunk.title) ?? stringValue(chunk.item?.title) ?? stringValue(metadata.title) ?? t('ask.sourceTitle', { index: index + 1 }),
-      url: stringValue(chunk.url) ?? stringValue(metadata.url) ?? stringValue(metadata.source_url) ?? '#',
+      url: sanitizeNavigationUrl(stringValue(chunk.url) ?? stringValue(metadata.url) ?? stringValue(metadata.source_url) ?? '#'),
       ...(section ? { section } : {})
     };
   });
@@ -1124,7 +1182,7 @@ function getActiveHeading(headings: HTMLElement[]): HTMLElement | undefined {
   }));
   const visible = snapshots.filter((heading) => heading.top >= viewportTop && heading.top <= viewportBottom);
   if (visible.length > 0) {
-    return visible.reduce((lowest, heading) => heading.top > lowest.top ? heading : lowest).element;
+    return visible.reduce((highest, heading) => heading.top < highest.top ? heading : highest).element;
   }
   return snapshots.filter((heading) => heading.top < viewportTop).at(-1)?.element ?? snapshots[0]?.element;
 }
