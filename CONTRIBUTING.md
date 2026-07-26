@@ -81,4 +81,4 @@ pnpm deploy:site:dry-run
 pnpm deploy:site
 ```
 
-Publishable packages use npm provenance via `publishConfig.provenance: true`. Dispatch the `Release npm packages` workflow with the matching stable or beta channel so npm trusted publishing remains the release path.
+Publishable packages use npm provenance via `publishConfig.provenance: true`. Dispatch the `Release npm packages` workflow with the matching stable or beta channel so npm trusted publishing remains the release path. The stable channel also publishes a `vX.Y.Z` GitHub Release with generated release notes and package archives; the beta channel does not create a GitHub Release.

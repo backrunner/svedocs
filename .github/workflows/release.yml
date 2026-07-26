@@ -13,7 +13,7 @@ on:
           - beta
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 concurrency:
@@ -22,10 +22,13 @@ concurrency:
 
 jobs:
   publish:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: npm
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
         with:
           version: 11.11.0
@@ -52,9 +55,12 @@ jobs:
               ;;
           esac
       - name: Validate package versions
+        id: release-version
         env:
           RELEASE_CHANNEL: ${{ inputs.channel }}
         run: |
+          set -euo pipefail
+
           node <<'NODE'
           const { readFileSync } = require('node:fs');
 
@@ -77,7 +83,13 @@ jobs:
           }
 
           const version = packages[0].version;
-          const prerelease = version.match(/^\d+\.\d+\.\d+-(.+)$/)?.[1];
+          const semver = version.match(/^\d+\.\d+\.\d+(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/);
+          if (!semver) {
+            console.error(`Release packages must use a valid semver version, got ${version}.`);
+            process.exit(1);
+          }
+
+          const prerelease = semver[1];
           const prereleaseParts = prerelease?.split(/[.-]/) ?? [];
           const channel = process.env.RELEASE_CHANNEL;
 
@@ -92,7 +104,12 @@ jobs:
 
           console.log(`Publishing ${packages.map((pkg) => pkg.name).join(', ')} at ${version} on ${channel}.`);
           NODE
+
+          version="$(node -p "require('./packages/svedocs/package.json').version")"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
       - run: pnpm release:check
+      - run: pnpm test:templates
       - run: mkdir -p artifacts
       - run: pnpm pack --out ../../artifacts/svedocs.tgz
         working-directory: packages/svedocs
@@ -123,3 +140,45 @@ jobs:
           publish_package "svedocs" "$(node -p "require('./packages/svedocs/package.json').version")" "./artifacts/svedocs.tgz"
           publish_package "svedocs-cli" "$(node -p "require('./packages/cli/package.json').version")" "./artifacts/svedocs-cli.tgz"
           publish_package "create-svedocs" "$(node -p "require('./packages/create-svedocs/package.json').version")" "./artifacts/create-svedocs.tgz"
+      - name: Publish GitHub Release
+        if: inputs.channel == 'stable'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release-version.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.release-version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          assets=(
+            ./artifacts/svedocs.tgz
+            ./artifacts/svedocs-cli.tgz
+            ./artifacts/create-svedocs.tgz
+          )
+
+          if git rev-parse --verify --quiet "refs/tags/$RELEASE_TAG" >/dev/null; then
+            tag_commit="$(git rev-list -n 1 "$RELEASE_TAG")"
+            if [[ "$tag_commit" != "$GITHUB_SHA" ]]; then
+              echo "Tag $RELEASE_TAG points to $tag_commit, not the release commit $GITHUB_SHA." >&2
+              exit 1
+            fi
+          fi
+
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" \
+              "${assets[@]}" \
+              --target "$GITHUB_SHA" \
+              --title "svedocs $RELEASE_VERSION" \
+              --generate-notes \
+              --latest
+            exit 0
+          fi
+
+          existing_assets="$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')"
+          for asset in "${assets[@]}"; do
+            asset_name="$(basename "$asset")"
+            if grep -Fxq "$asset_name" <<< "$existing_assets"; then
+              echo "Skipping $asset_name; it is already attached to $RELEASE_TAG."
+              continue
+            fi
+            gh release upload "$RELEASE_TAG" "$asset"
+          done

@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import spawn from 'cross-spawn';
 import { mkdir, readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -89,10 +89,12 @@ async function main(): Promise<void> {
       '--tag',
       npmTag,
       '--provenance=false',
-      ...(args.dryRun ? ['--dry-run'] : []),
-      ...(args.otp ? ['--otp', args.otp] : [])
+      ...(args.dryRun ? ['--dry-run'] : [])
     ];
-    await runCommand('npm', publishArgs, { cwd: repoRoot });
+    await runCommand('npm', publishArgs, {
+      cwd: repoRoot,
+      ...(args.otp ? { env: { npm_config_otp: args.otp } } : {})
+    });
   }
 }
 
@@ -201,7 +203,10 @@ async function addDistTag(name: string, version: string, tag: string, args: Publ
     console.log(`Dry run: npm ${commandArgs.join(' ')}`);
     return;
   }
-  await runCommand('npm', [...commandArgs, ...(args.otp ? ['--otp', args.otp] : [])], { cwd: repoRoot });
+  await runCommand('npm', commandArgs, {
+    cwd: repoRoot,
+    ...(args.otp ? { env: { npm_config_otp: args.otp } } : {})
+  });
 }
 
 function renderHelp(): string {
@@ -233,12 +238,13 @@ async function assertCleanGitWorktree(): Promise<void> {
   }
 }
 
-function runCommand(command: string, args: string[], options: { cwd?: string } = {}): Promise<void> {
+function runCommand(command: string, args: string[], options: { cwd?: string; env?: Record<string, string> } = {}): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd: options.cwd,
       stdio: 'inherit',
-      shell: process.platform === 'win32'
+      shell: false,
+      env: { ...process.env, ...options.env }
     });
     child.on('close', (code) => {
       if (code === 0) {
@@ -255,7 +261,7 @@ function runCommandCapture(command: string, args: string[], options: { cwd?: str
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd: options.cwd,
-      shell: process.platform === 'win32'
+      shell: false
     });
     let stdout = '';
     let stderr = '';
@@ -280,7 +286,7 @@ function runCommandCaptureOptional(command: string, args: string[], options: { c
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd: options.cwd,
-      shell: process.platform === 'win32'
+      shell: false
     });
     let stdout = '';
     let stderr = '';

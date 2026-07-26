@@ -214,7 +214,7 @@ pnpm deploy:site:dry-run
 pnpm deploy:site
 ```
 
-No GitHub workflow deploys the site. npm packages continue to publish through the manually dispatched `Release npm packages` workflow with trusted publishing and provenance.
+No GitHub workflow deploys the site. npm packages publish through the manually dispatched `Release npm packages` workflow with trusted publishing and provenance. Stable releases also create a `vX.Y.Z` Git tag and GitHub Release with generated release notes and package archives; beta releases remain npm-only.
 
 Generated templates have a heavier install/build smoke test:
 
