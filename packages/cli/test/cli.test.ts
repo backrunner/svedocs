@@ -179,7 +179,7 @@ describe('svedocs-cli Batch 0 shell', () => {
       expect(minimalPackage).toContain('"name": "minimal-app"');
       expect(minimalPackage).toContain('"packageManager": "pnpm@11.1.2"');
       expect(minimalPackage).toContain('"build:ssg": "svedocs ssg"');
-      expect(minimalPackage).toContain('"svedocs-cli": "0.1.0-beta.11"');
+      expect(minimalPackage).toContain('"svedocs-cli": "0.1.0"');
       expect(minimalSvelteConfig).toContain(
         "const remoteBindings = process.env.SVEDOCS_REMOTE_BINDINGS === 'true'"
       );
