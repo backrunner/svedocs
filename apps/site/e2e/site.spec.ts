@@ -83,6 +83,30 @@ test('keeps localized shell and recovery links on zh error routes', async ({ pag
   await expect(page.getByRole('link', { name: '文档' }).last()).toHaveAttribute('href', '/docs/zh');
 });
 
+test('searches beta docs and falls back Ask AI without remote bindings', async ({ page }) => {
+  await page.goto('/docs');
+
+  const searchDialog = page.getByRole('dialog', { name: 'Search documentation' });
+  await expect(async () => {
+    await page.getByRole('button', { name: 'Search documentation' }).click();
+    await expect(searchDialog).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 8_000 });
+  const search = page.getByRole('combobox', { name: 'Search query' });
+  await expect(search).toHaveAttribute('aria-expanded', 'true');
+  await search.fill('beta channel');
+  await page.getByRole('option', { name: /Create a new project/ }).click();
+  await expect(page).toHaveURL(/\/docs\/installation#create-a-new-project$/);
+
+  await page.getByRole('button', { name: 'Ask AI' }).click();
+  const askDialog = page.getByRole('dialog', { name: 'Ask AI' });
+  await askDialog.getByRole('textbox', { name: 'Ask anything about svedocs' }).fill('How can I use the beta channel?');
+  await askDialog.getByRole('button', { name: 'Send' }).click();
+
+  await expect(askDialog.getByText(/I found \d+ relevant sources? in this documentation/)).toBeVisible();
+  await expect(askDialog.getByRole('link', { name: 'Installation' })).toBeVisible();
+  await expect(askDialog.getByText(/Ask AI returned 500/)).toHaveCount(0);
+});
+
 async function expectResponseToContain(response: APIResponse, texts: string[]) {
   const body = await response.text();
   for (const text of texts) {

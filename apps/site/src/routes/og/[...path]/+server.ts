@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { createConfiguredOgImageFormat, createConfiguredOgImageRenderer, createConfiguredOgImageTemplate, createConfiguredPageOgImageEntries, createPageOgImagePath, createPageOgImageResponse, isOgImageEnabled } from 'svedocs/og';
-import config from 'virtual:svedocs/config';
+import config from 'virtual:svedocs/server-config';
 import pages from 'virtual:svedocs/pages';
 import type { RequestHandler } from './$types';
 

@@ -8,6 +8,8 @@ export const prerender = false;
 
 export const GET: RequestHandler = ({ platform, request }) => {
   return createConfiguredSearchResponse(config, records, request, {
-    env: getRuntimeEnv(platform?.env)
+    env: getRuntimeEnv(platform?.env, {
+      ignoreDevBindings: [config.cloudflare.aiSearch.binding, 'SVEDOCS_AI_SEARCH']
+    })
   });
 };

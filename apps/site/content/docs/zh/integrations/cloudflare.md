@@ -44,7 +44,7 @@ instance_name = "svedocs"
 
 静态和 SPA 模式的 Cloudflare Pages 输出目录是 `build`。可以在初始化或部署时传入 `--mode static` 或 `--mode spa`；默认仍然输出边缘 SSR 构建。
 
-本地适配器默认关闭 `platformProxy.remoteBindings`，因此边缘构建和预渲染不需要 Cloudflare 账号。`platformProxy.persist` 也默认关闭，避免反复重启开发服务器后遇到 Miniflare 状态锁。`cloudflare.aiSearch.remote` 默认为 `false`；只有本地开发确实需要访问 Cloudflare 资源时才开启。
+本地适配器默认关闭 `platformProxy.remoteBindings`，因此边缘构建和预渲染不需要 Cloudflare 账号。不受本地支持的 AI Search binding 会从运行时 provider 解析中移除并回退到本地行为。需要在本地访问 Cloudflare 资源时，设置 `SVEDOCS_REMOTE_BINDINGS=true`。`platformProxy.persist` 也默认关闭，避免反复重启开发服务器后遇到 Miniflare 状态锁。
 
 ## 运行时类型
 

@@ -44,7 +44,7 @@ For AI Search namespaces, configure `cloudflare.aiSearch.namespace`; svedocs wil
 
 Use `--mode static` or `--mode spa` with either setup or deploy when the Cloudflare Pages output should be `build` instead of the default edge SSR output.
 
-The local adapter disables `platformProxy.remoteBindings`, so edge builds and prerendering do not require a Cloudflare account. It also disables `platformProxy.persist` to avoid Miniflare state locks after repeated dev-server restarts. `cloudflare.aiSearch.remote` defaults to `false`; enable it only when local development needs to access Cloudflare resources.
+The local adapter disables `platformProxy.remoteBindings` by default, so edge builds and prerendering do not require a Cloudflare account. Unsupported local AI Search bindings are omitted from runtime provider resolution and fall back to local behavior. Set `SVEDOCS_REMOTE_BINDINGS=true` when local development should access Cloudflare resources. The adapter also disables `platformProxy.persist` to avoid Miniflare state locks after repeated dev-server restarts.
 
 ## Runtime types
 

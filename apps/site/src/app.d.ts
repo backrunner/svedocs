@@ -4,6 +4,12 @@ declare module 'virtual:svedocs/config' {
   export default config;
 }
 
+declare module 'virtual:svedocs/server-config' {
+  import type { SvedocsResolvedConfig } from 'svedocs/core';
+  const config: SvedocsResolvedConfig;
+  export default config;
+}
+
 declare module 'virtual:svedocs/pages' {
   import type { SvedocsPage } from 'svedocs/core';
   const pages: SvedocsPage[];

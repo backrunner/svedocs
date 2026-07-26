@@ -82,7 +82,7 @@ import {
   createPageOgImageResponse,
   isOgImageEnabled
 } from 'svedocs/og';
-import config from 'virtual:svedocs/config';
+import config from 'virtual:svedocs/server-config';
 import pages from 'virtual:svedocs/pages';
 
 export const prerender = isOgImageEnabled(config);
