@@ -140,10 +140,50 @@ jobs:
           publish_package "svedocs" "$(node -p "require('./packages/svedocs/package.json').version")" "./artifacts/svedocs.tgz"
           publish_package "svedocs-cli" "$(node -p "require('./packages/cli/package.json').version")" "./artifacts/svedocs-cli.tgz"
           publish_package "create-svedocs" "$(node -p "require('./packages/create-svedocs/package.json').version")" "./artifacts/create-svedocs.tgz"
+      - name: Generate GitHub Release notes
+        if: inputs.channel == 'stable'
+        id: release-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release-version.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          notes_file="$RUNNER_TEMP/release-notes.md"
+          gh api \
+            --method POST \
+            "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+            --raw-field "tag_name=$RELEASE_TAG" \
+            --raw-field "target_commitish=$GITHUB_SHA" \
+            --jq '.body' > "$notes_file"
+
+          if ! grep -Eq '^## ' "$notes_file"; then
+            previous_tag="$({
+              git tag --list 'v[0-9]*' --sort=-v:refname |
+                grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
+                grep -Fxv "$RELEASE_TAG" |
+                head -n 1
+            } || true)"
+            range="$GITHUB_SHA"
+            if [[ -n "$previous_tag" ]]; then
+              range="$previous_tag..$GITHUB_SHA"
+            fi
+
+            {
+              echo
+              echo '## Changes'
+              echo
+              git log --first-parent --no-merges --pretty=format:'- %s (`%h`)' "$range"
+              echo
+            } >> "$notes_file"
+          fi
+
+          echo "path=$notes_file" >> "$GITHUB_OUTPUT"
       - name: Publish GitHub Release
         if: inputs.channel == 'stable'
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_NOTES_FILE: ${{ steps.release-notes.outputs.path }}
           RELEASE_TAG: ${{ steps.release-version.outputs.tag }}
           RELEASE_VERSION: ${{ steps.release-version.outputs.version }}
         run: |
@@ -168,7 +208,7 @@ jobs:
               "${assets[@]}" \
               --target "$GITHUB_SHA" \
               --title "svedocs $RELEASE_VERSION" \
-              --generate-notes \
+              --notes-file "$RELEASE_NOTES_FILE" \
               --latest
             exit 0
           fi
