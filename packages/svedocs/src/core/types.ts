@@ -283,6 +283,7 @@ export interface SvedocsPage {
   icon?: string;
   html: string;
   plainText: string;
+  markdown?: string;
   headings: SvedocsHeading[];
   links: SvedocsLinkReference[];
   codeBlocks: SvedocsCodeBlock[];
@@ -423,6 +424,20 @@ export interface SvedocsResolvedConfig {
     maxResults: number;
     systemPrompt?: string;
     welcomeMessage?: string;
+  };
+  agent: {
+    enabled: boolean;
+    markdown: boolean;
+    llms: boolean;
+    negotiation: {
+      enabled: boolean;
+      userAgents: string[];
+      accept: boolean;
+      cache: {
+        enabled: boolean;
+        maxAge: number;
+      };
+    };
   };
   seo: {
     sitemap: boolean;

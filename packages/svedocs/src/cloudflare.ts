@@ -53,8 +53,12 @@ export function svedocsSsr(mode = readSvedocsBuildMode()): boolean {
   return mode === 'edge' || mode === 'static' || mode === 'spa';
 }
 
-export function svedocsPagePrerender(mode = readSvedocsBuildMode()): SvedocsPagePrerenderOption {
+export function svedocsPagePrerender(mode = readSvedocsBuildMode(), config?: SvedocsResolvedConfig): SvedocsPagePrerenderOption {
   if (mode === 'static' || mode === 'spa') return true;
+  // Agent UA/Accept negotiation runs in the server hook, which prerendered
+  // pages never reach (they are served as static assets before the Worker).
+  // Keep pages server-rendered when negotiation is enabled.
+  if (config?.agent?.enabled && config.agent.negotiation?.enabled) return false;
   return 'auto';
 }
 

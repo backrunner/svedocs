@@ -133,6 +133,20 @@ export interface SvedocsConfig {
     suggestions?: string[];
     maxResults?: number;
   };
+  agent?: false | {
+    enabled?: boolean;
+    markdown?: boolean;
+    llms?: boolean;
+    negotiation?: boolean | {
+      enabled?: boolean;
+      userAgents?: string[];
+      accept?: boolean;
+      cache?: boolean | {
+        enabled?: boolean;
+        maxAge?: number;
+      };
+    };
+  };
   seo?: {
     sitemap?: boolean;
     rss?: boolean | SvedocsRssOptions;
@@ -346,6 +360,35 @@ export const svedocsConfigSchema = z.object({
         placeholder: z.string().optional(),
         suggestions: z.array(z.string()).optional(),
         maxResults: z.number().int().positive().optional()
+      })
+    ])
+    .optional(),
+  agent: z
+    .union([
+      z.literal(false),
+      z.object({
+        enabled: z.boolean().optional(),
+        markdown: z.boolean().optional(),
+        llms: z.boolean().optional(),
+        negotiation: z
+          .union([
+            z.boolean(),
+            z.object({
+              enabled: z.boolean().optional(),
+              userAgents: z.array(z.string()).optional(),
+              accept: z.boolean().optional(),
+              cache: z
+                .union([
+                  z.boolean(),
+                  z.object({
+                    enabled: z.boolean().optional(),
+                    maxAge: z.number().int().positive().optional()
+                  })
+                ])
+                .optional()
+            })
+          ])
+          .optional()
       })
     ])
     .optional(),

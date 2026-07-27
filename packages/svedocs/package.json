@@ -79,6 +79,10 @@
       "types": "./dist/og.d.ts",
       "import": "./dist/og.js"
     },
+    "./agent": {
+      "types": "./dist/agent.d.ts",
+      "import": "./dist/agent.js"
+    },
     "./svelte": {
       "types": "./dist/svelte.d.ts",
       "import": "./dist/svelte.js"

@@ -60,6 +60,7 @@ const virtualModules = new Set([
   'virtual:svedocs/tree',
   'virtual:svedocs/search',
   'virtual:svedocs/search-loader',
+  'virtual:svedocs/markdown',
   'virtual:svedocs/components',
   'virtual:svedocs/layouts',
   'virtual:svedocs/theme-components',
@@ -152,16 +153,17 @@ export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
       const key = id.replace('\0virtual:svedocs/', '');
       if (key === 'config') return `export default ${JSON.stringify(data.config)};`;
       if (key === 'server-config') return createServerConfigModule(data.config, resolvedConfigFile);
-      if (key === 'pages') return `export default ${JSON.stringify(data.pages)};`;
+      if (key === 'pages') return `export default ${JSON.stringify(stripPageMarkdown(data.pages))};`;
       if (key === 'page-index') return `export default ${JSON.stringify(createPageIndex(data.pages))};`;
       if (key === 'page-loaders') return createPageLoadersModule(data.pages);
       if (key === 'tree') return `export default ${JSON.stringify(data.tree)};`;
       if (key === 'search') return `export default ${JSON.stringify(data.search)};`;
       if (key === 'search-loader') return `export default () => import('virtual:svedocs/search').then((module) => module.default);`;
+      if (key === 'markdown') return `export default ${JSON.stringify(createMarkdownMap(data.pages))};`;
       if (key === 'components') return createComponentsModule(data.pages);
       if (key === 'layouts') return createNamedImportModule(options.layouts ?? {});
       if (key === 'theme-components') return createNamedImportModule(themeComponentImports);
-      if (key === 'manifest') return `export default ${JSON.stringify(data)};`;
+      if (key === 'manifest') return `export default ${JSON.stringify({ ...data, pages: stripPageMarkdown(data.pages) })};`;
       return undefined;
     },
     async handleHotUpdate(ctx) {
@@ -280,7 +282,7 @@ function createComponentsModule(pages: SvedocsPage[]): string {
 }
 
 function createPageIndex(pages: SvedocsPage[]): SvedocsPage[] {
-  return pages.map((page) => ({
+  return stripPageMarkdown(pages).map((page) => ({
     ...page,
     html: '',
     plainText: '',
@@ -289,6 +291,18 @@ function createPageIndex(pages: SvedocsPage[]): SvedocsPage[] {
     codeBlocks: [],
     search: []
   }));
+}
+
+function stripPageMarkdown(pages: SvedocsPage[]): SvedocsPage[] {
+  return pages.map(({ markdown: _markdown, ...page }) => page);
+}
+
+function createMarkdownMap(pages: SvedocsPage[]): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const page of pages) {
+    if (typeof page.markdown === 'string' && page.markdown.trim()) map[page.id] = page.markdown;
+  }
+  return map;
 }
 
 function createPageLoadersModule(pages: SvedocsPage[]): string {
@@ -301,7 +315,8 @@ function createPageLoadersModule(pages: SvedocsPage[]): string {
 function loadPageDataModule(id: string, pages: SvedocsPage[]): string {
   const pageId = decodeURIComponent(id.slice(`\0${pageVirtualPrefix}`.length).replace(/\.js$/, ''));
   const page = pages.find((item) => item.id === pageId);
-  return `export default ${JSON.stringify(page)};`;
+  const [data] = page ? stripPageMarkdown([page]) : [undefined];
+  return `export default ${JSON.stringify(data)};`;
 }
 
 function createNamedImportModule(entries: Record<string, string | undefined>): string {

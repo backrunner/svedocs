@@ -149,6 +149,7 @@ async function loadContentFile(
     ...(icon ? { icon } : {}),
     html: compiled.html,
     plainText: compiled.plainText,
+    markdown: renderMarkdown,
     headings: compiled.headings,
     links: extractMarkdownLinks(markdown),
     codeBlocks: compiled.codeBlocks,

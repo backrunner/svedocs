@@ -424,6 +424,10 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(svedocsPagePrerender('edge')).toBe('auto');
     expect(svedocsPagePrerender('static')).toBe(true);
     expect(svedocsPagePrerender('spa')).toBe(true);
+    expect(svedocsPagePrerender('edge', resolveSvedocsConfig())).toBe(false);
+    expect(svedocsPagePrerender('edge', resolveSvedocsConfig({ agent: false }))).toBe('auto');
+    expect(svedocsPagePrerender('edge', resolveSvedocsConfig({ agent: { negotiation: false } }))).toBe('auto');
+    expect(svedocsPagePrerender('static', resolveSvedocsConfig())).toBe(true);
     expect(svedocsTrailingSlash('edge')).toBe('never');
     expect(svedocsTrailingSlash('static')).toBe('always');
     expect(svedocsTrailingSlash('spa')).toBe('always');

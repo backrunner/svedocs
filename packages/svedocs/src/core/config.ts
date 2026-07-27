@@ -4,6 +4,24 @@ import type { SvedocsResolvedConfig } from './types.js';
 
 export { defaultSvedocsMessages } from './i18n.js';
 
+export const defaultAgentUserAgents = [
+  'ClaudeBot',
+  'Claude-User',
+  'Claude-SearchBot',
+  'anthropic-ai',
+  'GPTBot',
+  'ChatGPT-User',
+  'OAI-SearchBot',
+  'PerplexityBot',
+  'Perplexity-User',
+  'CCBot',
+  'Bytespider',
+  'Meta-ExternalAgent',
+  'Amazonbot',
+  'cohere-ai',
+  'MistralAI-User'
+];
+
 export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolvedConfig {
   const contentRoot = config.content?.root ?? 'content';
   const docsRoot = config.content?.docs ?? `${contentRoot}/docs`;
@@ -33,6 +51,7 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
     ...(config.ai?.welcomeMessage ? { welcomeMessage: config.ai.welcomeMessage } : {})
   };
   const rss = resolveRssConfig(config);
+  const agent = resolveAgentConfig(config);
 
   return {
     site: {
@@ -107,6 +126,7 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
     },
     search,
     ai,
+    agent,
     seo: {
       sitemap: config.seo?.sitemap ?? true,
       rss,
@@ -145,6 +165,43 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
       translations: config.checks?.translations ?? false,
     },
     i18n: resolveSvedocsI18nConfig(config)
+  };
+}
+
+function resolveAgentConfig(config: SvedocsConfig): SvedocsResolvedConfig['agent'] {
+  const input = config.agent;
+  if (input === false) {
+    return {
+      enabled: false,
+      markdown: false,
+      llms: false,
+      negotiation: {
+        enabled: false,
+        userAgents: [...defaultAgentUserAgents],
+        accept: true,
+        cache: {
+          enabled: true,
+          maxAge: 3600
+        }
+      }
+    };
+  }
+  const enabled = input?.enabled ?? true;
+  const negotiation = input?.negotiation;
+  const cache = typeof negotiation === 'object' ? negotiation?.cache : undefined;
+  return {
+    enabled,
+    markdown: input?.markdown ?? true,
+    llms: input?.llms ?? true,
+    negotiation: {
+      enabled: enabled && (typeof negotiation === 'boolean' ? negotiation : negotiation?.enabled ?? true),
+      userAgents: (typeof negotiation === 'object' && negotiation?.userAgents ? [...negotiation.userAgents] : undefined) ?? [...defaultAgentUserAgents],
+      accept: (typeof negotiation === 'object' ? negotiation?.accept : undefined) ?? true,
+      cache: {
+        enabled: typeof cache === 'boolean' ? cache : cache?.enabled ?? true,
+        maxAge: (typeof cache === 'object' ? cache?.maxAge : undefined) ?? 3600
+      }
+    }
   };
 }
 

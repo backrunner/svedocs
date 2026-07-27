@@ -46,6 +46,11 @@ declare module 'virtual:svedocs/search-loader' {
   export default loadSearch;
 }
 
+declare module 'virtual:svedocs/markdown' {
+  const markdown: Record<string, string>;
+  export default markdown;
+}
+
 declare module 'virtual:svedocs/manifest' {
   import type { SvedocsContentManifest } from 'svedocs/core';
   const manifest: SvedocsContentManifest;
