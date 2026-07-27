@@ -3,6 +3,7 @@
 - [Standard project files](#standard-project-files)
 - [Create or install](#create-or-install)
 - [Content model](#content-model)
+- [Agent interface](#agent-interface)
 - [CLI](#cli)
 - [Verification](#verification)
 
@@ -25,7 +26,7 @@ Generated projects keep these responsibilities separate:
 | `content/docs` | Documentation tree rooted at `/docs` |
 | `content/pages` | Standalone pages rooted at `/` |
 
-`docs` and `cloudflare` templates also include search, Ask AI, sitemap, robots, optional RSS, and OG routes. Copy the closest template instead of inventing route plumbing.
+`docs` and `cloudflare` templates also include search, Ask AI, sitemap, robots, optional RSS, OG routes, and the agent interface (per-page markdown twins, `/llms.txt`, `/llms-full.txt`). Copy the closest template instead of inventing route plumbing.
 
 Existing explicit SvelteKit routes can coexist with the docs catch-all. If the application already owns `[...path]`, merge resolution behavior or mount docs below a non-conflicting route; do not add a second catch-all. Preserve an existing `/` unless svedocs should own the product homepage.
 
@@ -108,11 +109,22 @@ Consume those virtual modules through the generated route pattern. Do not recrea
 
 For static local search, `virtual:svedocs/search-loader` is sufficient and no `/api/search` route is required. Hosted providers use the generated edge endpoint; static and SPA builds must retain their local fallback. The same distinction applies to Ask AI runtime routes.
 
+## Agent interface
+
+`svedocs/agent` exposes the machine-readable surface:
+
+- Markdown twins: each page serves raw markdown at `<route>/index.md` via `createPageMarkdownResponse`; raw markdown also ships to apps as `virtual:svedocs/markdown`.
+- `/llms.txt` and `/llms-full.txt` via `createLlmsTxtResponse` and `createLlmsFullTxtResponse`.
+- `createSvedocsAgentHandle` in `hooks.server.ts` negotiates markdown for agent user-agents and `Accept` headers. Negotiation is edge-only and uses content-versioned cache keys; negotiated responses stay `private`.
+
+When agent negotiation is enabled, `svedocsPagePrerender()` returns `false` because prerendered pages bypass the server hook. Static and SPA builds keep the markdown-twin and llms.txt routes but skip negotiation.
+
 ## CLI
 
 | Command | Purpose |
 | --- | --- |
 | `svedocs dev` | Run development |
+| `svedocs preview` | Preview a production build |
 | `svedocs build --mode edge` | Build edge SSR |
 | `svedocs ssg` | Build static output |
 | `svedocs build --mode spa` | Build known pages plus SPA fallback |
