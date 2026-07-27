@@ -179,7 +179,7 @@ describe('svedocs-cli Batch 0 shell', () => {
       expect(minimalPackage).toContain('"name": "minimal-app"');
       expect(minimalPackage).toContain('"packageManager": "pnpm@11.1.2"');
       expect(minimalPackage).toContain('"build:ssg": "svedocs ssg"');
-      expect(minimalPackage).toContain('"svedocs-cli": "0.1.0"');
+      expect(minimalPackage).toContain(`"svedocs-cli": "${await readCliPackageVersion()}"`);
       expect(minimalSvelteConfig).toContain(
         "const remoteBindings = process.env.SVEDOCS_REMOTE_BINDINGS === 'true'"
       );
@@ -920,6 +920,11 @@ async function packWorkspacePackage(filter: string, packDir: string): Promise<st
 
 function repoRoot(): string {
   return new URL('../../..', import.meta.url).pathname;
+}
+
+async function readCliPackageVersion(): Promise<string> {
+  const manifest = JSON.parse(await readFile(path.join(repoRoot(), 'packages/cli/package.json'), 'utf8')) as { version: string };
+  return manifest.version;
 }
 
 async function patchCliTarballForLocalE2e(cliTarball: string, svedocsTarball: string, packDir: string): Promise<string> {
