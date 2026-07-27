@@ -1,6 +1,6 @@
 # svedocs
 
-## 0.1.1-beta.0
+## 0.1.1-beta.1
 
 ### Patch Changes
 
