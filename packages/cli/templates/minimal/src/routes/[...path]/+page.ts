@@ -8,7 +8,7 @@ import type { SvedocsPage } from 'svedocs/core';
 import { createSvedocsRouteEntries, resolveSvedocsPageRoute } from 'svedocs/routes';
 import type { PageLoad } from './$types';
 
-export const prerender = svedocsPagePrerender();
+export const prerender = svedocsPagePrerender(undefined, config);
 
 export function entries() {
   return createSvedocsRouteEntries(pages, config)
