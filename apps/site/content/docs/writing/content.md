@@ -28,6 +28,8 @@ Examples:
 
 Use `index.md` for a section landing page. Use nested directories when the sidebar should have groups.
 
+Set the `slug` frontmatter field to replace the final segment of the file-based route. For example, `content/docs/guides/deploy.md` with `slug: ship-to-production` serves at `/docs/guides/ship-to-production`. A slug must be a single path segment: values with slashes or whitespace and the reserved values `index`, `.`, and `..` are ignored with an `invalid-slug` check warning. Section roots such as `content/docs/index.md` keep their file-based route. Translations pair by file path, so each locale may use its own slug, and internal links written against file-based paths still resolve to the slugged route.
+
 Multilingual projects place the locale `path` below each content root. See [Internationalization](/docs/configuration/i18n) for the complete file-to-route mapping.
 
 ## Frontmatter
@@ -48,6 +50,7 @@ Common fields:
 | --- | --- | --- |
 | `title` | string | Page title, search title, OG title, and default sidebar title. |
 | `navTitle` | string | Shorter sidebar label without changing the document title. |
+| `slug` | string | Replace the final route segment; must be a single path segment. |
 | `description` | string | SEO description, search excerpt fallback, and page summary. |
 | `order` | number | Sort weight in navigation and previous/next links. |
 | `hidden` | boolean | Remove from generated navigation and public lists. |

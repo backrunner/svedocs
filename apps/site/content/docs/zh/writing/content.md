@@ -28,6 +28,8 @@ content/pages -> /
 
 用 `index.md` 表示一个分组首页。需要侧栏分组时，用嵌套目录组织。
 
+在 frontmatter 中设置 `slug` 可以替换文件路由的最后一段。例如 `content/docs/guides/deploy.md` 设置 `slug: ship-to-production` 后，页面路由为 `/docs/guides/ship-to-production`。slug 必须是单个路径段：包含斜杠或空白的值，以及保留值 `index`、`.`、`..` 会被忽略并产生 `invalid-slug` 检查警告。`content/docs/index.md` 这类分组首页保持按文件推导的路由。译文之间按文件路径配对，因此每种语言可以使用各自的 slug；按文件路径写的内部链接也仍会解析到 slug 后的路由。
+
 多语言项目需要把语言的 `path` 放在每个内容根目录的下一层。完整的文件到路由映射见[多语言](/docs/zh/configuration/i18n)。
 
 ## Frontmatter
@@ -48,6 +50,7 @@ order: 2
 | --- | --- | --- |
 | `title` | `string` | 页面标题、搜索标题、OG 标题和默认侧栏标题。 |
 | `navTitle` | `string` | 更短的侧栏标题，不改变页面标题。 |
+| `slug` | `string` | 替换路由的最后一段；必须是单个路径段。 |
 | `description` | `string` | SEO 描述、搜索摘要的默认内容和页面简介。 |
 | `order` | `number` | 导航和上一篇/下一篇的排序权重。 |
 | `hidden` | `boolean` | 从生成的导航和公开列表中移除。 |
