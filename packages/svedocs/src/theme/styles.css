@@ -1713,9 +1713,7 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
   top: var(--toc-indicator-top, 0);
   width: 2px;
   height: var(--toc-indicator-height, 0);
-  border-radius: 999px;
   background: color-mix(in srgb, var(--sd-accent) 88%, var(--sd-ink));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--sd-accent) 18%, transparent);
   opacity: 0;
   transition: top .22s cubic-bezier(.4, 0, .2, 1), height .22s cubic-bezier(.4, 0, .2, 1), opacity .16s ease;
   pointer-events: none;
@@ -1969,9 +1967,7 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
   width: 2px;
   height: 1.2rem;
   margin-top: -.6rem;
-  border-radius: 999px;
   background: color-mix(in srgb, var(--sd-accent) 88%, var(--sd-ink));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--sd-accent) 18%, transparent);
 }
 
 .sd-sidebar-summary.sd-active {
