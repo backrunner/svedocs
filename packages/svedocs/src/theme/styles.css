@@ -1701,7 +1701,7 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
       color-mix(in srgb, var(--sd-line) 55%, transparent),
       color-mix(in srgb, var(--sd-line) 55%, transparent)
     );
-  background-position: 0 0;
+  background-position: .5px 0;
   background-repeat: no-repeat;
   background-size: 1px 100%;
 }
@@ -1964,12 +1964,14 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
 .sd-sidebar-list:not([data-depth="0"]) > .sd-sidebar-item > .sd-sidebar-link.sd-active::before {
   content: "";
   position: absolute;
-  left: -.85rem;
+  left: calc(-.85rem - 1.5px);
   top: 50%;
   width: 2px;
   height: 1.2rem;
   margin-top: -.6rem;
-  background: var(--sd-accent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sd-accent) 88%, var(--sd-ink));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--sd-accent) 18%, transparent);
 }
 
 .sd-sidebar-summary.sd-active {
