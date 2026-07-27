@@ -1,0 +1,13 @@
+{
+  "mode": "pre",
+  "tag": "beta",
+  "initialVersions": {
+    "@svedocs/site": "0.0.0",
+    "svedocs-cli": "0.1.0",
+    "create-svedocs": "0.1.0",
+    "svedocs": "0.1.0"
+  },
+  "changesets": [
+    "agent-interface"
+  ]
+}
