@@ -1,5 +1,12 @@
 # svedocs-cli
 
+## 0.1.1-beta.2
+
+### Patch Changes
+
+- Updated dependencies [9bac46e]
+  - svedocs@0.1.1-beta.2
+
 ## 0.1.1-beta.1
 
 ### Patch Changes

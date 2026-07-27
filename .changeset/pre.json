@@ -8,6 +8,7 @@
     "svedocs": "0.1.0"
   },
   "changesets": [
-    "agent-interface"
+    "agent-interface",
+    "slug-frontmatter"
   ]
 }
