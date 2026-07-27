@@ -96,7 +96,7 @@ order: 2
 ---
 ```
 
-Useful frontmatter includes `navTitle`, `hidden`, `collapsed`, `section`, `canonical`, `image`, `keywords`, `author`, publication/update dates, and `layout`. Use `index.md` for section roots. Keep internal links route-based and give code blocks language and file metadata.
+Useful frontmatter includes `navTitle`, `slug`, `hidden`, `collapsed`, `section`, `canonical`, `image`, `keywords`, `author`, publication/update dates, and `layout`. Use `slug` to replace the final route segment with a single path segment (reserved values `index`, `.`, `..` and values with slashes or whitespace are rejected); translations pair by file path, so each locale may use its own slug. Use `index.md` for section roots. Keep internal links route-based and give code blocks language and file metadata.
 
 The Vite plugin generates:
 
