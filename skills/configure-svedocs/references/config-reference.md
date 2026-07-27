@@ -29,6 +29,7 @@ Do not write resolved defaults back into project config unless the project needs
 | `markdown` | Compile-time `remarkPlugins`, `rehypePlugins`, Shiki transformers |
 | `search` | `false` or enabled/provider/scope |
 | `ai` | `false` or enabled/provider/scope/copy/suggestions/result limit |
+| `agent` | `false` or enabled/`markdown` twins/`llms`/SSR `negotiation` (agent user agents, `Accept: text/markdown`, Cloudflare Cache API via `cache`) |
 | `seo` | Sitemap, RSS, robots, default author, serializable head additions, OG images |
 | `source` | Edit-link base URL |
 | `checks` | Asset, external-link, and translation checks |
@@ -42,6 +43,7 @@ Do not write resolved defaults back into project config unless the project needs
 - Search defaults to enabled local search with `scope: 'current'`.
 - Ask AI defaults to disabled unless a provider is configured; its default provider is `mock`.
 - Sitemap and robots default to enabled. RSS defaults to disabled.
+- The agent interface (markdown twins, `/llms.txt`, `/llms-full.txt`, edge-only UA/Accept negotiation) defaults to enabled; negotiation only takes effect in `edge` mode.
 - OG images default to SVG output in `static/og`.
 - Asset checks default to enabled; external-link and translation checks default to disabled.
 - Theme mode defaults to `system`. The bundled home visual defaults to `pixel`.

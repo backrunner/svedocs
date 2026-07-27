@@ -19,6 +19,7 @@ Keep public entry files small and stable:
 - `src/config.ts` owns user config schema and config file loading.
 - `src/vite.ts` owns Vite virtual modules and content refresh.
 - `src/search.ts`, `src/ai.ts`, `src/cloudflare.ts`, and `src/og.ts` own framework integrations.
+- `src/agent.ts` owns the agent interface: markdown twins, llms.txt/llms-full.txt, and SSR agent negotiation.
 - `src/theme/` owns Svelte components and Tailwind CSS v4 theme styles.
 
 Keep `packages/svedocs/src/config.ts` as the single public configuration file. Do not split config types, defaults, or schema into separate public files unless this direction changes; small internal helper functions inside the file are fine.
@@ -47,11 +48,12 @@ Current implementation state:
 - `apps/site` is the official site/live demo using the workspace `svedocs` package, with docs, examples, localized/versioned content, SEO/OG routes, search, Ask AI, and the pixel-style home page.
 - Generated templates include minimal, docs, and Cloudflare variants. Docs and Cloudflare templates use configured search/Ask AI runtime routes with local fallback.
 - Search currently supports local MiniSearch, Algolia, Typesense, and Cloudflare AI Search. Ask AI currently supports mock, Cloudflare AI Search, Workers AI, and OpenAI-compatible providers.
+- The agent interface (`svedocs/agent`) ships per-page markdown twins (`<route>/index.md`), `/llms.txt`, `/llms-full.txt`, and edge-only agent user-agent/Accept negotiation via `createSvedocsAgentHandle` (with Cloudflare Cache API storage using content-versioned keys; outgoing negotiated responses stay `private` to avoid edge-cache poisoning). Page raw markdown is retained on `SvedocsPage.markdown` and exposed to apps as `virtual:svedocs/markdown`. In edge mode `svedocsPagePrerender()` returns `false` when agent negotiation is enabled, because prerendered pages bypass the server hook.
 - Real Cloudflare deployment verification is intentionally not part of the default validation loop unless explicitly requested.
 
 ## Implementation Rules
 
-- Preserve public imports: `svedocs/core`, `svedocs/config`, `svedocs/vite`, `svedocs/theme`, `svedocs/cloudflare`, `svedocs/search`, `svedocs/ai`, and `svedocs/og`.
+- Preserve public imports: `svedocs/core`, `svedocs/config`, `svedocs/vite`, `svedocs/theme`, `svedocs/cloudflare`, `svedocs/search`, `svedocs/ai`, `svedocs/og`, and `svedocs/agent`.
 - Keep framework behavior SvelteKit-native. Do not introduce a React MDX runtime.
 - Use Tailwind CSS v4 and framework CSS variables for theme styling.
 - Cloudflare edge SSR is the default path. Static builds are first-class. SPA builds are supported but should warn or be documented as discouraged.

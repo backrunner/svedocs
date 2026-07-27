@@ -67,6 +67,12 @@ export default defineConfig({
     systemPrompt: 'You are the svedocs documentation assistant. Answer questions strictly from the provided documentation sources, cite the relevant pages, and clearly say when something is missing.',
     maxResults: 5
   },
+  agent: {
+    enabled: true,
+    negotiation: {
+      enabled: true
+    }
+  },
   i18n: {
     defaultLocale: 'en',
     locales: [

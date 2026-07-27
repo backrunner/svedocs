@@ -5,7 +5,7 @@ import { svedocsPagePrerender } from 'svedocs/cloudflare';
 import { createSvedocsRouteEntries } from 'svedocs/routes';
 import type { PageLoad } from './$types';
 
-export const prerender = svedocsPagePrerender();
+export const prerender = svedocsPagePrerender(undefined, config);
 
 export function entries() {
   return createSvedocsRouteEntries(pages, config)
