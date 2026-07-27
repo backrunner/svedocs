@@ -17,6 +17,7 @@ import {
   formatRoutePathForBuildMode,
   normalizePath,
   numberFrontmatter,
+  slugFrontmatter,
   stringArrayFrontmatter,
   stringFrontmatter,
   stripInlineMarkdown,
@@ -39,13 +40,14 @@ export async function loadSvedocsContent(options: {
     ignore: config.content.exclude,
     onlyFiles: true
   });
-  const entries = assignUniquePageIds(files
+  const entries = assignUniquePageIds(await Promise.all(files
     .filter((file) => isContentFile(file))
     .sort()
-    .map((file) => {
+    .map(async (file) => {
       const kind = inferKind(file, config);
-      return { file, kind, route: createRouteInfo(file, kind, config) };
-    }));
+      const raw = await readFile(path.join(projectRoot, file), 'utf8');
+      return { file, kind, raw, route: createRouteInfo(file, kind, config, slugFrontmatter(matter(raw).data.slug)) };
+    })));
   const routeTargets: SvedocsRouteTarget[] = entries.map(({ file, kind, route }) => ({
     kind,
     sourcePath: file,
@@ -76,14 +78,13 @@ function isContentFile(file: string): boolean {
 
 async function loadContentFile(
   projectRoot: string,
-  entry: { file: string; id: string; kind: 'doc' | 'page'; route: SvedocsRouteInfo },
+  entry: { file: string; id: string; kind: 'doc' | 'page'; raw: string; route: SvedocsRouteInfo },
   routeTargets: SvedocsRouteTarget[],
   config: SvedocsResolvedConfig,
   markdownOptions: CompileMarkdownOptions
 ): Promise<SvedocsPage> {
-  const { file, id, kind, route } = entry;
+  const { file, id, kind, raw, route } = entry;
   const sourcePath = path.join(projectRoot, file);
-  const raw = await readFile(sourcePath, 'utf8');
   const fileStats = await stat(sourcePath);
   const parsed = matter(raw);
   const markdown = parsed.content.trim();
@@ -300,7 +301,7 @@ interface SvedocsRouteInfo {
   locale?: string;
 }
 
-function createRouteInfo(file: string, kind: 'doc' | 'page', config: SvedocsResolvedConfig): SvedocsRouteInfo {
+function createRouteInfo(file: string, kind: 'doc' | 'page', config: SvedocsResolvedConfig, slug?: string): SvedocsRouteInfo {
   const normalized = normalizePath(file);
   const base = normalizePath(kind === 'doc' ? config.content.docs : config.content.pages);
   const relative = normalized.startsWith(`${base}/`) ? normalized.slice(base.length + 1) : normalized;
@@ -310,6 +311,7 @@ function createRouteInfo(file: string, kind: 'doc' | 'page', config: SvedocsReso
   const routeParts = kind === 'doc' ? ['docs'] : [];
   const locale = consumeLocale(parts, config);
   const scopeParts = [...parts];
+  if (slug && parts.length > 0) parts[parts.length - 1] = slug;
 
   if (locale && shouldPrefixLocale(locale, config)) {
     routeParts.push(findLocalePath(locale, config) ?? locale);

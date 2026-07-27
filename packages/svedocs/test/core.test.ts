@@ -1280,6 +1280,148 @@ describe('svedocs Batch 0 skeleton', () => {
     }
   });
 
+  it('honors the slug frontmatter as the final route segment', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-slug-'));
+    try {
+      await mkdir(path.join(tmp, 'content/docs/guides'), { recursive: true });
+      await mkdir(path.join(tmp, 'content/pages'), { recursive: true });
+      await writeFile(path.join(tmp, 'content/docs/guides/deploy.md'), [
+        '---',
+        'title: Deploy',
+        'slug: ship-to-production',
+        '---',
+        '',
+        'Deploy the app.'
+      ].join('\n'), 'utf8');
+      await writeFile(path.join(tmp, 'content/pages/changelog.md'), [
+        '---',
+        'title: Changelog',
+        'slug: releases',
+        '---',
+        '',
+        'Release notes.'
+      ].join('\n'), 'utf8');
+      await writeFile(path.join(tmp, 'content/pages/status.md'), [
+        '---',
+        'title: Status',
+        'slug: 404',
+        '---',
+        '',
+        'Status page.'
+      ].join('\n'), 'utf8');
+      const manifest = await loadSvedocsContent({
+        projectRoot: tmp,
+        config: { site: { url: 'https://example.test' } }
+      });
+      const deploy = manifest.pages.find((page) => page.title === 'Deploy');
+      const changelog = manifest.pages.find((page) => page.title === 'Changelog');
+
+      expect(deploy?.routePath).toBe('/docs/guides/ship-to-production');
+      expect(deploy?.slug).toEqual(['docs', 'guides', 'ship-to-production']);
+      expect(deploy?.scopePath).toBe('/docs/guides/deploy');
+      expect(deploy?.seo.canonical).toBe('https://example.test/docs/guides/ship-to-production');
+      expect(changelog?.routePath).toBe('/releases');
+      // Numeric YAML scalars are coerced to strings.
+      expect(manifest.pages.find((page) => page.title === 'Status')?.routePath).toBe('/404');
+      expect(manifest.issues.filter((issue) => issue.code === 'invalid-slug')).toHaveLength(0);
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects invalid slug frontmatter and keeps the file-based route', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-bad-slug-'));
+    try {
+      await mkdir(path.join(tmp, 'content/docs'), { recursive: true });
+      await writeFile(path.join(tmp, 'content/docs/deploy.md'), [
+        '---',
+        'title: Deploy',
+        'slug: nested/deploy',
+        '---',
+        '',
+        'Deploy the app.'
+      ].join('\n'), 'utf8');
+      await writeFile(path.join(tmp, 'content/docs/reserved.md'), [
+        '---',
+        'title: Reserved',
+        'slug: index',
+        '---',
+        '',
+        'Reserved slug.'
+      ].join('\n'), 'utf8');
+      const manifest = await loadSvedocsContent({
+        projectRoot: tmp,
+        config: { site: { url: 'https://example.test' } }
+      });
+      const deploy = manifest.pages.find((page) => page.title === 'Deploy');
+      const reserved = manifest.pages.find((page) => page.title === 'Reserved');
+
+      expect(deploy?.routePath).toBe('/docs/deploy');
+      expect(reserved?.routePath).toBe('/docs/reserved');
+      expect(manifest.issues.some((issue) => issue.code === 'invalid-slug' && issue.sourcePath?.endsWith('deploy.md'))).toBe(true);
+      expect(manifest.issues.some((issue) => issue.code === 'invalid-slug' && issue.sourcePath?.endsWith('reserved.md'))).toBe(true);
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps scope pairing file-based when translations use different slugs', async () => {
+    const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-slug-i18n-'));
+    try {
+      await mkdir(path.join(tmp, 'content/docs/guides'), { recursive: true });
+      await mkdir(path.join(tmp, 'content/docs/zh/guides'), { recursive: true });
+      await writeFile(path.join(tmp, 'content/docs/guides/deploy.md'), [
+        '---',
+        'title: Deploy',
+        'slug: ship',
+        '---',
+        '',
+        'Deploy the app. [Self](/docs/guides/deploy)'
+      ].join('\n'), 'utf8');
+      await writeFile(path.join(tmp, 'content/docs/zh/guides/deploy.md'), [
+        '---',
+        'title: 部署',
+        'slug: bushu',
+        '---',
+        '',
+        '部署应用。'
+      ].join('\n'), 'utf8');
+      await writeFile(path.join(tmp, 'content/docs/zh/index.md'), [
+        '---',
+        'title: 文档首页',
+        'slug: ignored-root',
+        '---',
+        '',
+        '首页。'
+      ].join('\n'), 'utf8');
+      const manifest = await loadSvedocsContent({
+        projectRoot: tmp,
+        config: {
+          site: { url: 'https://example.test' },
+          i18n: { defaultLocale: 'en', locales: ['en', 'zh'] },
+          checks: { translations: true }
+        }
+      });
+      const en = manifest.pages.find((page) => page.title === 'Deploy');
+      const zh = manifest.pages.find((page) => page.title === '部署');
+      const zhRoot = manifest.pages.find((page) => page.title === '文档首页');
+
+      expect(en?.routePath).toBe('/docs/guides/ship');
+      expect(zh?.routePath).toBe('/docs/zh/guides/bushu');
+      expect(en?.scopePath).toBe('/docs/guides/deploy');
+      expect(zh?.scopePath).toBe('/docs/guides/deploy');
+      // A slug on a locale root index is ignored; the locale segment is preserved.
+      expect(zhRoot?.routePath).toBe('/docs/zh');
+      expect(zhRoot?.locale).toBe('zh');
+      // File-based links still resolve to the slugged route.
+      expect(en?.html).toContain('href="/docs/guides/ship"');
+      // Translations pair by file-based scopePath, so per-locale slugs raise no warnings.
+      expect(manifest.issues.filter((issue) => issue.code === 'missing-translation' && issue.sourcePath?.includes('deploy'))).toHaveLength(0);
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('reports malformed percent-encoded anchors without aborting content loading', async () => {
     const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-bad-anchor-'));
     try {

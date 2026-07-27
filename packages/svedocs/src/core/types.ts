@@ -487,6 +487,7 @@ export interface SvedocsContentIssue {
     | 'missing-description'
     | 'duplicate-route'
     | 'duplicate-canonical'
+    | 'invalid-slug'
     | 'broken-link'
     | 'broken-anchor'
     | 'broken-asset'

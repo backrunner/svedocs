@@ -4,7 +4,7 @@ import { isIP } from 'node:net';
 import path from 'node:path';
 import { checkLink, createLinkCheckContext } from './links.js';
 import type { SvedocsContentIssue, SvedocsContentManifest, SvedocsLinkReference, SvedocsPage } from './types.js';
-import { findDuplicates, normalizePath } from './utils.js';
+import { findDuplicates, normalizePath, slugFrontmatter } from './utils.js';
 
 export async function checkSvedocsContent(
   manifest: SvedocsContentManifest,
@@ -54,6 +54,19 @@ export async function checkSvedocsContent(
       severity: 'error',
       message: `Duplicate route path detected: ${route}`
     });
+  }
+
+  for (const page of manifest.pages) {
+    const slug = page.frontmatter.slug;
+    if (typeof slug === 'string' && slug.trim() && !slugFrontmatter(slug)) {
+      issues.push({
+        code: 'invalid-slug',
+        severity: 'warning',
+        message: `${page.sourcePath} has an invalid slug "${slug}"; use a single URL path segment without slashes, whitespace, or reserved values like "index".`,
+        pageId: page.id,
+        sourcePath: page.sourcePath
+      });
+    }
   }
 
   for (const canonical of canonicalDuplicates) {

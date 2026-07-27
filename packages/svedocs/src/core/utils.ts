@@ -53,6 +53,14 @@ export function stringArrayFrontmatter(value: unknown): string[] {
   return [];
 }
 
+export function slugFrontmatter(value: unknown): string | undefined {
+  const raw = typeof value === 'number' && Number.isFinite(value) ? String(value) : stringFrontmatter(value);
+  const text = raw?.replace(/^\/+|\/+$/g, '');
+  if (!text || text === '.' || text === '..' || text === 'index') return undefined;
+  if (text.includes('/') || text.includes('..') || text.includes('#') || text.includes('?') || /\s/.test(text)) return undefined;
+  return text;
+}
+
 export function findDuplicates(values: string[]): string[] {
   const seen = new Set<string>();
   const duplicates = new Set<string>();
