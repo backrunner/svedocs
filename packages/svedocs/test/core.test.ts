@@ -9,6 +9,7 @@ import { defineConfig, loadSvedocsConfigFile, validateSvedocsConfig } from '../s
 import { checkPackagePublication, createPageTree, createSearchRecords, createSvedocsRouteEntries, flattenPageTree, loadSvedocsContent, resolveSvedocsConfig, resolveSvedocsHref, resolveSvedocsPageRoute } from '../src/core';
 import { createConfiguredOgImageFormat, createConfiguredOgImageTemplate, createConfiguredPageOgImageEntries, createJsonLdScript, createOgPng, createPageAlternates, createPageMetadata, createPageOgImagePath, createPageOgImageResponse, createRobotsResponse, createRobotsTxt, createRssResponse, createRssXml, createSatoriOgSvg, createSitemapResponse, createSitemapXml, serializeJsonLd } from '../src/og';
 import { compileMarkdown, createDiffRows, createDiffSplitRows } from '../src/mdx/compile';
+import { extractMarkdownOutline, extractMarkdownSections } from '../src/mdx/ast';
 import { createAlgoliaSearchProvider, createCloudflareAiSearchDocuments, createCloudflareAiSearchProvider, createConfiguredSearchProvider, createConfiguredSearchResponse, createSearchResponse, createTypesenseSearchProvider, searchRecords, syncCloudflareAiSearchIndex } from '../src/search';
 import { createFixturePage } from '../src/testing';
 import { createAskAiController, createPageToolsController, createSearchController, createThemeContext, createThemeInitScript, createThemeModeController, createThemeStyle, resolveLocaleCodeFromPath, resolveLocalizedHref, resolveLocalizedNavItem } from '../src/theme/headless';
@@ -3395,6 +3396,83 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(result.failed).toBe(0);
     expect(result.indexed).toBe(1);
   }, 60_000);
+});
+
+describe('heading id consistency', () => {
+  it('keeps outline ids identical to rendered heading ids for code spans with angle brackets', async () => {
+    const markdown = ['# Guide', '', '### `init <path>`', '', 'Body text.'].join('\n');
+    const compiled = await compileMarkdown(markdown);
+    const outline = extractMarkdownOutline(markdown);
+
+    expect(compiled.html).toContain('<h3 id="init-path">');
+    expect(compiled.headings.map((heading) => heading.id)).toContain('init-path');
+    expect(outline.headings.map((heading) => heading.id)).toEqual(
+      compiled.headings.map((heading) => heading.id)
+    );
+  });
+
+  it('does not invent hyphens for adjacent inline formatting', async () => {
+    const markdown = ['# Guide', '', '### Foo **bar** baz', '', 'Body text.'].join('\n');
+    const compiled = await compileMarkdown(markdown);
+
+    expect(compiled.html).toContain('<h3 id="foo-bar-baz">');
+    expect(compiled.headings.map((heading) => heading.id)).toContain('foo-bar-baz');
+  });
+
+  it('strips inline HTML tags but keeps their text, like the rehype side', async () => {
+    const markdown = ['# Guide', '', '### Set <span class="x">env</span> vars', '', 'Body text.'].join('\n');
+    const compiled = await compileMarkdown(markdown);
+    const outline = extractMarkdownOutline(markdown);
+
+    expect(compiled.html).toContain('<h3 id="set-env-vars">');
+    expect(outline.headings.map((heading) => heading.id)).toContain('set-env-vars');
+  });
+
+  it('gives search sections the same ids as the rendered headings', () => {
+    const markdown = [
+      '# Guide',
+      '',
+      '## `init <path>`',
+      '',
+      'First section body text.',
+      '',
+      '## Foo **bar**',
+      '',
+      'Second section body text.'
+    ].join('\n');
+    const sections = extractMarkdownSections(markdown);
+
+    expect(sections.map((section) => section.id)).toEqual(['init-path', 'foo-bar']);
+  });
+});
+
+describe('sidebar section ordering', () => {
+  it('positions sections by their index page order, not by their earliest page', () => {
+    const tree = createPageTree([
+      createFixturePage({ id: 'a-index', title: 'A', routePath: '/docs/a', order: 2 }),
+      createFixturePage({ id: 'a-one', title: 'A One', routePath: '/docs/a/one', order: 1 }),
+      createFixturePage({ id: 'b-index', title: 'B', routePath: '/docs/b', order: 1 }),
+      createFixturePage({ id: 'b-one', title: 'B One', routePath: '/docs/b/one', order: 9 })
+    ]);
+
+    // B (index order 1) precedes A (index order 2), even though A contains a page
+    // ordered 1 — the section index order wins over the min-of-children weight.
+    expect(tree.map((item) => item.title)).toEqual(['B', 'A']);
+    // Within a section, pages still sort by their own order.
+    expect(tree[1]!.children?.map((item) => item.title)).toEqual(['A One']);
+  });
+
+  it('falls back to the earliest page order for sections without an index order', () => {
+    const tree = createPageTree([
+      createFixturePage({ id: 'a-index', title: 'A', routePath: '/docs/a', order: 2 }),
+      createFixturePage({ id: 'a-one', title: 'A One', routePath: '/docs/a/one', order: 1 }),
+      createFixturePage({ id: 'c-one', title: 'C One', routePath: '/docs/c/one', order: 5 }),
+      createFixturePage({ id: 'c-two', title: 'C Two', routePath: '/docs/c/two', order: 3 })
+    ]);
+
+    // C has no index page, so its weight is its earliest page (3) — after A (2).
+    expect(tree.map((item) => item.title)).toEqual(['A', 'C']);
+  });
 });
 
 function restoreGlobalProperty(name: 'window' | 'document' | 'localStorage', descriptor: PropertyDescriptor | undefined): void {
