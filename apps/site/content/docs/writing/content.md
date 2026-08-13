@@ -52,7 +52,7 @@ Common fields:
 | `navTitle` | string | Shorter sidebar label without changing the document title. |
 | `slug` | string | Replace the final route segment; must be a single path segment. |
 | `description` | string | SEO description, search excerpt fallback, and page summary. |
-| `order` | number | Sort weight in navigation and previous/next links. |
+| `order` | number | Sort weight in navigation and previous/next links. On a section index page it pins the whole section's position; without one, the section sorts by its earliest page. |
 | `hidden` | boolean | Remove from generated navigation and public lists. |
 | `collapsed` | boolean | Collapse a navigation group by default. |
 | `section` | boolean | Mark a directory page as a section page. |

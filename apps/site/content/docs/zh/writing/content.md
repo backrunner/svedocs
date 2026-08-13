@@ -52,7 +52,7 @@ order: 2
 | `navTitle` | `string` | 更短的侧栏标题，不改变页面标题。 |
 | `slug` | `string` | 替换路由的最后一段；必须是单个路径段。 |
 | `description` | `string` | SEO 描述、搜索摘要的默认内容和页面简介。 |
-| `order` | `number` | 导航和上一篇/下一篇的排序权重。 |
+| `order` | `number` | 导航和上一篇/下一篇的排序权重。设置在栏目 index 页上时会固定整个栏目的位置；未设置时，栏目按其中排序最靠前的页面定位。 |
 | `hidden` | `boolean` | 从生成的导航和公开列表中移除。 |
 | `collapsed` | `boolean` | 让导航分组默认折叠。 |
 | `section` | `boolean` | 标记目录页为分组页。 |
