@@ -171,10 +171,22 @@ function classifyHref(href: string): SvedocsLinkReference['kind'] {
   return 'internal';
 }
 
+// Containers whose children are block-level: separate them with a space so plain
+// text stays readable. Inline containers (headings, paragraphs, emphasis, cells, …)
+// concatenate exactly like the hast text extraction rehype-slug sees.
+const BLOCK_JOIN_CONTAINERS = new Set(['root', 'blockquote', 'list', 'listItem', 'footnoteDefinition', 'table', 'tableRow']);
+
 function nodeToText(node: MarkdownNode | undefined): string {
   if (!node) return '';
-  if (typeof node.value === 'string') return stripHtml(node.value);
+  // Mirror the text extraction the rehype side (rehype-raw + rehype-slug) performs,
+  // so outline/section ids always match the rendered heading ids:
+  // - only raw `html` nodes have their tags stripped (inline code and text keep
+  //   literal values like `init <path>`);
+  // - inline children are concatenated without injecting spaces (text nodes already
+  //   carry their own whitespace; adding more would produce extra hyphens in slugs).
+  if (typeof node.value === 'string') return node.type === 'html' ? stripHtml(node.value) : node.value;
   if (node.type === 'image') return node.alt ?? '';
   if (!node.children?.length) return '';
-  return node.children.map(nodeToText).filter(Boolean).join(' ');
+  const separator = BLOCK_JOIN_CONTAINERS.has(node.type ?? '') ? ' ' : '';
+  return node.children.map(nodeToText).filter(Boolean).join(separator);
 }
