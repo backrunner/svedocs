@@ -117,7 +117,7 @@ function applyPageToTreeItem(item: MutableTreeItem, page: SvedocsPage) {
 
 function finalizeTree(items: MutableTreeItem[]): SvedocsTreeItem[] {
   for (const item of items) {
-    item._weight = Math.min(item._weight, ...item.children.map((child) => computeTreeWeight(child)));
+    computeTreeWeight(item);
   }
   return items
     .sort(compareTreeItems)
@@ -137,6 +137,13 @@ function finalizeTree(items: MutableTreeItem[]): SvedocsTreeItem[] {
 }
 
 function computeTreeWeight(item: MutableTreeItem): number {
+  // A page or section index with an explicit `order` pins its own weight; the
+  // min-of-children propagation only applies to nodes without one, so authors can
+  // position a section by setting `order` on its index page alone.
+  if (typeof item.order === 'number') {
+    item._weight = item.order;
+    return item._weight;
+  }
   item._weight = Math.min(item._weight, ...item.children.map((child) => computeTreeWeight(child)));
   return item._weight;
 }
