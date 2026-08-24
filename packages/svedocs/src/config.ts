@@ -79,6 +79,14 @@ export interface SvedocsMarkdownOptions {
   shiki?: SvedocsShikiOptions;
 }
 
+export interface SvedocsImagesOptions {
+  enabled?: boolean;
+  maxWidth?: number;
+  quality?: number;
+  format?: 'original' | 'webp' | 'avif';
+  outputDir?: string;
+}
+
 export interface SvedocsRssOptions {
   title?: string;
   description?: string;
@@ -117,6 +125,7 @@ export interface SvedocsConfig {
     home?: SvedocsThemeHome;
   };
   markdown?: SvedocsMarkdownOptions;
+  images?: false | SvedocsImagesOptions;
   search?: false | {
     enabled?: boolean;
     provider?: 'local' | 'algolia' | 'typesense' | 'cloudflare-ai-search' | string;
@@ -336,6 +345,18 @@ export const svedocsConfigSchema = z.object({
         })
         .optional()
     })
+    .optional(),
+  images: z
+    .union([
+      z.literal(false),
+      z.object({
+        enabled: z.boolean().optional(),
+        maxWidth: z.number().int().positive().optional(),
+        quality: z.number().int().min(1).max(100).optional(),
+        format: z.enum(['original', 'webp', 'avif']).optional(),
+        outputDir: z.string().min(1).optional()
+      })
+    ])
     .optional(),
   search: z
     .union([

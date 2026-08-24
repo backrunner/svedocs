@@ -60,6 +60,37 @@ export default defineConfig({
 
 `docs` 下的内容会进入文档导航，`pages` 下的内容则会生成独立页面。草稿可以放在 `include` 不匹配的位置，也可以通过 `exclude` 明确排除。
 
+## 图片
+
+Markdown、MDX 和 SVX 中的本地栅格图片默认会被压缩。svedocs 会在 `static/_svedocs/images` 下生成带内容哈希的副本，默认限制到 `880px` 最大显示宽度，并输出 WebP。CDN、远程 URL、`data:` 和 `blob:` 图片保持不变。
+
+```ts
+export default defineConfig({
+  images: {
+    maxWidth: 1200,
+    quality: 84,
+    format: 'webp',
+    outputDir: 'static/_svedocs/images'
+  }
+});
+```
+
+使用 `format: 'original'` 保留源格式，使用 `format: 'avif'` 输出 AVIF，或者设置 `images: false` 关闭压缩。图片上的宽度属性或 CSS 宽度会作为目标显示宽度，并且不会超过 `maxWidth`：
+
+```md
+![架构图](/architecture.png "1200x")
+<img src="/screenshot.png" width="640" alt="截图" />
+```
+
+如果某张图片需要保持原样，可以使用 `no-compress` 标题，或添加 `no-compress`、`no-optimize`、`unoptimized` 类名/数据属性：
+
+```md
+![源图](/diagram.png "no-compress")
+<img src="/diagram.png" data-svedocs-no-compress alt="源图" />
+```
+
+在页面 frontmatter 中设置 `imageCompression: false`，可以跳过该页面的全部图片。
+
 ## 构建模式
 
 ```ts

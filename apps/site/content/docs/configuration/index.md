@@ -60,6 +60,37 @@ export default defineConfig({
 
 `docs` content participates in docs navigation. `pages` content becomes standalone site pages. Keep drafts outside the include pattern or exclude them explicitly.
 
+## Images
+
+Local raster images in Markdown, MDX, and SVX are optimized by default. svedocs writes content-hashed copies under `static/_svedocs/images`, limits them to a maximum display width of `880px`, and emits WebP files. CDN, remote, `data:`, and `blob:` URLs are left unchanged.
+
+```ts
+export default defineConfig({
+  images: {
+    maxWidth: 1200,
+    quality: 84,
+    format: 'webp',
+    outputDir: 'static/_svedocs/images'
+  }
+});
+```
+
+Use `format: 'original'` to keep each source format, `format: 'avif'` for AVIF output, or `images: false` to disable optimization. A width or CSS width on an image is used as its target display width, capped by `maxWidth`:
+
+```md
+![Architecture](/architecture.png "1200x")
+<img src="/screenshot.png" width="640" alt="Screenshot" />
+```
+
+To keep a particular image untouched, add the `no-compress` title or one of the `no-compress`, `no-optimize`, or `unoptimized` classes/data attributes:
+
+```md
+![Source diagram](/diagram.png "no-compress")
+<img src="/diagram.png" data-svedocs-no-compress alt="Source diagram" />
+```
+
+Set `imageCompression: false` in page frontmatter to skip optimization for every image on that page.
+
 ## Build modes
 
 ```ts

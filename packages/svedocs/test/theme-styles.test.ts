@@ -42,4 +42,12 @@ describe('theme styles', () => {
     expect(styles).toContain('.sd-code.shiki [style*="--shiki-dark:"]');
     expect(styles).toContain('color: var(--shiki-dark) !important;');
   });
+
+  it('centers the search dialog in the viewport', async () => {
+    const styles = await readFile(new URL('../src/theme/styles.css', import.meta.url), 'utf8');
+
+    expect(styles).toMatch(/\.sd-search-dialog\s*\{[^}]*top:\s*50%;[^}]*transform:\s*translate\(-50%,\s*-50%\);/s);
+    expect(styles).toContain('transform: translate(-50%, calc(-50% - 8px)) scale(.985);');
+    expect(styles).toContain('transform: translate(-50%, -50%) scale(1);');
+  });
 });

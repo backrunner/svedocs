@@ -7,6 +7,7 @@ import remarkMath from 'remark-math';
 import { extractCodeBlocks, rehypeCodeBlocks, remarkSvedocsCodeBlocks } from './mdx/code.js';
 import { rehypeSvedocsHeadingAnchors } from './mdx/headings.js';
 import { rehypeSvedocsLinks } from './mdx/links.js';
+import { rehypeSvedocsImages, type SvedocsImageOptimizationOptions } from './mdx/images.js';
 
 export const svedocsContentExtensions = ['.md', '.mdx', '.svx'] as const;
 export const svedocsSvelteExtensions = ['.svelte', ...svedocsContentExtensions] as const;
@@ -43,6 +44,7 @@ export function createSvedocsMdsvexOptions(
     codeCopyButton?: boolean;
     headingAnchorLabel?: string;
     resolveHref?: (href: string) => string;
+    imageOptimization?: SvedocsImageOptimizationOptions;
   } = {}
 ): MdsvexOptions {
   const codeBlocks = extractCodeBlocks(source);
@@ -66,7 +68,10 @@ export function createSvedocsMdsvexOptions(
       rehypeKatex,
       [rehypeSvedocsLinks, { resolveHref: svedocsOptions.resolveHref }],
       [rehypeCodeBlocks, codeBlocks],
-      ...((options.rehypePlugins ?? []) as any[])
+      ...((options.rehypePlugins ?? []) as any[]),
+      ...(svedocsOptions.imageOptimization
+        ? [[rehypeSvedocsImages, svedocsOptions.imageOptimization]]
+        : [])
     ] as any
   };
 }

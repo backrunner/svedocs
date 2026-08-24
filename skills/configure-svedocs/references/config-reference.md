@@ -27,6 +27,7 @@ Do not write resolved defaults back into project config unless the project needs
 | `build` | `mode` selects `edge`, `static`, or `spa` |
 | `theme` | Color mode, palette, fonts, radius, code, brand, navigation, footer, home |
 | `markdown` | Compile-time `remarkPlugins`, `rehypePlugins`, Shiki transformers |
+| `images` | Local image optimization defaults and output format; `false` disables it |
 | `search` | `false` or enabled/provider/scope |
 | `ai` | `false` or enabled/provider/scope/copy/suggestions/result limit |
 | `agent` | `false` or enabled/`markdown` twins/`llms`/SSR `negotiation` (agent user agents, `Accept: text/markdown`, Cloudflare Cache API via `cache`) |
@@ -45,6 +46,7 @@ Do not write resolved defaults back into project config unless the project needs
 - Sitemap and robots default to enabled. RSS defaults to disabled.
 - The agent interface (markdown twins, `/llms.txt`, `/llms-full.txt`, edge-only UA/Accept negotiation) defaults to enabled; negotiation only takes effect in `edge` mode.
 - OG images default to SVG output in `static/og`.
+- Local raster images default to optimization with an `880px` maximum width, quality `82`, WebP output, and `static/_svedocs/images` copies.
 - Asset checks default to enabled; external-link and translation checks default to disabled.
 - Theme mode defaults to `system`. The bundled home visual defaults to `pixel`.
 
@@ -64,6 +66,10 @@ Do not write resolved defaults back into project config unless the project needs
 - `home` with kicker/key, primary/secondary actions, and pixel/image visual
 
 Register Svelte component replacements in the Vite plugin, not here.
+
+## Image optimization
+
+`images` accepts `enabled`, `maxWidth`, `quality` (1-100), `format` (`original`, `webp`, or `avif`), and a static-root `outputDir`. Markdown/MDX/SVX images can opt out with a `no-compress` title, a `no-compress`/`no-optimize`/`unoptimized` class, or a matching `data-*` attribute. Set page frontmatter `imageCompression: false` to skip all images on one page. Remote and CDN URLs are never rewritten.
 
 ## Providers
 

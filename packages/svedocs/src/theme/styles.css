@@ -223,11 +223,11 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
 @keyframes sd-dialog-in {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(-8px) scale(.985);
+    transform: translate(-50%, calc(-50% - 8px)) scale(.985);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0) scale(1);
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
@@ -1011,9 +1011,9 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
 
 .sd-search-dialog {
   left: 50%;
-  top: 5.5rem;
+  top: 50%;
   width: min(44rem, calc(100vw - 2rem));
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
 }
 
 .sd-search-box {

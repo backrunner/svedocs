@@ -13,6 +13,7 @@ import { extractCodeBlocks, rehypeCodeBlocks, remarkSvedocsCodeBlocks, type Sved
 import { createDiffRows, createDiffSplitRows } from './diff.js';
 import { rehypeSvedocsHeadingAnchors } from './headings.js';
 import { rehypeSvedocsLinks } from './links.js';
+import { rehypeSvedocsImages, type SvedocsImageOptimizationOptions } from './images.js';
 import { markdownToPlainText } from './utils.js';
 
 export interface CompiledMarkdown {
@@ -34,6 +35,7 @@ export interface CompileMarkdownOptions {
   codeCopyButton?: boolean;
   messages?: SvedocsMarkdownMessages;
   resolveHref?: (href: string) => string;
+  imageOptimization?: SvedocsImageOptimizationOptions;
 }
 
 export async function compileMarkdown(
@@ -78,8 +80,12 @@ export async function compileMarkdown(
     processor.use(plugin as never);
   }
 
+  processor.use(rehypeCodeBlocks, codeBlocks);
+  if (options.imageOptimization) {
+    processor.use(rehypeSvedocsImages, options.imageOptimization);
+  }
+
   const file = await processor
-    .use(rehypeCodeBlocks, codeBlocks)
     .use(rehypeStringify, { allowDangerousHtml: true })
     .process(markdown);
 

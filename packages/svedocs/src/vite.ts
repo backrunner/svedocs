@@ -403,7 +403,13 @@ async function loadPageComponent(
             config: manifestConfig,
             page
           }).href,
-          ...(rawConfig?.markdown?.shiki?.transformers ? { shikiTransformers: rawConfig.markdown.shiki.transformers } : {})
+          ...(rawConfig?.markdown?.shiki?.transformers ? { shikiTransformers: rawConfig.markdown.shiki.transformers } : {}),
+          imageOptimization: {
+            ...manifestConfig.images,
+            projectRoot: root,
+            sourcePath: page.sourcePath,
+            skip: shouldSkipPageImages(parsed.data as Record<string, unknown>)
+          }
         }
       )
     });
@@ -413,6 +419,13 @@ async function loadPageComponent(
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to compile ${page.sourcePath} as Svelte-compatible MDX: ${message}`);
   }
+}
+
+function shouldSkipPageImages(frontmatter: Record<string, unknown>): boolean {
+  return frontmatter.imageCompression === false
+    || frontmatter.imageOptimization === false
+    || frontmatter.images === false
+    || frontmatter.noImageCompression === true;
 }
 
 function createMdsvexOptionsFromConfig(config: SvedocsConfig | undefined): MdsvexOptions {

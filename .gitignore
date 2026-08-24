@@ -3,6 +3,7 @@ node_modules/
 .svelte-kit/
 dist/
 build/
+**/static/_svedocs/
 coverage/
 playwright-report/
 test-results/

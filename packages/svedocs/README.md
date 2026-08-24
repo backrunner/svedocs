@@ -83,3 +83,7 @@ svedocs({
 
 `.svx` and `.mdx` files can then use `<Callout />` without local imports.
 Registered theme components are exposed through `virtual:svedocs/theme-components` and can replace default navigation, article, search, Ask AI, ToC, and footer rendering.
+
+## Image optimization
+
+Local raster images in Markdown, MDX, and SVX are optimized by default with an `880px` maximum width and WebP output. Configure `images` in `svedocs.config.ts` to change `maxWidth`, `quality`, `format` (`original`, `webp`, or `avif`), or `outputDir`; set `images: false` to disable it. Remote/CDN URLs are never rewritten. Use a `no-compress` title, a `no-compress`/`no-optimize`/`unoptimized` class or data attribute, or page frontmatter `imageCompression: false` to skip optimization.

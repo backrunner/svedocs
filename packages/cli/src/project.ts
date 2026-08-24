@@ -88,6 +88,11 @@ function mergeSvedocsConfig(
     typeof overrides.theme?.codeTheme === 'object' ? overrides.theme.codeTheme : undefined
   );
   const markdown = mergeObject(base.markdown, overrides.markdown);
+  const images = overrides.images === undefined
+    ? base.images
+    : overrides.images === false
+      ? false
+      : mergeObject(base.images && typeof base.images === 'object' ? base.images : undefined, overrides.images);
   const seo = mergeObject(base.seo, overrides.seo);
   const source = mergeObject(base.source, overrides.source);
   const checks = mergeObject(base.checks, overrides.checks);
@@ -111,6 +116,7 @@ function mergeSvedocsConfig(
       }
     } : {}),
     ...(markdown ? { markdown } : {}),
+    ...(images !== undefined ? { images } : {}),
     ...(seo ? { seo } : {}),
     ...(source ? { source } : {}),
     ...(checks ? { checks } : {}),

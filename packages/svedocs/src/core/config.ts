@@ -73,6 +73,21 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
         '**/.svelte-kit/**'
       ]
     },
+    images: config.images === false
+      ? {
+          enabled: false,
+          maxWidth: 880,
+          quality: 82,
+          format: 'webp',
+          outputDir: 'static/_svedocs/images'
+        }
+      : {
+          enabled: config.images?.enabled ?? true,
+          maxWidth: config.images?.maxWidth ?? 880,
+          quality: config.images?.quality ?? 82,
+          format: config.images?.format ?? 'webp',
+          outputDir: config.images?.outputDir ?? 'static/_svedocs/images'
+        },
     build: {
       mode: config.build?.mode ?? 'edge'
     },

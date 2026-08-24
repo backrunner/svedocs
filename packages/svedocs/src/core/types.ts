@@ -336,6 +336,13 @@ export interface SvedocsResolvedConfig {
     include: string[];
     exclude: string[];
   };
+  images: {
+    enabled: boolean;
+    maxWidth: number;
+    quality: number;
+    format: 'original' | 'webp' | 'avif';
+    outputDir: string;
+  };
   build: {
     mode: 'edge' | 'static' | 'spa';
   };

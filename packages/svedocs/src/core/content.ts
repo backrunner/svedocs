@@ -11,6 +11,7 @@ import { extractMarkdownLinks } from './links.js';
 import { createPageTree, wirePrevNext } from './navigation.js';
 import { resolveSvedocsHref, type SvedocsRouteTarget } from './routes.js';
 import { createPageSearchRecords, createSearchRecords } from './search.js';
+import { optimizeSvedocsThemeImages } from '../mdx/images.js';
 import type { SvedocsContentManifest, SvedocsPage, SvedocsResolvedConfig, SvedocsSeoHead, SvedocsSeoJsonLd, SvedocsSeoLinkTag, SvedocsSeoMetaTag } from './types.js';
 import {
   booleanFrontmatter,
@@ -30,9 +31,10 @@ export async function loadSvedocsContent(options: {
 } = {}): Promise<SvedocsContentManifest> {
   const projectRoot = options.projectRoot ?? process.cwd();
   const rawConfig = isResolvedConfig(options.config) ? undefined : options.config;
-  const config = isResolvedConfig(options.config)
+  let config = isResolvedConfig(options.config)
     ? options.config
     : resolveSvedocsConfig(validateSvedocsConfig(options.config ?? {}));
+  config = await optimizeSvedocsThemeImages(config, projectRoot);
   const markdownOptions = createMarkdownCompileOptions(rawConfig, config);
   const files = await fg(config.content.include, {
     cwd: projectRoot,
@@ -102,6 +104,12 @@ async function loadContentFile(
   };
   const compiled = await compileMarkdown(renderMarkdown, {
     ...markdownOptions,
+    imageOptimization: {
+      ...config.images,
+      projectRoot,
+      sourcePath: file,
+      skip: shouldSkipPageImages(frontmatter)
+    },
     messages: createMarkdownMessages(config, route.locale),
     resolveHref: (href) => resolveSvedocsHref({
       href,
@@ -174,6 +182,13 @@ async function loadContentFile(
   };
   page.search = createPageSearchRecords(page, renderMarkdown);
   return page;
+}
+
+function shouldSkipPageImages(frontmatter: Record<string, unknown>): boolean {
+  return frontmatter.imageCompression === false
+    || frontmatter.imageOptimization === false
+    || frontmatter.images === false
+    || frontmatter.noImageCompression === true;
 }
 
 function normalizeSeoHead(value: unknown): SvedocsSeoHead | undefined {
