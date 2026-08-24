@@ -1,5 +1,19 @@
 # svedocs
 
+## 0.2.0-beta.3
+
+### Minor Changes
+
+- Add the `SvedocsImage` theme component for build-time optimization of static local images in custom Svelte layouts and landing pages.
+
+### Patch Changes
+
+- f6de35c: Fix heading id mismatches between rendered HTML and the outline/search extraction. Inline code spans containing angle brackets (for example `### \`init <path>\``) and headings with adjacent inline formatting previously produced TOC and search-section links pointing at nonexistent anchors, which could fail prerender builds; the markdown-side text extraction now mirrors the rehype side exactly.
+
+  Sidebar sections whose index page sets an explicit `order` now sort by that order. The min-of-children weight propagation only applies to sections without an index order, so a section can be positioned without coordinating disjoint `order` ranges across every section.
+
+- 86b5fb8: Optimize local raster images to their display width by default, with configurable format, quality, and output directory. Remote images remain unchanged, and individual images or whole pages can opt out of optimization.
+
 ## 0.1.1-beta.2
 
 ### Patch Changes

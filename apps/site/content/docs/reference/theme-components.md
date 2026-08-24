@@ -11,7 +11,7 @@ The svedocs theme is split into replaceable Svelte components and reusable headl
 ## Import paths
 
 ```ts
-import { DocsApp, Navbar, Article, SearchDialog } from 'svedocs/theme';
+import { DocsApp, Navbar, Article, SearchDialog, SvedocsImage } from 'svedocs/theme';
 import { createSearchController, createAskAiController } from 'svedocs/theme/headless';
 import type {
   SvedocsThemeComponentMap,
@@ -21,6 +21,20 @@ import type {
 ```
 
 `svedocs/theme` exports the default components and also re-exports the headless helpers and public types. Prefer `svedocs/theme/headless` and `svedocs/theme/types` in theme packages when you want small, explicit imports.
+
+## SvedocsImage
+
+`SvedocsImage` is a reusable image component for custom Svelte layouts and landing pages. When its `src` is a static local path, the Vite plugin optimizes the source during the build and keeps the component as a regular `<img>` at runtime. `width` supplies the rendered width and the optimization target; use `displayWidth` when CSS controls the rendered size. Remote and dynamic URLs are left unchanged.
+
+```svelte
+<script lang="ts">
+  import { SvedocsImage } from 'svedocs/theme';
+</script>
+
+<SvedocsImage src="/images/hero.png" width={640} height={360} alt="Product preview" />
+```
+
+The component follows the global `images` settings and accepts standard image attributes. Add `class="no-compress"` or `data-svedocs-no-compress` to opt out for one image.
 
 ## Component map
 

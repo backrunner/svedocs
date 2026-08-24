@@ -106,6 +106,91 @@ export async function optimizeSvedocsImageHref(
   }
 }
 
+export async function transformSvedocsImageComponents(
+  source: string,
+  options: SvedocsImageOptimizationOptions
+): Promise<string> {
+  if (options.enabled === false || options.skip || !source.includes('<SvedocsImage')) return source;
+
+  const tags = /<SvedocsImage\b[^>]*>/g;
+  const matches = Array.from(source.matchAll(tags));
+  if (matches.length === 0) return source;
+
+  let output = '';
+  let cursor = 0;
+  for (const match of matches) {
+    const tag = match[0];
+    const start = match.index ?? 0;
+    output += source.slice(cursor, start);
+    cursor = start + tag.length;
+
+    if (shouldSkipSvedocsImageComponent(tag)) {
+      output += tag;
+      continue;
+    }
+
+    const srcAttribute = readStaticAttribute(tag, 'src');
+    if (!srcAttribute || isGeneratedImageHref(srcAttribute.value, options)) {
+      output += tag;
+      continue;
+    }
+    const optimized = await optimizeSvedocsImageHref(srcAttribute.value, options, {
+      width: readStaticAttribute(tag, 'displayWidth')?.value ?? readStaticAttribute(tag, 'width')?.value
+    });
+    if (!optimized) {
+      output += tag;
+      continue;
+    }
+    output += `${tag.slice(0, srcAttribute.valueStart)}${optimized}${tag.slice(srcAttribute.valueStart + srcAttribute.value.length)}`;
+  }
+  return output + source.slice(cursor);
+}
+
+function shouldSkipSvedocsImageComponent(tag: string): boolean {
+  return /(?:no-compress|no-optimize|unoptimized|data-svedocs-no-compress|data-svedocs-no-optimize)/i.test(tag);
+}
+
+function readStaticAttribute(tag: string, name: string): {
+  start: number;
+  valueStart: number;
+  end: number;
+  quote: string;
+  value: string;
+} | undefined {
+  const pattern = new RegExp(`\\b${name}\\s*=\\s*(?:\\{\\s*)?(["'])([^"']+)\\1\\s*\\}?`, 'i');
+  const match = pattern.exec(tag);
+  if (match?.index !== undefined) {
+    const quote = match[1]!;
+    const value = match[2]!;
+    const valueStart = match.index + match[0].indexOf(quote) + 1;
+    return {
+      start: match.index,
+      valueStart,
+      end: match.index + match[0].length,
+      quote,
+      value
+    };
+  }
+  const numericPattern = new RegExp(`\\b${name}\\s*=\\s*\\{\\s*(\\d+(?:\\.\\d+)?)\\s*\\}`, 'i');
+  const numericMatch = numericPattern.exec(tag);
+  if (!numericMatch || numericMatch.index === undefined) return undefined;
+  const value = numericMatch[1]!;
+  const valueStart = numericMatch.index + numericMatch[0].indexOf(value);
+  return {
+    start: numericMatch.index,
+    valueStart,
+    end: numericMatch.index + numericMatch[0].length,
+    quote: '',
+    value
+  };
+}
+
+function isGeneratedImageHref(href: string, options: SvedocsImageOptimizationOptions): boolean {
+  const outputDir = options.outputDir ?? 'static/_svedocs/images';
+  const relative = normalizePath(outputDir.replace(/^static\/?/, '')).replace(/\/$/, '');
+  return relative.length > 0 && (href === `/${relative}` || href.startsWith(`/${relative}/`));
+}
+
 async function createOptimizedImage(
   sourcePath: string,
   options: SvedocsImageOptimizationOptions,

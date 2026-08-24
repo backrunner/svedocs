@@ -1,5 +1,11 @@
 # create-svedocs
 
+## 0.2.0-beta.3
+
+### Patch Changes
+
+- svedocs-cli@0.2.0-beta.3
+
 ## 0.1.1-beta.2
 
 ### Patch Changes

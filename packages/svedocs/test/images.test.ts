@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import sharp from 'sharp';
 import { resolveSvedocsConfig } from '../src/core/config.js';
 import { compileMarkdown } from '../src/mdx/compile.js';
+import { transformSvedocsImageComponents } from '../src/mdx/images.js';
 
 describe('svedocs image optimization', () => {
   it('enables width-limited WebP optimization by default', () => {
@@ -114,6 +115,29 @@ describe('svedocs image optimization', () => {
       expect(result.html).toContain('src="/source.png"');
       expect(result.html).toContain('data-svedocs-no-compress');
       expect(result.html).not.toContain('/_svedocs/images/');
+    } finally {
+      await rm(projectRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('rewrites static SvedocsImage component sources for custom Svelte pages', async () => {
+    const projectRoot = await mkdtemp(path.join(os.tmpdir(), 'svedocs-images-'));
+    try {
+      await sharp({ create: { width: 1600, height: 900, channels: 3, background: '#0891b2' } })
+        .png()
+        .toFile(path.join(projectRoot, 'hero.png'));
+      const source = '<SvedocsImage src="/hero.png" width={640} alt="Hero" />';
+      const transformed = await transformSvedocsImageComponents(source, {
+        projectRoot,
+        sourcePath: 'src/routes/+page.svelte',
+        maxWidth: 880,
+        quality: 82,
+        format: 'webp',
+        outputDir: 'static/_svedocs/images',
+        enabled: true
+      });
+      expect(transformed).toMatch(/src="\/_svedocs\/images\/hero-[a-f0-9]+\.webp"/);
+      expect(transformed).toContain('width={640}');
     } finally {
       await rm(projectRoot, { recursive: true, force: true });
     }

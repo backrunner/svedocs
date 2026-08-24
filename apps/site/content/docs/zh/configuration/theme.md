@@ -22,6 +22,39 @@ order: 2
 
 这份样式定义了 `--sd-*` 变量，并通过 `data-theme` 切换明暗模式。
 
+## 在自定义布局中使用优化图片
+
+自定义 landing 页面或主题组件需要本地图片时，可以使用导出的 `SvedocsImage` 组件。Vite 插件会在构建阶段处理它的静态 `src`，使用与 Markdown 内容相同的 `images` 配置；运行时组件仍然只是一个普通的 `<img>`。
+
+```svelte title="src/lib/Hero.svelte"
+<script lang="ts">
+  import { SvedocsImage } from 'svedocs/theme';
+</script>
+
+<SvedocsImage
+  src="/images/hero.png"
+  width={640}
+  height={360}
+  alt="产品预览"
+  sizes="(max-width: 768px) 100vw, 640px"
+  class="hero-image"
+/>
+```
+
+`width` 同时作为图片的渲染属性和优先优化宽度。如果实际宽度由 CSS 控制，或两者需要不同，可以使用 `displayWidth`。组件支持常见的图片属性；远程 URL、`data:`、`blob:`、动态表达式和动图格式会保持不变。
+
+图片源必须是静态本地路径，例如 `/images/hero.png`，或相对于 Svelte 文件的路径。生成文件会写入 `images.outputDir` 指定的目录，并使用与 Markdown 图片相同的内容哈希文件名。为单张图片添加 `class="no-compress"` 或 `data-svedocs-no-compress` 可以跳过优化。
+
+在 MDX/SVX 中也可以使用该组件，但需要先导入：
+
+```mdx
+import { SvedocsImage } from 'svedocs/theme';
+
+<SvedocsImage src="/images/hero.png" displayWidth={960} alt="产品预览" />
+```
+
+如果图片 URL 是动态生成的，请直接使用普通 `<img>` 并自行提供最终 URL；构建阶段无法安全地处理源文件中不存在的图片。
+
 ## 表单控件
 
 主题也导出了一组基础表单组件，适合自定义布局、嵌入式工具和交互式文档页使用。它们保留 Svelte 的原生使用习惯，例如 `bind:value`、DOM 事件转发和标准表单属性。

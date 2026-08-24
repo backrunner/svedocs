@@ -87,3 +87,5 @@ Registered theme components are exposed through `virtual:svedocs/theme-component
 ## Image optimization
 
 Local raster images in Markdown, MDX, and SVX are optimized by default with an `880px` maximum width and WebP output. Configure `images` in `svedocs.config.ts` to change `maxWidth`, `quality`, `format` (`original`, `webp`, or `avif`), or `outputDir`; set `images: false` to disable it. Remote/CDN URLs are never rewritten. Use a `no-compress` title, a `no-compress`/`no-optimize`/`unoptimized` class or data attribute, or page frontmatter `imageCompression: false` to skip optimization.
+
+Custom Svelte layouts and landing pages can use `SvedocsImage` from `svedocs/theme`. Static local `src` values are optimized by the Vite plugin at build time, using the same width and format settings as content images; dynamic and remote URLs are rendered unchanged. Use `displayWidth` when the preferred optimization width differs from the rendered `width`.

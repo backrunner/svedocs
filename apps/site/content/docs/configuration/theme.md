@@ -22,6 +22,39 @@ Import the theme stylesheet from the SvelteKit root layout:
 
 The stylesheet defines `--sd-*` tokens and uses `data-theme` for light and dark mode.
 
+## Optimized images in custom layouts
+
+Use the exported `SvedocsImage` component when a custom landing page or theme component needs a local image. The Vite plugin resolves its static `src` during the build, using the same `images` configuration as Markdown content, and the component renders a normal `<img>` at runtime.
+
+```svelte title="src/lib/Hero.svelte"
+<script lang="ts">
+  import { SvedocsImage } from 'svedocs/theme';
+</script>
+
+<SvedocsImage
+  src="/images/hero.png"
+  width={640}
+  height={360}
+  alt="A preview of the product"
+  sizes="(max-width: 768px) 100vw, 640px"
+  class="hero-image"
+/>
+```
+
+`width` is both a rendered image attribute and the preferred optimization width. Use `displayWidth` when the rendered width is controlled by CSS or when those two values should differ. The component accepts the usual image attributes, while remote URLs, `data:` URLs, `blob:` URLs, dynamic expressions, and animated raster images remain unchanged.
+
+The source must be a static local path such as `/images/hero.png` or a path relative to the Svelte file. The generated file is written to the configured `images.outputDir` and receives the same content-hashed filename used for Markdown images. Add `class="no-compress"` or `data-svedocs-no-compress` to keep one image untouched.
+
+The component can also be used in MDX/SVX after importing it:
+
+```mdx
+import { SvedocsImage } from 'svedocs/theme';
+
+<SvedocsImage src="/images/hero.png" displayWidth={960} alt="Product preview" />
+```
+
+For a dynamic image URL, use a regular `<img>` and provide the URL yourself; build-time optimization cannot safely infer a source that is not present in the source file.
+
 ## Form controls
 
 The theme also exports basic form components for custom layouts, embedded tools, and interactive docs pages. They keep native Svelte ergonomics such as `bind:value`, forwarded DOM events, and standard form attributes.

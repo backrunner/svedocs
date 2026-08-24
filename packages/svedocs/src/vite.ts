@@ -8,6 +8,7 @@ import { loadConfigFromFile, type Plugin } from 'vite';
 import type { SvedocsConfig } from './config.js';
 import { loadSvedocsContent, resolveSvedocsHref, type SvedocsContentManifest, type SvedocsPage } from './core.js';
 import { createSvedocsMdsvexOptions } from './svelte.js';
+import { transformSvedocsImageComponents } from './mdx/images.js';
 import type { SvedocsThemeComponentMap } from './theme/types.js';
 
 export type SvedocsThemeComponentName = keyof SvedocsThemeComponentMap;
@@ -102,6 +103,16 @@ export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
       for (const page of manifest?.pages ?? []) {
         this.addWatchFile(page.sourcePath);
       }
+    },
+    async transform(code, id) {
+      if (!manifest || id.startsWith('\0') || id.includes('/node_modules/') || !/\.svelte(?:\?|$)/.test(id)) return undefined;
+      const sourcePath = path.relative(root, id.split('?')[0] ?? id);
+      const transformed = await transformSvedocsImageComponents(code, {
+        ...manifest.config.images,
+        projectRoot: root,
+        sourcePath
+      });
+      return transformed === code ? undefined : { code: transformed, map: null };
     },
     config() {
       return {
@@ -381,10 +392,16 @@ async function loadPageComponent(
     page.locale ?? manifestConfig.i18n.defaultLocale ?? 'en'
   ]?.['heading.anchor'];
   try {
-    const compiled = await compileMdsvex(source, {
+    const transformedSource = await transformSvedocsImageComponents(source, {
+      ...manifestConfig.images,
+      projectRoot: root,
+      sourcePath: page.sourcePath,
+      skip: shouldSkipPageImages(parsed.data as Record<string, unknown>)
+    });
+    const compiled = await compileMdsvex(transformedSource, {
       filename: page.sourcePath,
       ...createSvedocsMdsvexOptions(
-        source,
+        transformedSource,
         createMdsvexOptionsFromConfig(rawConfig),
         {
           ...(manifestConfig.theme.defaultMode === 'system'

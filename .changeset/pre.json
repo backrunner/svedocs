@@ -9,6 +9,9 @@
   },
   "changesets": [
     "agent-interface",
+    "heading-id-and-section-order",
+    "local-image-optimization",
+    "optimized-image-component",
     "slug-frontmatter"
   ]
 }

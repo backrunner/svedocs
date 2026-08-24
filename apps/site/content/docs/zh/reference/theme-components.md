@@ -11,7 +11,7 @@ svedocs 主题由可替换的 Svelte 组件和可复用的无样式控制器组�
 ## 导入路径
 
 ```ts
-import { DocsApp, Navbar, Article, SearchDialog } from 'svedocs/theme';
+import { DocsApp, Navbar, Article, SearchDialog, SvedocsImage } from 'svedocs/theme';
 import { createSearchController, createAskAiController } from 'svedocs/theme/headless';
 import type {
   SvedocsThemeComponentMap,
@@ -21,6 +21,20 @@ import type {
 ```
 
 `svedocs/theme` 会导出默认组件，同时重新导出无样式控制器和公开类型。开发主题包时，建议从 `svedocs/theme/headless` 和 `svedocs/theme/types` 分别导入，依赖关系会更清楚。
+
+## SvedocsImage
+
+`SvedocsImage` 是用于自定义 Svelte 布局和 landing 页面的可复用图片组件。当 `src` 是静态本地路径时，Vite 插件会在构建阶段优化源图片，运行时组件仍然是普通的 `<img>`。`width` 同时提供渲染宽度和优化目标；如果实际尺寸由 CSS 控制，可以改用 `displayWidth`。远程 URL 和动态 URL 会保持不变。
+
+```svelte
+<script lang="ts">
+  import { SvedocsImage } from 'svedocs/theme';
+</script>
+
+<SvedocsImage src="/images/hero.png" width={640} height={360} alt="产品预览" />
+```
+
+该组件遵循全局 `images` 配置，并支持标准图片属性。为单张图片添加 `class="no-compress"` 或 `data-svedocs-no-compress` 可以跳过优化。
 
 ## 组件映射
 
