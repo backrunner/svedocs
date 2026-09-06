@@ -10,7 +10,7 @@
   import PageLayout from './PageLayout.svelte';
   import RouteRenderError from './RouteRenderError.svelte';
   import ThemeInit from './ThemeInit.svelte';
-  import type { SvedocsCustomLayoutProps, SvedocsThemeComponentMap } from './types.js';
+  import type { SvedocsCustomLayoutProps, SvedocsThemeComponentMap, SvedocsThemeContext } from './types.js';
 
   export let page: SvedocsPage;
   export let pages: SvedocsPage[] = [];
@@ -36,7 +36,7 @@
   $: hasHomeFeaturesSlot = Boolean($$slots['home-features']);
   $: hasDocHeaderSlot = Boolean($$slots['doc-header']);
   $: appContext = createThemeContext({ config, page, pages, tree, search, ...(loadSearch ? { loadSearch } : {}) });
-  const inheritedContext = writable(createThemeContext({ config, page, pages, tree, search }));
+  const inheritedContext = writable<SvedocsThemeContext>();
   provideSvedocsTheme(inheritedContext);
   $: inheritedContext.set(appContext);
 </script>
@@ -62,7 +62,7 @@
     />
     {#snippet failed(error, reset)}
       <svelte:component
-        this={RouteRenderError}
+        this={RouteRenderError} context={appContext}
         {error}
         {reset}
         {page}
@@ -88,7 +88,7 @@
     {/if}
     <svelte:boundary>
       <svelte:component
-        this={Home}
+        this={Home} context={appContext}
         {page}
         {pages}
         {tree}
@@ -117,7 +117,7 @@
       </svelte:component>
       {#snippet failed(error, reset)}
         <svelte:component
-          this={RouteRenderError}
+          this={RouteRenderError} context={appContext}
           {error}
           {reset}
           {page}
@@ -142,14 +142,14 @@
       />
     {/if}
     <svelte:boundary>
-      <svelte:component this={Page} {page} {pages} {tree} {search} {config} {loadSearch} content={pageContent} {hasBackgroundSlot} {themeComponents}>
+      <svelte:component this={Page} context={appContext} {page} {pages} {tree} {search} {config} {loadSearch} content={pageContent} {hasBackgroundSlot} {themeComponents}>
         <svelte:fragment slot="background">
           <slot name="background" />
         </svelte:fragment>
       </svelte:component>
       {#snippet failed(error, reset)}
         <svelte:component
-          this={RouteRenderError}
+          this={RouteRenderError} context={appContext}
           {error}
           {reset}
           {page}
@@ -174,7 +174,7 @@
       />
     {/if}
     <svelte:boundary>
-      <svelte:component this={Docs} {page} {pages} {tree} {search} {config} {loadSearch} content={pageContent} {hasBackgroundSlot} {hasDocHeaderSlot} {themeComponents}>
+      <svelte:component this={Docs} context={appContext} {page} {pages} {tree} {search} {config} {loadSearch} content={pageContent} {hasBackgroundSlot} {hasDocHeaderSlot} {themeComponents}>
         <svelte:fragment slot="background">
           <slot name="background" />
         </svelte:fragment>
@@ -184,7 +184,7 @@
       </svelte:component>
       {#snippet failed(error, reset)}
         <svelte:component
-          this={RouteRenderError}
+          this={RouteRenderError} context={appContext}
           {error}
           {reset}
           {page}

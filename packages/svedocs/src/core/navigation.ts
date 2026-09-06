@@ -15,7 +15,7 @@ interface MutableTreeItem {
 
 export function createPageTree(pages: readonly SvedocsPage[] = []): SvedocsTreeItem[] {
   const docs = [...pages].filter((page) => page.kind === 'doc' && !page.hidden);
-  const pageByPath = new Map(docs.map((page) => [page.routePath, page]));
+  const pageByPath = new Map(docs.map((page) => [scopeKey(page, page.scopePath), page]));
   const nodeByPath = new Map<string, MutableTreeItem>();
   const root: MutableTreeItem[] = [];
 
@@ -28,7 +28,7 @@ export function createPageTree(pages: readonly SvedocsPage[] = []): SvedocsTreeI
       const isDocsIndex = segments.length === 1 && segment === 'index';
       const isLeaf = index === segments.length - 1;
       if (!isDocsIndex) accumulated.push(segment);
-      const nodePath = isDocsIndex ? '/docs' : `/docs/${accumulated.join('/')}`;
+      const nodePath = scopeKey(page, isDocsIndex ? '/docs' : `/docs/${accumulated.join('/')}`);
       const sourcePage = pageByPath.get(nodePath);
       const node = upsertTreeNode({
         children,
@@ -70,8 +70,33 @@ export function wirePrevNext(pages: SvedocsPage[], tree: SvedocsTreeItem[]) {
 }
 
 function getDocRouteSegments(page: SvedocsPage): string[] {
-  if (page.routePath === '/docs') return ['index'];
-  return page.routePath.replace(/^\/docs\/?/, '').split('/').filter(Boolean);
+  if (page.scopePath === '/docs') return ['index'];
+  return page.scopePath.replace(/^\/docs\/?/, '').split('/').filter(Boolean);
+}
+
+function scopeKey(page: SvedocsPage, path: string): string {
+  return page.locale ? `${page.locale}:${path}` : path;
+}
+
+/** Retain author-supplied navigation and only remove pages from other locales. */
+export function scopePageTree(
+  tree: readonly SvedocsTreeItem[],
+  pages: readonly SvedocsPage[],
+  locale?: string,
+  defaultLocale?: string
+): SvedocsTreeItem[] {
+  const pageById = new Map(pages.map((page) => [page.id, page]));
+  const pageByPath = new Map(pages.map((page) => [page.routePath, page]));
+  function filter(items: readonly SvedocsTreeItem[]): SvedocsTreeItem[] {
+    return items.flatMap((item) => {
+      const page = pageById.get(item.id) ?? (item.path ? pageByPath.get(item.path) : undefined);
+      const children = item.children ? filter(item.children) : undefined;
+      if (page && (page.locale ?? defaultLocale) !== locale) return children ?? [];
+      if (!page && item.children?.length && !children?.length) return [];
+      return [{ ...item, ...(children ? { children } : {}) }];
+    });
+  }
+  return filter(tree);
 }
 
 function upsertTreeNode(input: {

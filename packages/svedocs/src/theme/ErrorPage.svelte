@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
-  import { createPageTree } from '../core/navigation.js';
   import { createThemeContext, resolveLocaleCodeFromPath, resolveLocalizedHref } from './headless.js';
   import LayoutShell from './LayoutShell.svelte';
   import PageShell from './PageShell.svelte';
@@ -26,9 +25,8 @@
   $: code = status ?? 500;
   $: localeCode = resolveLocaleCodeFromPath(path, config);
   $: localePages = pages.filter((page) => (page.locale ?? config.i18n.defaultLocale ?? 'en') === localeCode);
-  $: localeTree = createPageTree(localePages);
-  $: navigationTree = localeTree.length > 0 ? localeTree : tree;
-  $: context = createThemeContext({ config, pages, tree: navigationTree, search, localeCode, ...(loadSearch ? { loadSearch } : {}) });
+  $: navigationTree = context.tree;
+  $: context = createThemeContext({ config, pages, tree, search, localeCode, ...(loadSearch ? { loadSearch } : {}) });
   $: title = code === 404 ? context.t('error.notFound.title') : context.t('error.generic.title');
   $: detail = code === 404
     ? context.t('error.notFound.description')
@@ -55,6 +53,7 @@
 <svelte:boundary>
   <svelte:component
     this={Root}
+    {context}
     {config}
     {localeCode}
     {pages}
@@ -82,6 +81,7 @@
   </svelte:component>
   {#snippet failed(fallbackError, reset)}
     <RootLayout
+      {context}
       {config}
       {localeCode}
       {pages}

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { HTMLLinkAttributes, HTMLMetaAttributes } from 'svelte/elements';
   import { withThemeSlots } from './slots.js';
+  import { mountScrollbarVisibility } from './controllers/scrollbars.js';
   import { onDestroy, onMount } from 'svelte';
   import { writable } from 'svelte/store';
   import { provideSvedocsTheme } from './context.js';
@@ -10,7 +11,7 @@
   import LayoutShell from './LayoutShell.svelte';
   import SafeRenderError from './SafeRenderError.svelte';
   import ThemeInit from './ThemeInit.svelte';
-  import type { SvedocsThemeComponentMap } from './types.js';
+  import type { SvedocsThemeComponentMap, SvedocsThemeContext } from './types.js';
 
   export let config: SvedocsResolvedConfig;
   export let page: SvedocsPage | undefined = undefined;
@@ -26,15 +27,16 @@
   export let mobileCurrentPath = '';
   export let hasBackgroundSlot: boolean | undefined = undefined;
   export let themeComponents: Partial<SvedocsThemeComponentMap> = {};
+  export let context: SvedocsThemeContext | undefined = undefined;
 
   const mobileNav = createMobileNavController();
   let mounted = false;
   let mobileMenuOpen = false;
   let unsubscribeMobileMenu: (() => void) | undefined;
   let stopScrollbarVisibility: (() => void) | undefined;
-  const inheritedContext = writable(createThemeContext({ config, pages, tree, search }));
+  const inheritedContext = writable<SvedocsThemeContext>();
   provideSvedocsTheme(inheritedContext);
-  $: inheritedContext.set(context);
+  $: inheritedContext.set(resolvedContext);
 
   $: metadata = page ? createPageMetadata(config, page, pages) : undefined;
   $: alternates = page ? createPageAlternates(config, page, pages) : [];
@@ -42,7 +44,7 @@
     createJsonLdScript(metadata.jsonLd),
     ...metadata.head.jsonLd.map((entry) => createJsonLdScript(entry))
   ] : [];
-  $: context = createThemeContext({
+  $: resolvedContext = context ?? createThemeContext({
     config,
     ...(page ? { page } : {}),
     pages,
@@ -81,8 +83,8 @@
 
   function markHydratedRoute() {
     document.documentElement.dataset.svedocsRoute = page?.routePath ?? '';
-    document.documentElement.lang = context.languageTag;
-    document.documentElement.dir = context.locale?.dir ?? 'ltr';
+    document.documentElement.lang = resolvedContext.languageTag;
+    document.documentElement.dir = resolvedContext.locale?.dir ?? 'ltr';
   }
 
   function cleanupSubscriptions() {
@@ -90,57 +92,6 @@
     unsubscribeMobileMenu = undefined;
     stopScrollbarVisibility?.();
     stopScrollbarVisibility = undefined;
-  }
-
-  function mountScrollbarVisibility() {
-    const root = document.documentElement;
-    const body = document.body;
-    const elementTimers = new Map<HTMLElement, number>();
-    let windowTimer: number | undefined;
-
-    function markWindowScrolling() {
-      root.classList.add('sd-is-window-scrolling');
-      body.classList.add('sd-is-window-scrolling');
-      if (windowTimer !== undefined) window.clearTimeout(windowTimer);
-      windowTimer = window.setTimeout(() => {
-        root.classList.remove('sd-is-window-scrolling');
-        body.classList.remove('sd-is-window-scrolling');
-        windowTimer = undefined;
-      }, 900);
-    }
-
-    function markElementScrolling(event: Event) {
-      const target = event.target;
-      if (!(target instanceof HTMLElement) || target === root || target === body) return;
-      if (!isScrollableElement(target)) return;
-      target.classList.add('sd-is-scrolling');
-      const existingTimer = elementTimers.get(target);
-      if (existingTimer !== undefined) window.clearTimeout(existingTimer);
-      elementTimers.set(target, window.setTimeout(() => {
-        target.classList.remove('sd-is-scrolling');
-        elementTimers.delete(target);
-      }, 900));
-    }
-
-    window.addEventListener('scroll', markWindowScrolling, { passive: true });
-    document.addEventListener('scroll', markElementScrolling, { capture: true, passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', markWindowScrolling);
-      document.removeEventListener('scroll', markElementScrolling, { capture: true });
-      if (windowTimer !== undefined) window.clearTimeout(windowTimer);
-      root.classList.remove('sd-is-window-scrolling');
-      body.classList.remove('sd-is-window-scrolling');
-      for (const [element, timer] of elementTimers) {
-        window.clearTimeout(timer);
-        element.classList.remove('sd-is-scrolling');
-      }
-      elementTimers.clear();
-    };
-  }
-
-  function isScrollableElement(element: HTMLElement) {
-    return element.scrollHeight > element.clientHeight + 1 || element.scrollWidth > element.clientWidth + 1;
   }
 
   function metaHttpEquiv(value: string | undefined): HTMLMetaAttributes['http-equiv'] {
@@ -160,8 +111,8 @@
 
 <ThemeInit
   defaultMode={config.theme.defaultMode}
-  languageTag={context.languageTag}
-  dir={context.locale?.dir ?? 'ltr'}
+  languageTag={resolvedContext.languageTag}
+  dir={resolvedContext.locale?.dir ?? 'ltr'}
 />
 
 <svelte:head>
@@ -242,7 +193,7 @@
 <svelte:boundary>
   <svelte:component
     this={Layout}
-    {context}
+    context={resolvedContext}
     {themeStyle}
     {mobileTree}
     mobileCurrentPath={mobileTreePath}
@@ -261,7 +212,7 @@
   {#snippet failed(error, reset)}
     <svelte:component
       this={LayoutShell}
-      {context}
+      context={resolvedContext}
       {themeStyle}
       {mobileTree}
       mobileCurrentPath={mobileTreePath}
@@ -280,12 +231,12 @@
           this={SafeRenderError} component={themeComponents.RenderError}
           {error}
           {reset}
-          {context}
-          tree={context.tree}
+          context={resolvedContext}
+          tree={resolvedContext.tree}
           variant="layout"
-          label={context.t('render.layout.label')}
-          title={context.t('render.layout.title')}
-          message={context.t('render.layout.message')}
+          label={resolvedContext.t('render.layout.label')}
+          title={resolvedContext.t('render.layout.title')}
+          message={resolvedContext.t('render.layout.message')}
         />
       </main>
     </svelte:component>

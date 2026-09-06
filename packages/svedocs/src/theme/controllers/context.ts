@@ -1,5 +1,6 @@
 import { defaultSvedocsMessages } from '../../core/config.js';
 import { resolveSvedocsHref } from '../../core/routes.js';
+import { createPageTree, scopePageTree } from '../../core/navigation.js';
 import type { SvedocsMessageKey, SvedocsMessages, SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTranslate } from '../../core/types.js';
 import type { SearchScope } from '../../search/types.js';
 import type { SvedocsThemeContext } from '../types.js';
@@ -30,7 +31,12 @@ export function createThemeContext(input: {
     config: input.config,
     ...(page ? { page } : {}),
     pages: input.pages ?? [],
-    tree: input.tree ?? [],
+    tree: scopePageTree(
+      input.tree?.length ? input.tree : createPageTree(input.pages ?? []),
+      input.pages ?? [],
+      localeCode,
+      input.config.i18n.defaultLocale ?? 'en'
+    ),
     search: input.search ?? [],
     ...(input.loadSearch ? { loadSearch: input.loadSearch } : {}),
     searchScope: createRuntimeScope(input.config.search.scope, page),

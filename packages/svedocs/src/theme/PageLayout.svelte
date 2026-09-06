@@ -6,7 +6,7 @@
   import PageShell from './PageShell.svelte';
   import RootLayout from './RootLayout.svelte';
   import ThemeInit from './ThemeInit.svelte';
-  import type { SvedocsThemeComponentMap } from './types.js';
+  import type { SvedocsThemeComponentMap, SvedocsThemeContext } from './types.js';
 
   export let page: SvedocsPage;
   export let pages: SvedocsPage[] = [];
@@ -17,22 +17,23 @@
   export let content: Component | undefined = undefined;
   export let hasBackgroundSlot: boolean | undefined = undefined;
   export let themeComponents: Partial<SvedocsThemeComponentMap> = {};
+  export let context: SvedocsThemeContext | undefined = undefined;
 
   $: showBackgroundSlot = hasBackgroundSlot ?? Boolean($$slots.background);
   $: Root = withThemeSlots(themeComponents.Root ?? RootLayout);
   $: Shell = themeComponents.PageShell ?? PageShell;
-  $: context = createThemeContext({ config, page, pages, tree, search, ...(loadSearch ? { loadSearch } : {}) });
+  $: resolvedContext = context ?? createThemeContext({ config, page, pages, tree, search, ...(loadSearch ? { loadSearch } : {}) });
 </script>
 
 {#if Boolean(themeComponents.Root)}
   <ThemeInit
     defaultMode={config.theme.defaultMode}
-    languageTag={context.languageTag}
-    dir={context.locale?.dir ?? 'ltr'}
+    languageTag={resolvedContext.languageTag}
+    dir={resolvedContext.locale?.dir ?? 'ltr'}
   />
 {/if}
 
-<svelte:component this={Root} {config} {page} {pages} {tree} {search} {loadSearch} hasBackgroundSlot={showBackgroundSlot} {themeComponents}>
+<svelte:component this={Root} context={resolvedContext} {config} {page} {pages} {tree} {search} {loadSearch} hasBackgroundSlot={showBackgroundSlot} {themeComponents}>
   <svelte:fragment slot="background">
     <slot name="background" />
   </svelte:fragment>
@@ -44,7 +45,7 @@
     description={page.description ?? ''}
     kicker={config.site.name}
     html={page.html}
-    {context}
+    context={resolvedContext}
     {themeComponents}
   />
 </svelte:component>

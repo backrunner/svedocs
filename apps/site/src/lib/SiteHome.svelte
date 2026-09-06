@@ -17,7 +17,7 @@
   ]);
 </script>
 
-<RootLayout {config} {page} {pages} {tree} {search} {loadSearch} {themeComponents}>
+<RootLayout {context} {config} {page} {pages} {tree} {search} {loadSearch} {themeComponents}>
   <main id="content" class="site-home">
     <section class="intro">
       <div>

@@ -6,7 +6,7 @@
   import SafeRenderError from './SafeRenderError.svelte';
   import RootLayout from './RootLayout.svelte';
   import ThemeInit from './ThemeInit.svelte';
-  import type { SvedocsThemeComponentMap } from './types.js';
+  import type { SvedocsThemeComponentMap, SvedocsThemeContext } from './types.js';
 
   export let page: SvedocsPage;
   export let pages: SvedocsPage[] = [];
@@ -20,6 +20,7 @@
   export let hasHomeHeroVisualSlot: boolean | undefined = undefined;
   export let hasHomeFeaturesSlot: boolean | undefined = undefined;
   export let themeComponents: Partial<SvedocsThemeComponentMap> = {};
+  export let context: SvedocsThemeContext | undefined = undefined;
 
   interface PixelCell {
     index: number;
@@ -104,15 +105,15 @@
     });
     return result;
   })();
-  $: context = createThemeContext({ config, page, pages, tree, search, ...(loadSearch ? { loadSearch } : {}) });
+  $: resolvedContext = context ?? createThemeContext({ config, page, pages, tree, search, ...(loadSearch ? { loadSearch } : {}) });
   $: docPages = pages.filter((item) => item.kind === 'doc' && isCurrentLocalePage(item));
   $: homeCards = createHomeCards(docPages);
   $: primaryDoc = docPages[0];
   $: secondaryDoc = docPages.find((doc) => /configuration|config/i.test(doc.routePath)) ?? docPages[1];
   $: primaryAction = resolveHomeAction(config.theme.home.primaryAction ?? (
     primaryDoc
-      ? { label: context.t('home.primaryAction'), href: primaryDoc.routePath }
-      : { label: context.t('home.primaryAction'), href: page.routePath }
+      ? { label: resolvedContext.t('home.primaryAction'), href: primaryDoc.routePath }
+      : { label: resolvedContext.t('home.primaryAction'), href: page.routePath }
   ))!;
   $: secondaryAction = resolveHomeAction(config.theme.home.secondaryAction ?? (
     secondaryDoc ? { label: secondaryDoc.title, href: secondaryDoc.routePath } : undefined
@@ -120,9 +121,9 @@
   $: kicker = resolveLocalizedText(
     config.theme.home.kicker,
     config.theme.home.kickerKey ?? (config.theme.home.kicker === 'SvelteKit-native docs' ? 'home.kicker' : undefined),
-    context
+    resolvedContext
   );
-  $: visualAlt = resolveLocalizedText(config.theme.home.visual.alt, config.theme.home.visual.altKey, context);
+  $: visualAlt = resolveLocalizedText(config.theme.home.visual.alt, config.theme.home.visual.altKey, resolvedContext);
   $: showBackgroundSlot = hasBackgroundSlot ?? Boolean($$slots.background);
   $: showLandingSlot = hasLandingSlot ?? Boolean($$slots.landing);
   $: showHomeHeroVisualSlot = hasHomeHeroVisualSlot ?? Boolean($$slots['home-hero-visual']);
@@ -138,9 +139,9 @@
       const fallbackTarget = docs.find((candidate) => candidate.scopePath === pillar.fallback);
 
       return {
-        label: context.t(homeMessageKey(pillar.key, 'label')),
-        title: context.t(homeMessageKey(pillar.key, 'title')),
-        description: context.t(homeMessageKey(pillar.key, 'description')),
+        label: resolvedContext.t(homeMessageKey(pillar.key, 'label')),
+        title: resolvedContext.t(homeMessageKey(pillar.key, 'title')),
+        description: resolvedContext.t(homeMessageKey(pillar.key, 'description')),
         glyph: pillar.glyph,
         href: target?.routePath ?? fallbackTarget?.routePath ?? fallbackDoc?.routePath ?? page.routePath
       };
@@ -154,14 +155,14 @@
   function resolveHomeAction(action: { label: string; labelKey?: string; href: string } | undefined) {
     if (!action) return undefined;
     return {
-      label: resolveLocalizedText(action.label, action.labelKey, context),
-      href: resolveLocalizedHref(action.href, context)
+      label: resolveLocalizedText(action.label, action.labelKey, resolvedContext),
+      href: resolveLocalizedHref(action.href, resolvedContext)
     };
   }
 
   function isCurrentLocalePage(candidate: SvedocsPage): boolean {
     const candidateLocale = candidate.locale ?? config.i18n.defaultLocale ?? 'en';
-    return candidateLocale === context.localeCode;
+    return candidateLocale === resolvedContext.localeCode;
   }
 
   function glyphRows(glyph: string): string[][] {
@@ -172,18 +173,18 @@
 {#if Boolean(themeComponents.Root)}
   <ThemeInit
     defaultMode={config.theme.defaultMode}
-    languageTag={context.languageTag}
-    dir={context.locale?.dir ?? 'ltr'}
+    languageTag={resolvedContext.languageTag}
+    dir={resolvedContext.locale?.dir ?? 'ltr'}
   />
 {/if}
 
-<svelte:component this={Root} {config} {page} {pages} {tree} {search} {loadSearch} hasBackgroundSlot={showBackgroundSlot} {themeComponents}>
+<svelte:component this={Root} context={resolvedContext} {config} {page} {pages} {tree} {search} {loadSearch} hasBackgroundSlot={showBackgroundSlot} {themeComponents}>
   <svelte:fragment slot="background">
     <slot name="background" />
   </svelte:fragment>
   {#if showLandingSlot}
     <main id="content" class="sd-home">
-      <slot name="landing" {page} {pages} {tree} {search} {config} {content} {context} />
+      <slot name="landing" {page} {pages} {tree} {search} {config} {content} context={resolvedContext} />
     </main>
   {:else}
     <main id="content" class="sd-home">
@@ -211,7 +212,7 @@
           </div>
         </div>
         {#if showHomeHeroVisualSlot}
-          <slot name="home-hero-visual" {page} {pages} {config} {context} />
+          <slot name="home-hero-visual" {page} {pages} {config} context={resolvedContext} />
         {:else if config.theme.home.visual.type === 'image' && config.theme.home.visual.src}
           <img class="sd-home-visual" src={config.theme.home.visual.src} alt={visualAlt} draggable="false" />
         {:else}
@@ -233,9 +234,9 @@
         {/if}
       </section>
       {#if showHomeFeaturesSlot}
-        <slot name="home-features" {page} {pages} {config} cards={homeCards} {context} />
+        <slot name="home-features" {page} {pages} {config} cards={homeCards} context={resolvedContext} />
       {:else}
-        <section class="sd-home-grid" aria-label={context.t('home.features')}>
+        <section class="sd-home-grid" aria-label={resolvedContext.t('home.features')}>
           {#each homeCards as card, i}
             <a href={card.href} style={`--card-index:${i};`}>
               <span class="sd-home-card-tag">
@@ -271,11 +272,11 @@
               {error}
               {reset}
               {page}
-              {context}
+              context={resolvedContext}
               variant="content"
-              label={context.t('render.home.label')}
-              title={context.t('render.home.title')}
-              message={context.t('render.home.message')}
+              label={resolvedContext.t('render.home.label')}
+              title={resolvedContext.t('render.home.title')}
+              message={resolvedContext.t('render.home.message')}
             />
           {/snippet}
         </svelte:boundary>
