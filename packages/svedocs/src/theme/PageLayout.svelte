@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { withThemeSlots } from './slots.js';
   import type { Component } from 'svelte';
   import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
   import { createThemeContext } from './headless.js';
@@ -18,12 +19,12 @@
   export let themeComponents: Partial<SvedocsThemeComponentMap> = {};
 
   $: showBackgroundSlot = hasBackgroundSlot ?? Boolean($$slots.background);
-  $: Root = themeComponents.Root ?? RootLayout;
+  $: Root = withThemeSlots(themeComponents.Root ?? RootLayout);
   $: Shell = themeComponents.PageShell ?? PageShell;
   $: context = createThemeContext({ config, page, pages, tree, search, ...(loadSearch ? { loadSearch } : {}) });
 </script>
 
-{#if Root !== RootLayout}
+{#if Boolean(themeComponents.Root)}
   <ThemeInit
     defaultMode={config.theme.defaultMode}
     languageTag={context.languageTag}
@@ -40,7 +41,7 @@
     {page}
     {content}
     title={page.title}
-    description={page.description}
+    description={page.description ?? ''}
     kicker={config.site.name}
     html={page.html}
     {context}

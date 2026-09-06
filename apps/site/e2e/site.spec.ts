@@ -113,3 +113,46 @@ async function expectResponseToContain(response: APIResponse, texts: string[]) {
     expect(body).toContain(text);
   }
 }
+
+test('loads custom content on demand and updates its theme context across locales', async ({ page }) => {
+  const requests: string[] = [];
+  const errors: string[] = [];
+  page.on('request', (request) => requests.push(decodeURIComponent(request.url())));
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('data-svedocs-route', '/');
+  expect(requests.some((url) => url.includes('/SiteHome.svelte'))).toBe(true);
+  expect(requests.some((url) => /ThemePreview\.svelte|FeatureLayout\.svelte|virtual:svedocs\/component\//.test(url))).toBe(false);
+
+  await page.getByRole('link', { name: 'Theme preview' }).click();
+  await expect(page.getByRole('heading', { name: 'A Svelte page of your own' })).toBeVisible();
+  expect(requests.some((url) => url.includes('/ThemePreview.svelte'))).toBe(true);
+  await page.getByRole('slider', { name: 'Corner radius' }).fill('16');
+  await expect(page.locator('.preview')).toHaveCSS('border-radius', '16px');
+  await page.getByRole('button', { name: /^(Locale|Language)$/ }).click();
+  await page.getByRole('menuitemradio', { name: '中文' }).click();
+  await expect(page).toHaveURL(/\/zh\/theme-preview$/);
+  await expect(page.getByRole('heading', { name: '这是你自己的 Svelte 页面' })).toBeVisible();
+  await expect(page.getByRole('link', { name: '查看主题文档' })).toHaveAttribute('href', '/docs/zh/configuration/theme');
+  await expect(page.getByRole('slider', { name: '圆角' })).toHaveValue('16');
+  await expect(page.getByText('svedocs · zh-CN', { exact: true })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('supports mobile navigation and persists the selected theme', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/zh');
+  await expect(page.locator('html')).toHaveAttribute('data-svedocs-route', '/zh');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
+  await page.getByRole('button', { name: '打开菜单' }).click();
+  await expect(page.getByRole('button', { name: '关闭菜单' })).toHaveAttribute('aria-expanded', 'true');
+  await page.locator('.sd-theme-toggle').click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.getByRole('navigation', { name: '主导航' }).getByRole('link', { name: '文档', exact: true }).click();
+  await expect(page).toHaveURL(/\/docs\/zh$/);
+  await expect(page.getByRole('button', { name: '打开菜单' })).toHaveAttribute('aria-expanded', 'false');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.getByRole('heading', { name: '快速开始', exact: true })).toBeVisible();
+});

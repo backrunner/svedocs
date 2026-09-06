@@ -87,7 +87,8 @@ export function createCloudflareKvRateLimiter(input: {
         return input.namespace.get<{ count: number; resetAt: number }>(key, { type: 'json' }).then((value) => value ?? undefined);
       },
       async put(key, value, ttlSeconds) {
-        await input.namespace.put(key, JSON.stringify(value), { expirationTtl: ttlSeconds });
+        // KV expires storage independently of the logical window in resetAt.
+        await input.namespace.put(key, JSON.stringify(value), { expirationTtl: Math.max(60, ttlSeconds) });
       }
     }
   });

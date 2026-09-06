@@ -85,7 +85,7 @@ import {
 import config from 'virtual:svedocs/server-config';
 import pages from 'virtual:svedocs/pages';
 
-export const prerender = isOgImageEnabled(config);
+export const prerender = isOgImageEnabled(config) ? 'auto' : false;
 
 const format = createConfiguredOgImageFormat(config);
 const template = createConfiguredOgImageTemplate(config);
@@ -140,3 +140,7 @@ svedocs og --renderer satori --font ./Inter-Regular.ttf --format png
 Satori rendering requires explicit font files so output stays deterministic across machines and deployment environments.
 
 Build-time `svedocs og` and automatic `svedocs build` generation preserve function templates from `svedocs.config.ts`. Dynamic routes can use the same template when it is safe for the target runtime; otherwise prefer the default SVG renderer for edge portability.
+
+## Automatic generation and OG routes
+
+`svedocs build` generates OG images before Vite copies static assets into the deployment output. If the project also provides an `/og/[...path]` route, set its `prerender` to `'auto'` when enabled and `false` when disabled. Existing static images can then satisfy those paths; when files are absent, SvelteKit still prerenders the route’s `entries()`. Generated templates include the appropriate setup. Update older project routes to avoid an unseen OG route error when static images already exist.

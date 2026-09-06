@@ -19,7 +19,9 @@ interface MarkdownNode {
   position?: {
     start?: {
       line?: number;
+      offset?: number;
     };
+    end?: { offset?: number };
   };
 }
 
@@ -36,6 +38,21 @@ export function parseMarkdownAst(markdown: string): MarkdownNode {
     .use(remarkGfm)
     .use(remarkMath)
     .parse(markdown) as MarkdownNode;
+}
+
+/** Strip only a leading title node, never heading-like text inside code. */
+export function prepareMarkdownTitle(markdown: string, explicitTitle?: string): { markdown: string; title?: string } {
+  const nodes = parseMarkdownAst(markdown).children ?? [];
+  const heading = nodes.find((node) => node.type === 'heading' && node.depth === 1);
+  const title = explicitTitle ?? (heading ? nodeToText(heading).trim() : undefined);
+  const leading = nodes.find((node) => !(node.type === 'html' && /^\s*<(script|style)\b/i.test(node.value ?? '')));
+  const start = leading?.position?.start?.offset;
+  const end = leading?.position?.end?.offset;
+  const body = leading?.type === 'heading' && leading.depth === 1 && nodeToText(leading).trim() === title
+    && start !== undefined && end !== undefined
+    ? `${markdown.slice(0, start)}${markdown.slice(end)}`.trim()
+    : markdown;
+  return { markdown: body, ...(title ? { title } : {}) };
 }
 
 export function extractMarkdownOutline(markdown: string): { title?: string; headings: SvedocsHeading[] } {

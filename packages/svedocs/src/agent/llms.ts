@@ -87,7 +87,7 @@ function listLlmsPages(
   return pages
     .filter((page) => isDiscoverablePage(page))
     .filter((page) => !defaultLocale || !page.locale || page.locale === defaultLocale)
-    .filter((page) => Boolean((markdown?.[page.id] ?? page.markdown)?.trim()))
+    .filter((page) => typeof (markdown?.[page.id] ?? page.markdown) === 'string')
     .slice()
     .sort((a, b) => a.routePath.localeCompare(b.routePath));
 }

@@ -141,7 +141,7 @@ export default defineConfig({
       { label: 'API', href: '/docs/reference/api' }
     ],
     social: [
-      { label: 'GitHub', href: 'https://github.com/svedocs/svedocs', external: true }
+      { label: 'GitHub', href: 'https://github.com/backrunner/svedocs', external: true }
     ],
     footer: {
       text: 'MIT licensed.',
@@ -165,6 +165,8 @@ The default root layout runs a synchronous theme initializer before theme CSS is
 
 Set `theme.defaultMode` to `light` or `dark` to lock the site to one color mode. Fixed modes apply only the selected design tokens, omit the theme toggle, skip the theme bootstrap script, and compile code blocks with the selected code theme. The default `system` mode keeps the toggle, saved preference, and system color scheme synchronization.
 
+These examples use `data.content` and `data.layout` from the generated universal `+page.ts` loader. See [Custom pages](/docs/configuration/pages) for migration, custom content components, and named layouts.
+
 ## Theme slots
 
 `DocsApp` exposes named slots for changing parts of the page without rebuilding its routing, metadata, header, footer, search, Ask AI, or docs navigation.
@@ -172,8 +174,6 @@ Set `theme.defaultMode` to `light` or `dark` to lock the site to one color mode.
 ```svelte title="src/routes/+page.svelte"
 <script lang="ts">
   import { DocsApp } from 'svedocs/theme';
-  import components from 'virtual:svedocs/components';
-  import layouts from 'virtual:svedocs/layouts';
   import loadSearch from 'virtual:svedocs/search-loader';
 
   export let data;
@@ -185,8 +185,8 @@ Set `theme.defaultMode` to `light` or `dark` to lock the site to one color mode.
   tree={data.tree}
   search={data.search}
   config={data.config}
-  {components}
-  {layouts}
+  content={data.content}
+  layout={data.layout}
   {loadSearch}
 >
   <div slot="background" class="brand-background"></div>
@@ -208,8 +208,8 @@ Homepage-specific slots let you replace smaller regions:
   tree={data.tree}
   search={data.search}
   config={data.config}
-  {components}
-  {layouts}
+  content={data.content}
+  layout={data.layout}
   {loadSearch}
 >
   <div slot="home-hero-visual" class="product-orbit" aria-hidden="true"></div>
@@ -234,8 +234,8 @@ To replace the entire landing content while preserving the svedocs header and fo
   tree={data.tree}
   search={data.search}
   config={data.config}
-  {components}
-  {layouts}
+  content={data.content}
+  layout={data.layout}
   {loadSearch}
 >
   <section slot="landing" let:page let:context class="custom-landing">
@@ -261,8 +261,8 @@ Documentation articles also expose `doc-header` when you only need to replace th
   tree={data.tree}
   search={data.search}
   config={data.config}
-  {components}
-  {layouts}
+  content={data.content}
+  layout={data.layout}
   {loadSearch}
 >
   <header slot="doc-header" let:page let:breadcrumbs class="article-hero">
@@ -316,8 +316,6 @@ Generated route files import `virtual:svedocs/theme-components` and pass it into
 ```svelte title="src/routes/+page.svelte"
 <script lang="ts">
   import { DocsApp } from 'svedocs/theme';
-  import components from 'virtual:svedocs/components';
-  import layouts from 'virtual:svedocs/layouts';
   import themeComponents from 'virtual:svedocs/theme-components';
   import loadSearch from 'virtual:svedocs/search-loader';
 
@@ -330,8 +328,8 @@ Generated route files import `virtual:svedocs/theme-components` and pass it into
   tree={data.tree}
   search={data.search}
   config={data.config}
-  {components}
-  {layouts}
+  content={data.content}
+  layout={data.layout}
   {themeComponents}
   {loadSearch}
 />

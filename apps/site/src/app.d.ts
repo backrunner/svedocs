@@ -90,3 +90,18 @@ declare namespace App {
     caches: CacheStorage;
   }
 }
+
+declare module 'virtual:svedocs/component-loaders' {
+  import type { Component } from 'svelte';
+  import type { SvedocsModuleLoader } from 'svedocs/routes';
+  const loaders: Record<string, SvedocsModuleLoader<Component>>;
+  export default loaders;
+}
+
+declare module 'virtual:svedocs/layout-loaders' {
+  import type { Component } from 'svelte';
+  import type { SvedocsModuleLoader } from 'svedocs/routes';
+  import type { SvedocsCustomLayoutProps } from 'svedocs/theme/types';
+  const loaders: Record<string, SvedocsModuleLoader<Component<SvedocsCustomLayoutProps>>>;
+  export default loaders;
+}

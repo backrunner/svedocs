@@ -1,7 +1,7 @@
 ---
 title: svedocs
 description: Build SvelteKit documentation sites for Cloudflare or static hosting.
-layout: home
+layout: site-home
 ---
 
 ## Start here

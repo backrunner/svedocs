@@ -1,5 +1,8 @@
 <script lang="ts">
+  import { withThemeSlots } from './slots.js';
   import type { Component } from 'svelte';
+  import { writable } from 'svelte/store';
+  import { provideSvedocsTheme } from './context.js';
   import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
   import { createThemeContext } from './headless.js';
   import DocsLayout from './DocsLayout.svelte';
@@ -7,7 +10,7 @@
   import PageLayout from './PageLayout.svelte';
   import RouteRenderError from './RouteRenderError.svelte';
   import ThemeInit from './ThemeInit.svelte';
-  import type { SvedocsThemeComponentMap } from './types.js';
+  import type { SvedocsCustomLayoutProps, SvedocsThemeComponentMap } from './types.js';
 
   export let page: SvedocsPage;
   export let pages: SvedocsPage[] = [];
@@ -15,21 +18,27 @@
   export let search: SvedocsSearchRecord[] = [];
   export let config: SvedocsResolvedConfig;
   export let components: Record<string, Component> = {};
+  export let content: Component | undefined = undefined;
+  export let layout: Component<SvedocsCustomLayoutProps> | undefined = undefined;
   export let layouts: Record<string, Component> = {};
   export let themeComponents: Partial<SvedocsThemeComponentMap> = {};
   export let loadSearch: (() => Promise<SvedocsSearchRecord[]>) | undefined = undefined;
 
   $: layoutName = typeof page.frontmatter.layout === 'string' ? page.frontmatter.layout : '';
-  $: customLayout = layoutName && layoutName !== 'home' && layoutName !== 'docs' ? layouts[layoutName] : undefined;
-  $: Home = themeComponents.Home ?? HomePage;
-  $: Page = themeComponents.Page ?? PageLayout;
-  $: Docs = themeComponents.Docs ?? DocsLayout;
+  $: customLayout = layout ?? (layoutName && !['home', 'docs', 'page'].includes(layoutName) ? layouts[layoutName] : undefined);
+  $: pageContent = content ?? components[page.id];
+  $: Home = withThemeSlots(themeComponents.Home ?? HomePage);
+  $: Page = withThemeSlots(themeComponents.Page ?? PageLayout);
+  $: Docs = withThemeSlots(themeComponents.Docs ?? DocsLayout);
   $: hasBackgroundSlot = Boolean($$slots.background);
   $: hasLandingSlot = Boolean($$slots.landing);
   $: hasHomeHeroVisualSlot = Boolean($$slots['home-hero-visual']);
   $: hasHomeFeaturesSlot = Boolean($$slots['home-features']);
   $: hasDocHeaderSlot = Boolean($$slots['doc-header']);
   $: appContext = createThemeContext({ config, page, pages, tree, search, ...(loadSearch ? { loadSearch } : {}) });
+  const inheritedContext = writable(createThemeContext({ config, page, pages, tree, search }));
+  provideSvedocsTheme(inheritedContext);
+  $: inheritedContext.set(appContext);
 </script>
 
 {#if customLayout}
@@ -48,7 +57,7 @@
       {config}
       {loadSearch}
       {themeComponents}
-      content={components[page.id]}
+      content={pageContent}
       context={appContext}
     />
     {#snippet failed(error, reset)}
@@ -70,7 +79,7 @@
     {/snippet}
   </svelte:boundary>
   {:else if page.scopePath === '/' || page.frontmatter.layout === 'home'}
-    {#if Home !== HomePage}
+    {#if Boolean(themeComponents.Home)}
       <ThemeInit
         defaultMode={config.theme.defaultMode}
         languageTag={appContext.languageTag}
@@ -86,7 +95,7 @@
         {search}
         {config}
         {loadSearch}
-        content={components[page.id]}
+        content={pageContent}
         {themeComponents}
         {hasBackgroundSlot}
         {hasLandingSlot}
@@ -125,7 +134,7 @@
       {/snippet}
     </svelte:boundary>
   {:else if page.kind === 'page' || page.frontmatter.layout === 'page'}
-    {#if Page !== PageLayout}
+    {#if Boolean(themeComponents.Page)}
       <ThemeInit
         defaultMode={config.theme.defaultMode}
         languageTag={appContext.languageTag}
@@ -133,7 +142,7 @@
       />
     {/if}
     <svelte:boundary>
-      <svelte:component this={Page} {page} {pages} {tree} {search} {config} {loadSearch} content={components[page.id]} {hasBackgroundSlot} {themeComponents}>
+      <svelte:component this={Page} {page} {pages} {tree} {search} {config} {loadSearch} content={pageContent} {hasBackgroundSlot} {themeComponents}>
         <svelte:fragment slot="background">
           <slot name="background" />
         </svelte:fragment>
@@ -157,7 +166,7 @@
       {/snippet}
     </svelte:boundary>
   {:else}
-    {#if Docs !== DocsLayout}
+    {#if Boolean(themeComponents.Docs)}
       <ThemeInit
         defaultMode={config.theme.defaultMode}
         languageTag={appContext.languageTag}
@@ -165,7 +174,7 @@
       />
     {/if}
     <svelte:boundary>
-      <svelte:component this={Docs} {page} {pages} {tree} {search} {config} {loadSearch} content={components[page.id]} {hasBackgroundSlot} {hasDocHeaderSlot} {themeComponents}>
+      <svelte:component this={Docs} {page} {pages} {tree} {search} {config} {loadSearch} content={pageContent} {hasBackgroundSlot} {hasDocHeaderSlot} {themeComponents}>
         <svelte:fragment slot="background">
           <slot name="background" />
         </svelte:fragment>

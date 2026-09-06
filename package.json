@@ -63,6 +63,7 @@
     "remark-rehype": "11.1.2",
     "shiki": "4.0.2",
     "svelte": "5.55.7",
+    "svelte-check": "^4.7.6",
     "tailwindcss": "4.3.0",
     "tsup": "8.5.1",
     "turbo": "2.9.14",

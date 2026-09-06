@@ -1,7 +1,7 @@
 ---
 title: svedocs
 description: 为 Cloudflare 或静态托管构建 SvelteKit 文档站。
-layout: home
+layout: site-home
 ---
 
 ## 从这里开始

@@ -173,6 +173,14 @@ svedocs/og
 svedocs/svelte
 ```
 
+## Custom pages and themes
+
+Register individual visual replacements with `svedocs({ theme: { components } })` in Vite, or compose the headless controllers with your own markup. Custom components can call `useSvedocsTheme()` to read a reactive store containing the current page, locale, and site configuration.
+
+Use `pageComponents: { '/playground': '$lib/Playground.svelte' }` to render a Svelte body for an existing Markdown route, and `layouts: { feature: '$lib/FeatureLayout.svelte' }` with `layout: feature` frontmatter for a custom page shell. Generated routes load the selected page data, content component, and layout on demand through `loadSvedocsPage` from `svedocs/routes`.
+
+See the [custom page guide](apps/site/content/docs/configuration/pages.md) and the working [theme preview](apps/site/src/lib/ThemePreview.svelte).
+
 ## Development
 
 Common workspace commands:

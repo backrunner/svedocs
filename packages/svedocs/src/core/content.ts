@@ -1,9 +1,11 @@
+import { normalizeSeoHead } from './frontmatter.js';
+import { inferKind, createRouteInfo, assignUniquePageIds, type SvedocsRouteInfo } from './discovery.js';
 import { readFile, stat } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
 import path from 'node:path';
 import fg from 'fast-glob';
 import matter from 'gray-matter';
 import { validateSvedocsConfig, type SvedocsConfig } from '../config.js';
+import { prepareMarkdownTitle } from '../mdx/ast.js';
 import { compileMarkdown, type CompileMarkdownOptions } from '../mdx/compile.js';
 import { checkSvedocsContent } from './checks.js';
 import { defaultSvedocsMessages, isResolvedConfig, resolveSvedocsConfig } from './config.js';
@@ -12,7 +14,7 @@ import { createPageTree, wirePrevNext } from './navigation.js';
 import { resolveSvedocsHref, type SvedocsRouteTarget } from './routes.js';
 import { createPageSearchRecords, createSearchRecords } from './search.js';
 import { optimizeSvedocsThemeImages } from '../mdx/images.js';
-import type { SvedocsContentManifest, SvedocsPage, SvedocsResolvedConfig, SvedocsSeoHead, SvedocsSeoJsonLd, SvedocsSeoLinkTag, SvedocsSeoMetaTag } from './types.js';
+import type { SvedocsContentManifest, SvedocsPage, SvedocsResolvedConfig } from './types.js';
 import {
   booleanFrontmatter,
   formatRoutePathForBuildMode,
@@ -21,7 +23,6 @@ import {
   slugFrontmatter,
   stringArrayFrontmatter,
   stringFrontmatter,
-  stripInlineMarkdown,
   titleFromSegment
 } from './utils.js';
 
@@ -91,9 +92,8 @@ async function loadContentFile(
   const parsed = matter(raw);
   const markdown = parsed.content.trim();
   const frontmatter = parsed.data as Record<string, unknown>;
-  const discoveredTitle = extractFirstMarkdownTitle(markdown);
-  const titleFromFrontmatter = stringFrontmatter(frontmatter.title);
-  const renderMarkdown = stripLeadingTitleHeading(markdown, titleFromFrontmatter ?? discoveredTitle);
+  const prepared = prepareMarkdownTitle(markdown, stringFrontmatter(frontmatter.title));
+  const renderMarkdown = prepared.markdown;
   const routePath = route.routePath;
   const currentRoute: SvedocsRouteTarget = {
     kind,
@@ -118,7 +118,7 @@ async function loadContentFile(
       page: currentRoute
     }).href
   });
-  const title = titleFromFrontmatter ?? discoveredTitle ?? compiled.title ?? titleFromRoute(routePath);
+  const title = prepared.title ?? compiled.title ?? titleFromRoute(routePath);
   const navTitle = stringFrontmatter(frontmatter.navTitle) ?? stringFrontmatter(frontmatter.nav_title);
   const description = stringFrontmatter(frontmatter.description);
   const order = numberFrontmatter(frontmatter.order);
@@ -191,66 +191,6 @@ function shouldSkipPageImages(frontmatter: Record<string, unknown>): boolean {
     || frontmatter.noImageCompression === true;
 }
 
-function normalizeSeoHead(value: unknown): SvedocsSeoHead | undefined {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-  const input = value as Record<string, unknown>;
-  const meta = Array.isArray(input.meta) ? input.meta.map(normalizeSeoMetaTag).filter((tag): tag is SvedocsSeoMetaTag => Boolean(tag)) : [];
-  const links = Array.isArray(input.links) ? input.links.map(normalizeSeoLinkTag).filter((tag): tag is SvedocsSeoLinkTag => Boolean(tag)) : [];
-  const jsonLdInput = input.jsonLd ?? input.jsonld ?? input['json-ld'];
-  const jsonLd = Array.isArray(jsonLdInput) ? jsonLdInput.map(normalizeSeoJsonLd).filter((tag): tag is SvedocsSeoJsonLd => Boolean(tag)) : [];
-  if (meta.length === 0 && links.length === 0 && jsonLd.length === 0) return undefined;
-  return {
-    ...(meta.length > 0 ? { meta } : {}),
-    ...(links.length > 0 ? { links } : {}),
-    ...(jsonLd.length > 0 ? { jsonLd } : {})
-  };
-}
-
-function normalizeSeoMetaTag(value: unknown): SvedocsSeoMetaTag | undefined {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-  const input = value as Record<string, unknown>;
-  const content = stringFrontmatter(input.content);
-  if (!content) return undefined;
-  const tag: SvedocsSeoMetaTag = { content };
-  const name = stringFrontmatter(input.name);
-  const property = stringFrontmatter(input.property);
-  const httpEquiv = stringFrontmatter(input.httpEquiv) ?? stringFrontmatter(input['http-equiv']);
-  const itemprop = stringFrontmatter(input.itemprop);
-  if (name) tag.name = name;
-  if (property) tag.property = property;
-  if (httpEquiv) tag.httpEquiv = httpEquiv;
-  if (itemprop) tag.itemprop = itemprop;
-  return tag.name || tag.property || tag.httpEquiv || tag.itemprop ? tag : undefined;
-}
-
-function normalizeSeoLinkTag(value: unknown): SvedocsSeoLinkTag | undefined {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-  const input = value as Record<string, unknown>;
-  const rel = stringFrontmatter(input.rel);
-  const href = stringFrontmatter(input.href);
-  if (!rel || !href) return undefined;
-  const tag: SvedocsSeoLinkTag = { rel, href };
-  const hreflang = stringFrontmatter(input.hreflang);
-  const type = stringFrontmatter(input.type);
-  const media = stringFrontmatter(input.media);
-  const title = stringFrontmatter(input.title);
-  const sizes = stringFrontmatter(input.sizes);
-  const as = stringFrontmatter(input.as);
-  const crossorigin = stringFrontmatter(input.crossorigin);
-  if (hreflang) tag.hreflang = hreflang;
-  if (type) tag.type = type;
-  if (media) tag.media = media;
-  if (title) tag.title = title;
-  if (sizes) tag.sizes = sizes;
-  if (as) tag.as = as;
-  if (crossorigin) tag.crossorigin = crossorigin;
-  return tag;
-}
-
-function normalizeSeoJsonLd(value: unknown): SvedocsSeoJsonLd | undefined {
-  return value && typeof value === 'object' && !Array.isArray(value) ? value as SvedocsSeoJsonLd : undefined;
-}
-
 function createMarkdownCompileOptions(
   rawConfig: SvedocsConfig | undefined,
   resolvedConfig: SvedocsResolvedConfig
@@ -305,97 +245,7 @@ function dateFrontmatter(value: unknown): string | undefined {
   return undefined;
 }
 
-function inferKind(file: string, config: SvedocsResolvedConfig): 'doc' | 'page' {
-  return normalizePath(file).startsWith(`${normalizePath(config.content.docs)}/`) ? 'doc' : 'page';
-}
-
-interface SvedocsRouteInfo {
-  routePath: string;
-  scopePath: string;
-  slug: string[];
-  locale?: string;
-}
-
-function createRouteInfo(file: string, kind: 'doc' | 'page', config: SvedocsResolvedConfig, slug?: string): SvedocsRouteInfo {
-  const normalized = normalizePath(file);
-  const base = normalizePath(kind === 'doc' ? config.content.docs : config.content.pages);
-  const relative = normalized.startsWith(`${base}/`) ? normalized.slice(base.length + 1) : normalized;
-  const withoutExt = relative.replace(/\.(md|mdx|svx)$/, '');
-  const rawParts = withoutExt.split('/').filter(Boolean);
-  const parts = rawParts.at(-1) === 'index' ? rawParts.slice(0, -1) : [...rawParts];
-  const routeParts = kind === 'doc' ? ['docs'] : [];
-  const locale = consumeLocale(parts, config);
-  const scopeParts = [...parts];
-  if (slug && parts.length > 0) parts[parts.length - 1] = slug;
-
-  if (locale && shouldPrefixLocale(locale, config)) {
-    routeParts.push(findLocalePath(locale, config) ?? locale);
-  }
-  routeParts.push(...parts);
-
-  const routePath = `/${routeParts.join('/')}`.replace(/\/$/, '') || '/';
-  const scopePath = `/${[...(kind === 'doc' ? ['docs'] : []), ...scopeParts].join('/')}`.replace(/\/$/, '') || '/';
-  return {
-    routePath,
-    scopePath,
-    slug: routePath.split('/').filter(Boolean),
-    ...(locale ? { locale } : {})
-  };
-}
-
-function consumeLocale(parts: string[], config: SvedocsResolvedConfig): string | undefined {
-  if (config.i18n.locales.length === 0) return undefined;
-  const match = config.i18n.locales.find((locale) => locale.path === parts[0]);
-  if (match) {
-    parts.shift();
-    return match.code;
-  }
-  return config.i18n.defaultLocale;
-}
-
-function shouldPrefixLocale(locale: string, config: SvedocsResolvedConfig): boolean {
-  return config.i18n.prefixDefaultLocale || locale !== config.i18n.defaultLocale;
-}
-
-function findLocalePath(locale: string, config: SvedocsResolvedConfig): string | undefined {
-  return config.i18n.locales.find((item) => item.code === locale)?.path;
-}
-
-function createPageId(file: string): string {
-  return normalizePath(file).replace(/\.(md|mdx|svx)$/, '').replace(/[^a-zA-Z0-9]+/g, '-');
-}
-
-function assignUniquePageIds<T extends { file: string }>(entries: T[]): Array<T & { id: string }> {
-  const candidates = entries.map((entry) => createPageId(entry.file));
-  const counts = new Map<string, number>();
-  for (const candidate of candidates) counts.set(candidate, (counts.get(candidate) ?? 0) + 1);
-  return entries.map((entry, index) => {
-    const candidate = candidates[index] ?? createPageId(entry.file);
-    if ((counts.get(candidate) ?? 0) === 1) return { ...entry, id: candidate };
-    const digest = createHash('sha256').update(normalizePath(entry.file)).digest('hex').slice(0, 10);
-    return { ...entry, id: `${candidate}-${digest}` };
-  });
-}
-
 function titleFromRoute(routePath: string): string {
   const last = routePath.split('/').filter(Boolean).at(-1) ?? 'home';
   return titleFromSegment(last);
-}
-
-function extractFirstMarkdownTitle(markdown: string): string | undefined {
-  const match = /^#\s+(.+?)\s*#*$/m.exec(markdown);
-  return match?.[1] ? stripInlineMarkdown(match[1]) : undefined;
-}
-
-function stripLeadingTitleHeading(markdown: string, title: string | undefined): string {
-  if (!title) return markdown;
-  const lines = markdown.split(/\r?\n/);
-  const firstContentIndex = lines.findIndex((line) => line.trim().length > 0);
-  if (firstContentIndex < 0) return markdown;
-  const match = /^#\s+(.+?)\s*#*$/.exec(lines[firstContentIndex] ?? '');
-  if (!match?.[1]) return markdown;
-  const heading = stripInlineMarkdown(match[1]);
-  if (heading !== title) return markdown;
-  lines.splice(firstContentIndex, 1);
-  return lines.join('\n').trim();
 }

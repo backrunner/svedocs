@@ -158,9 +158,9 @@ describe('createPageMarkdownResponse', () => {
     expect(createPageMarkdownResponse(createConfig(), pages, undefined, '/docs/hidden/index.md').status).toBe(404);
   });
 
-  it('returns 404 for pages without markdown content', () => {
+  it('serves title-only pages with empty markdown content', () => {
     const empty = [createFixturePage({ id: 'empty', routePath: '/docs/empty', markdown: '' })];
-    expect(createPageMarkdownResponse(createConfig(), empty, undefined, '/docs/empty/index.md').status).toBe(404);
+    expect(createPageMarkdownResponse(createConfig(), empty, undefined, '/docs/empty/index.md').status).toBe(200);
   });
 
   it('redirects untranslated locale twins to the default locale twin', () => {
@@ -211,10 +211,10 @@ describe('llms.txt', () => {
     expect(output).not.toContain('Noindex');
   });
 
-  it('excludes pages without markdown content so links never 404', () => {
+  it('includes title-only pages in discovery', () => {
     const output = createLlmsTxt(createConfig(), pages);
-    expect(output).not.toContain('Empty');
-    expect(createLlmsFullTxt(createConfig(), pages)).not.toContain('Empty');
+    expect(output).toContain('Empty');
+    expect(createLlmsFullTxt(createConfig(), pages)).toContain('Empty');
   });
 
   it('returns a disabled response when markdown twins are off', () => {

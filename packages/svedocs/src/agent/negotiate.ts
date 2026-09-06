@@ -24,7 +24,7 @@ export function isAgentRequest(request: Request, agent: SvedocsResolvedConfig['a
 
 export function createSvedocsAgentHandle(options: SvedocsAgentHandleOptions): Handle {
   const { config, pages, markdown } = options;
-  const cacheVersion = createAgentCacheVersion(pages, markdown);
+  const cacheVersion = createAgentCacheVersion(pages, markdown, config);
   return async ({ event, resolve }) => {
     if (config.build.mode !== 'edge') return resolve(event);
     if (!config.agent.enabled || !config.agent.negotiation.enabled) return resolve(event);
@@ -60,12 +60,14 @@ export function createSvedocsAgentHandle(options: SvedocsAgentHandleOptions): Ha
 
 export function createAgentCacheVersion(
   pages: readonly SvedocsPage[],
-  markdown?: SvedocsMarkdownMap
+  markdown?: SvedocsMarkdownMap,
+  config?: SvedocsResolvedConfig
 ): string {
   let hash = 0x811c9dc5;
   for (const page of pages) {
     const source = markdown?.[page.id] ?? page.markdown ?? '';
-    const text = `${page.id}\n${source}`;
+    const text = JSON.stringify([page.id, page.routePath, page.title, page.description,
+      config?.site.url, config?.agent.llms, source]);
     for (let index = 0; index < text.length; index += 1) {
       hash = Math.imul(hash ^ text.charCodeAt(index), 0x01000193);
     }

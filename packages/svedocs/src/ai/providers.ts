@@ -1,4 +1,5 @@
 import type { SvedocsSearchRecord } from '../core.js';
+import { createContextPrompt, retrieveContext } from './context.js';
 import { createCloudflareAiSearchScopeFilters, normalizeCloudflareAiSearchResults } from '../search/cloudflare.js';
 import { matchesSearchScope, searchRecords } from '../search.js';
 import type { CloudflareAiSearchChatOutput, CloudflareAiSearchInput, CloudflareAiSearchNamespace } from '../search.js';
@@ -100,18 +101,14 @@ export function createWorkersAiProvider(input: {
   return {
     name: 'cloudflare-workers-ai',
     async ask(question) {
-      const citations = rankAskCitations(question.records ?? [], question.question, input.citationLimit ?? 5);
-      const context = citations.map((citation) => `- ${citation.section ?? citation.title}: ${citation.url}`).join('\n');
+      const sources = retrieveContext(question, question.maxResults ?? input.citationLimit ?? 5);
+      const citations = sources.map(({ title, url, section }) => ({ title, url, ...(section ? { section } : {}) }));
       const history = (question.messages ?? []).map((message) => ({ role: message.role, content: message.content }));
-      const userContent = [
-        `Question: ${question.question}`,
-        '',
-        'Sources:',
-        context || 'No local source matched.'
-      ].join('\n');
+      if (history.at(-1)?.role === 'user' && history.at(-1)?.content === question.question) history.pop();
+      const userContent = createContextPrompt(question, sources);
       const result = await input.ai.run(input.model ?? '@cf/meta/llama-3.1-8b-instruct', {
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: question.systemPrompt ?? systemPrompt },
           ...history,
           { role: 'user', content: userContent }
         ]

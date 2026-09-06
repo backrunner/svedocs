@@ -100,8 +100,8 @@
   "scripts": {
     "build": "svelte-package -i src -o dist",
     "test": "vitest run",
-    "check": "tsc -p tsconfig.json --noEmit",
-    "lint": "tsc -p tsconfig.json --noEmit",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "lint": "svelte-check --tsconfig ./tsconfig.json",
     "pack:dry-run": "pnpm pack --dry-run",
     "dev": "svelte-package -i src -o dist --watch"
   },

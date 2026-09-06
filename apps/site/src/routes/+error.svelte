@@ -29,7 +29,7 @@
     <ErrorPage
       status={$page.status}
       message={$page.error?.message}
-      error={fallbackError}
+      error={fallbackError instanceof Error ? fallbackError : { message: String(fallbackError) }}
       path={$page.url.pathname}
       {config}
       {pages}

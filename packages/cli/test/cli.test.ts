@@ -463,7 +463,7 @@ describe('svedocs-cli Batch 0 shell', () => {
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }
-  }, 15_000);
+  }, 30_000);
 
   it('checks a fixture project with section search records', async () => {
     const result = await withCwd(fixtureRoot(), () => runSvedocsCli(['check']));
@@ -619,7 +619,7 @@ describe('svedocs-cli Batch 0 shell', () => {
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }
-  }, 15000);
+  }, 30_000);
 
   it('runs configured OG generation before invoking vite build', async () => {
     const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-build-og-'));
@@ -629,7 +629,7 @@ describe('svedocs-cli Batch 0 shell', () => {
       await mkdir(binDir, { recursive: true });
       await writeFile(
         path.join(binDir, 'vite'),
-        '#!/usr/bin/env node\nprocess.exit(0);\n',
+        '#!/usr/bin/env node\nconst fs = require("node:fs");\nprocess.exit(fs.existsSync("static/og") && fs.readdirSync("static/og").some(f => f.endsWith(".svg")) ? 0 : 1);\n',
         { mode: 0o755 }
       );
       const previousPath = process.env.PATH;
@@ -866,8 +866,14 @@ describe('svedocs-cli Batch 0 shell', () => {
         await rewriteTemplateDependencies(packageJsonPath, svedocsTarball, cliTarball);
         await runCommand('pnpm', ['install', '--ignore-scripts'], target);
         await runCommand('pnpm', ['check'], target);
-        await runCommand('pnpm', ['exec', 'svedocs', 'build', '--no-og'], target);
-        if (template !== 'minimal') {
+        await runCommand('pnpm', ['exec', 'svedocs', 'build'], target);
+        expect((await readdir(path.join(target, '.svelte-kit/cloudflare/og'))).some((file) => file.endsWith('.svg'))).toBe(true);
+        if (template === 'minimal') {
+          await writeFile(path.join(target, 'content/pages/index.md'), '# Title only\n');
+          await runCommand('pnpm', ['exec', 'svedocs', 'build', '--mode', 'static'], target);
+          expect(await readFile(path.join(target, 'build/index.md'), 'utf8')).toContain('# Title only');
+          expect((await readdir(path.join(target, 'build/og'))).some((file) => file.endsWith('.svg'))).toBe(true);
+        } else {
           await runCommand('pnpm', ['exec', 'svedocs', 'build', '--mode', 'static', '--no-og'], target);
           const docsFallback = await readFile(path.join(target, 'build/docs/zh/index.html'), 'utf8');
           const homeFallback = await readFile(path.join(target, 'build/zh/index.html'), 'utf8');

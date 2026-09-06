@@ -62,8 +62,8 @@ Generated routes import `virtual:svedocs/theme-components` and pass the map to `
   tree={data.tree}
   search={data.search}
   config={data.config}
-  components={contentComponents}
-  layouts={layouts}
+  content={data.content}
+  layout={data.layout}
   themeComponents={{ Navbar: CustomNavbar }}
   loadSearch={loadSearch}
 />
@@ -123,6 +123,17 @@ Most shell components receive `SvedocsThemeContext`.
 
 Create the same object in custom shells with `createThemeContext`.
 
+Inside `DocsApp` or `RootLayout`, call `useSvedocsTheme()` during component initialization to obtain a `Readable<SvedocsThemeContext>`. Use `$theme` in markup so page and locale changes update the component. A fully custom shell can supply its own store with `provideSvedocsTheme(store)`. Keep the store local to the component tree rather than sharing it between server requests.
+
+```svelte
+<script lang="ts">
+  import { useSvedocsTheme } from 'svedocs/theme/headless';
+  const theme = useSvedocsTheme();
+</script>
+
+<p>{$theme.config.site.name} · {$theme.languageTag}</p>
+```
+
 ## DocsApp
 
 `DocsApp` is the complete route renderer. Use it when you want svedocs to connect routing, metadata, layouts, slots, and replacement components.
@@ -134,6 +145,8 @@ Create the same object in custom shells with `createThemeContext`.
 | `pages` | `SvedocsPage[]` | Optional, defaults to `[]`. |
 | `tree` | `SvedocsTreeItem[]` | Optional, defaults to `[]`. |
 | `search` | `SvedocsSearchRecord[]` | Optional, defaults to `[]`. |
+| `content` | `Component` | Current page content; takes precedence over the `components` map. |
+| `layout` | `Component<SvedocsCustomLayoutProps>` | Current named layout; takes precedence over the `layouts` map. |
 | `components` | `Record<string, Component>` | Compiled `.svx` / `.mdx` page components. |
 | `layouts` | `Record<string, Component>` | Named single-page layouts. |
 | `themeComponents` | `Partial<SvedocsThemeComponentMap>` | Component overrides. |

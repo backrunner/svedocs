@@ -51,9 +51,13 @@ export default defineConfig({
 | `virtual:svedocs/tree` | 侧栏树 |
 | `virtual:svedocs/search` | 搜索记录 |
 | `virtual:svedocs/search-loader` | 客户端搜索记录的动态加载器 |
+| `virtual:svedocs/component-loaders` | 按页面 ID 索引的 Svelte 正文动态加载器 |
+| `virtual:svedocs/layout-loaders` | 按布局名称索引的动态加载器 |
 | `virtual:svedocs/components` | 编译后的 `.svx/.mdx` 组件 |
 | `virtual:svedocs/layouts` | 注册的自定义布局 |
 | `virtual:svedocs/theme-components` | 注册的主题组件替换 |
+
+`loadSvedocsPage(page, { pages, components, layouts })` 并行加载当前页数据、正文组件和布局，返回 `{ page, content, layout }`。在通用 `+page.ts` 中使用；组件函数不能通过 `+page.server.ts` 序列化。旧的 `components` 和 `layouts` 虚拟模块仍保留，但会立即导入全部组件。
 
 ## Core
 
@@ -64,7 +68,7 @@ import {
   createSearchRecords,
   checkSvedocsContent
 } from 'svedocs/core';
-import { resolveSvedocsPageRoute, resolveSvedocsHref } from 'svedocs/routes';
+import { resolveSvedocsPageRoute, resolveSvedocsHref, loadSvedocsPage } from 'svedocs/routes';
 ```
 
 核心 API 包含内容加载、导航、链接、检查和搜索记录。浏览器安全的 `svedocs/routes` 入口提供 `resolveSvedocsPageRoute`，用于加载 canonical 路由并处理默认语言重定向；`resolveSvedocsHref` 对链接应用同一套语言规则。

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { withThemeSlots } from './slots.js';
   import type { Component } from 'svelte';
   import type { SvedocsMessageKey, SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
   import { createThemeContext, resolveLocalizedHref, resolveLocalizedText } from './headless.js';
@@ -112,7 +113,7 @@
     primaryDoc
       ? { label: context.t('home.primaryAction'), href: primaryDoc.routePath }
       : { label: context.t('home.primaryAction'), href: page.routePath }
-  ));
+  ))!;
   $: secondaryAction = resolveHomeAction(config.theme.home.secondaryAction ?? (
     secondaryDoc ? { label: secondaryDoc.title, href: secondaryDoc.routePath } : undefined
   ));
@@ -126,7 +127,7 @@
   $: showLandingSlot = hasLandingSlot ?? Boolean($$slots.landing);
   $: showHomeHeroVisualSlot = hasHomeHeroVisualSlot ?? Boolean($$slots['home-hero-visual']);
   $: showHomeFeaturesSlot = hasHomeFeaturesSlot ?? Boolean($$slots['home-features']);
-  $: Root = themeComponents.Root ?? RootLayout;
+  $: Root = withThemeSlots(themeComponents.Root ?? RootLayout);
   $: ErrorComponent = SafeRenderError;
 
   function createHomeCards(docs: SvedocsPage[]): HomeCard[] {
@@ -168,7 +169,7 @@
   }
 </script>
 
-{#if Root !== RootLayout}
+{#if Boolean(themeComponents.Root)}
   <ThemeInit
     defaultMode={config.theme.defaultMode}
     languageTag={context.languageTag}

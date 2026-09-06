@@ -93,3 +93,9 @@ const rateLimiter = createCloudflareKvRateLimiter({
 ```
 
 Use the memory limiter for local development and KV-backed limiting for edge deployments.
+
+## Long conversations and retrieval context
+
+The default Ask AI panel keeps the visible conversation while sending only recent history within the server’s message, text, and UTF-8 byte budgets. It sends the current question separately to avoid duplication. Workers AI receives retrieved source passages and links within the active locale and content scope.
+
+The KV rate limiter stores entries for at least 60 seconds to meet Cloudflare KV requirements. The logical window still uses the configured `resetAt`, so a 10-second window remains 10 seconds. KV is eventually consistent and provides approximate limiting; strict concurrent quotas require storage with atomic operations.

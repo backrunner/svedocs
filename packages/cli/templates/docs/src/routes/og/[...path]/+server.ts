@@ -4,7 +4,8 @@ import config from 'virtual:svedocs/server-config';
 import pages from 'virtual:svedocs/pages';
 import type { RequestHandler } from './$types';
 
-export const prerender = isOgImageEnabled(config);
+// Static OG files may already satisfy every entry after CLI generation.
+export const prerender = isOgImageEnabled(config) ? 'auto' : false;
 
 const format = createConfiguredOgImageFormat(config);
 const template = createConfiguredOgImageTemplate(config);

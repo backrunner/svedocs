@@ -25,11 +25,11 @@ export type SvedocsRenderErrorVariant = 'layout' | 'article' | 'content' | 'navi
 
 export interface SvedocsThemeContext {
   config: SvedocsResolvedConfig;
-  page?: SvedocsPage;
+  page?: SvedocsPage | undefined;
   pages: SvedocsPage[];
   tree: SvedocsTreeItem[];
   search: SvedocsSearchRecord[];
-  loadSearch?: SvedocsRecordLoader;
+  loadSearch?: SvedocsRecordLoader | undefined;
   searchScope: SearchScope;
   aiScope: SearchScope;
   surface: SvedocsThemeSurface;
@@ -49,9 +49,15 @@ export interface SvedocsAppProps {
   search?: SvedocsSearchRecord[];
   config: SvedocsResolvedConfig;
   components?: Record<string, Component>;
+  content?: Component | undefined;
+  layout?: Component<SvedocsCustomLayoutProps> | undefined;
   layouts?: Record<string, Component>;
   themeComponents?: Partial<SvedocsThemeComponentMap>;
-  loadSearch?: SvedocsRecordLoader;
+  loadSearch?: SvedocsRecordLoader | undefined;
+}
+
+export interface SvedocsCustomLayoutProps extends SvedocsDocsLayoutProps {
+  context: SvedocsThemeContext;
 }
 
 export interface SvedocsDocsLayoutProps {
@@ -60,7 +66,7 @@ export interface SvedocsDocsLayoutProps {
   tree?: SvedocsTreeItem[];
   search?: SvedocsSearchRecord[];
   config: SvedocsResolvedConfig;
-  loadSearch?: SvedocsRecordLoader;
+  loadSearch?: SvedocsRecordLoader | undefined;
   content?: SvedocsContentComponent;
   hasBackgroundSlot?: boolean;
   hasDocHeaderSlot?: boolean;
@@ -73,7 +79,7 @@ export interface SvedocsPageLayoutProps {
   tree?: SvedocsTreeItem[];
   search?: SvedocsSearchRecord[];
   config: SvedocsResolvedConfig;
-  loadSearch?: SvedocsRecordLoader;
+  loadSearch?: SvedocsRecordLoader | undefined;
   content?: SvedocsContentComponent;
   hasBackgroundSlot?: boolean;
   themeComponents?: Partial<SvedocsThemeComponentMap>;
@@ -85,7 +91,7 @@ export interface SvedocsHomeLayoutProps {
   tree?: SvedocsTreeItem[];
   search?: SvedocsSearchRecord[];
   config: SvedocsResolvedConfig;
-  loadSearch?: SvedocsRecordLoader;
+  loadSearch?: SvedocsRecordLoader | undefined;
   content?: SvedocsContentComponent;
   hasBackgroundSlot?: boolean;
   hasLandingSlot?: boolean;
@@ -103,18 +109,18 @@ export interface SvedocsErrorProps {
   pages?: SvedocsPage[];
   tree?: SvedocsTreeItem[];
   search?: SvedocsSearchRecord[];
-  loadSearch?: SvedocsRecordLoader;
+  loadSearch?: SvedocsRecordLoader | undefined;
   themeComponents?: Partial<SvedocsThemeComponentMap>;
 }
 
 export interface SvedocsRootProps {
   config: SvedocsResolvedConfig;
-  page?: SvedocsPage;
+  page?: SvedocsPage | undefined;
   localeCode?: string;
   pages?: SvedocsPage[];
   tree?: SvedocsTreeItem[];
   search?: SvedocsSearchRecord[];
-  loadSearch?: SvedocsRecordLoader;
+  loadSearch?: SvedocsRecordLoader | undefined;
   headTitle?: string;
   headDescription?: string;
   headRobots?: string;
@@ -148,7 +154,7 @@ export interface SvedocsDocsShellProps {
 }
 
 export interface SvedocsPageShellProps {
-  page?: SvedocsPage;
+  page?: SvedocsPage | undefined;
   variant?: SvedocsPageShellVariant;
   title?: string;
   description?: string;
@@ -158,7 +164,7 @@ export interface SvedocsPageShellProps {
   status?: number;
   path?: string;
   actions?: SvedocsPageShellAction[];
-  context?: SvedocsThemeContext;
+  context?: SvedocsThemeContext | undefined;
   themeComponents?: Partial<SvedocsThemeComponentMap>;
 }
 
@@ -190,7 +196,7 @@ export interface SvedocsSocialNavProps {
 export interface SvedocsMobileNavProps {
   items?: SvedocsTreeItem[];
   currentPath?: string;
-  context?: SvedocsThemeContext;
+  context?: SvedocsThemeContext | undefined;
   themeComponents?: Partial<SvedocsThemeComponentMap>;
 }
 
@@ -203,49 +209,49 @@ export interface SvedocsSidebarProps {
 export interface SvedocsArticleProps {
   page: SvedocsPage;
   content?: SvedocsContentComponent;
-  context?: SvedocsThemeContext;
+  context?: SvedocsThemeContext | undefined;
   hasDocHeaderSlot?: boolean;
   themeComponents?: Partial<SvedocsThemeComponentMap>;
 }
 
 export interface SvedocsRenderErrorProps {
   error?: unknown;
-  reset?: () => void;
-  title?: string;
-  message?: string;
-  label?: string;
+  reset?: (() => void) | undefined;
+  title?: string | undefined;
+  message?: string | undefined;
+  label?: string | undefined;
   variant?: SvedocsRenderErrorVariant | string;
-  page?: SvedocsPage;
-  context?: SvedocsThemeContext;
+  page?: SvedocsPage | undefined;
+  context?: SvedocsThemeContext | undefined;
   tree?: SvedocsTreeItem[];
 }
 
 export interface SvedocsTocProps {
   page: SvedocsPage;
   controller?: SvedocsTocController;
-  context?: SvedocsThemeContext;
+  context?: SvedocsThemeContext | undefined;
 }
 
 export interface SvedocsSearchProps {
   records?: SvedocsSearchRecord[];
-  loadRecords?: SvedocsRecordLoader;
+  loadRecords?: SvedocsRecordLoader | undefined;
   scope?: SearchScope;
   provider?: string;
   endpoint?: string;
   buildMode?: SvedocsResolvedConfig['build']['mode'] | string;
   controller?: SvedocsSearchController;
-  context?: SvedocsThemeContext;
+  context?: SvedocsThemeContext | undefined;
 }
 
 export interface SvedocsAskAiProps {
   config: SvedocsResolvedConfig;
   records?: SvedocsSearchRecord[];
-  loadRecords?: SvedocsRecordLoader;
+  loadRecords?: SvedocsRecordLoader | undefined;
   scope?: SearchScope;
   endpoint?: string;
   buildMode?: SvedocsResolvedConfig['build']['mode'];
   controller?: SvedocsAskAiController;
-  context?: SvedocsThemeContext;
+  context?: SvedocsThemeContext | undefined;
 }
 
 export interface SvedocsFooterProps {
@@ -259,13 +265,13 @@ export interface SvedocsFooterLinksProps {
 
 export interface SvedocsThemeToggleProps {
   defaultMode?: SvedocsResolvedConfig['theme']['defaultMode'];
-  context?: SvedocsThemeContext;
+  context?: SvedocsThemeContext | undefined;
 }
 
 export interface SvedocsPageToolsProps {
   config: SvedocsResolvedConfig;
   controller?: SvedocsPageToolsController;
-  context?: SvedocsThemeContext;
+  context?: SvedocsThemeContext | undefined;
 }
 
 export interface SvedocsThemeComponentMap {
@@ -315,7 +321,7 @@ export interface SvedocsSearchController {
 
 export interface SvedocsSearchControllerOptions {
   records?: SvedocsSearchRecord[];
-  loadRecords?: SvedocsRecordLoader;
+  loadRecords?: SvedocsRecordLoader | undefined;
   scope?: SearchScope;
   provider?: string;
   endpoint?: string;
@@ -354,7 +360,7 @@ export interface SvedocsAskAiController {
 export interface SvedocsAskAiControllerOptions {
   config: SvedocsResolvedConfig;
   records?: SvedocsSearchRecord[];
-  loadRecords?: SvedocsRecordLoader;
+  loadRecords?: SvedocsRecordLoader | undefined;
   scope?: SearchScope;
   endpoint?: string;
   buildMode?: SvedocsResolvedConfig['build']['mode'];

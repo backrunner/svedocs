@@ -14,7 +14,7 @@
     "preview:cloudflare": "wrangler pages dev .svelte-kit/cloudflare",
     "deploy": "svedocs deploy cloudflare",
     "deploy:setup": "svedocs deploy cloudflare setup --write",
-    "check": "svelte-kit sync && tsc -p tsconfig.json --noEmit"
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
     "@sveltejs/adapter-cloudflare": "^7.2.8",
@@ -31,6 +31,7 @@
   "devDependencies": {
     "svedocs-cli": "latest",
     "@types/node": "^25.8.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "svelte-check": "^4.7.6"
   }
 }

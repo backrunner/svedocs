@@ -4,7 +4,7 @@ export default defineConfig({
   site: {
     name: 'svedocs',
     title: 'svedocs',
-    description: 'A SvelteKit-native documentation framework for edge-first docs.',
+    description: 'Documentation sites built with SvelteKit.',
     url: 'https://svedocs.pwp.sh'
   },
   content: {
@@ -42,8 +42,7 @@ export default defineConfig({
     footer: {
       text: 'Made by Alkinum with ♥',
       links: [
-        { label: 'MIT Open Source', href: 'https://github.com/svedocs/svedocs/blob/main/LICENSE', external: true },
-        { label: 'GitHub', href: 'https://github.com/svedocs/svedocs', external: true }
+        { label: 'GitHub', href: 'https://github.com/backrunner/svedocs', external: true }
       ]
     },
     home: {
@@ -82,7 +81,7 @@ export default defineConfig({
     messages: {
       en: {
         'ask.placeholder': 'Ask anything about svedocs',
-        'ask.welcome': 'Hi! I can answer questions about svedocs. Try one of the suggestions below or write your own.',
+        'ask.welcome': 'Ask a question about the docs. Answers include links to their sources.',
         'ask.suggestion.1': 'How do I configure the theme?',
         'ask.suggestion.2': 'How do I deploy to Cloudflare Pages?',
         'ask.suggestion.3': 'What MDX components are built in?',
@@ -118,7 +117,7 @@ export default defineConfig({
         'search.failed': '搜索失败。',
         'ask.label': '问 AI',
         'ask.placeholder': '询问 svedocs 文档',
-        'ask.welcome': '你好！我可以回答关于 svedocs 的问题。可以选择下面的建议，或直接输入你的问题。',
+        'ask.welcome': '输入文档相关的问题，回答会附上来源链接。',
         'ask.empty': '可以询问这些文档里的任何内容。',
         'ask.newChat': '新对话',
         'ask.close': '关闭',
@@ -234,7 +233,7 @@ export default defineConfig({
     }
   },
   source: {
-    editBaseUrl: 'https://github.com/svedocs/svedocs/edit/main/apps/site'
+    editBaseUrl: 'https://github.com/backrunner/svedocs/edit/main/apps/site'
   },
   seo: {
     defaultAuthor: 'svedocs team',

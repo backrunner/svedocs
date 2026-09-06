@@ -51,9 +51,13 @@ Virtual modules:
 | `virtual:svedocs/tree` | Sidebar tree |
 | `virtual:svedocs/search` | Search records |
 | `virtual:svedocs/search-loader` | Dynamic loader for client-side search records |
+| `virtual:svedocs/component-loaders` | Lazy Svelte content loaders keyed by page ID |
+| `virtual:svedocs/layout-loaders` | Lazy layout loaders keyed by layout name |
 | `virtual:svedocs/components` | Compiled `.svx/.mdx` components |
 | `virtual:svedocs/layouts` | Registered custom layouts |
 | `virtual:svedocs/theme-components` | Registered theme component overrides |
+
+`loadSvedocsPage(page, { pages, components, layouts })` loads the current page data, content component, and layout concurrently, returning `{ page, content, layout }`. Use it in universal `+page.ts`; component functions cannot be serialized from `+page.server.ts`. The legacy `components` and `layouts` virtual modules remain available and import every component eagerly.
 
 ## Core
 
@@ -64,7 +68,7 @@ import {
   createSearchRecords,
   checkSvedocsContent
 } from 'svedocs/core';
-import { resolveSvedocsPageRoute, resolveSvedocsHref } from 'svedocs/routes';
+import { resolveSvedocsPageRoute, resolveSvedocsHref, loadSvedocsPage } from 'svedocs/routes';
 ```
 
 Core APIs cover content loading, navigation, links, checks, and search records. The browser-safe `svedocs/routes` entry exposes `resolveSvedocsPageRoute` for canonical route loading and default-locale redirects, plus `resolveSvedocsHref` for applying the same locale rules to links.

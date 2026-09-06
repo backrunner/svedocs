@@ -1,3 +1,6 @@
+import componentLoaders from 'virtual:svedocs/component-loaders';
+import layoutLoaders from 'virtual:svedocs/layout-loaders';
+import { loadSvedocsPage } from 'svedocs/routes';
 import { error, redirect } from '@sveltejs/kit';
 import pageLoaders from 'virtual:svedocs/page-loaders';
 import pages from 'virtual:svedocs/page-index';
@@ -21,14 +24,10 @@ export const load: PageLoad = async ({ params }) => {
   if (resolution.status === 'redirect') redirect(307, resolution.location);
   if (resolution.status === 'missing') error(404, `No page found for ${routePath}`);
   const pageIndex = resolution.page;
-  const page = await loadFullPage(pageIndex);
-  return { page, pages: mergeCurrentPage(pages, page), search: [], tree, config };
+  const loaded = await loadSvedocsPage(pageIndex, { pages: pageLoaders, components: componentLoaders, layouts: layoutLoaders });
+  const { page } = loaded;
+  return { ...loaded, pages: mergeCurrentPage(pages, page), search: [], tree, config };
 };
-
-async function loadFullPage(page: SvedocsPage): Promise<SvedocsPage> {
-  const loaded = await pageLoaders[page.id]?.();
-  return loaded?.default ?? page;
-}
 
 function mergeCurrentPage(pages: SvedocsPage[], current: SvedocsPage): SvedocsPage[] {
   return pages.map((page) => page.id === current.id ? current : page);

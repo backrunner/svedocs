@@ -11,8 +11,13 @@ export default defineConfig({
       components: {
         Callout: '$lib/Callout.svelte'
       },
+      pageComponents: {
+        '/theme-preview': '$lib/ThemePreview.svelte',
+        '/zh/theme-preview': '$lib/ThemePreview.svelte'
+      },
       layouts: {
-        feature: '$lib/FeatureLayout.svelte'
+        feature: '$lib/FeatureLayout.svelte',
+        'site-home': '$lib/SiteHome.svelte'
       }
     }),
     tailwindcss(),

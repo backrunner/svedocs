@@ -14,12 +14,14 @@ export async function runBuildCommand(args: string[]): Promise<CliResult> {
   const warning = mode === 'spa'
     ? 'SPA mode prerenders known docs pages and writes a static fallback; hosted Search, Ask AI, and other server-only features need an edge runtime.\n'
     : '';
+  // Generate assets before Vite snapshots static/ into the deployment output.
+  const ogResult = await runConfiguredOgGeneration(configFile, args, config.seo.ogImage);
+  if (ogResult && !ogResult.ok) return fail('build', args, ogResult.message);
   const result = await spawnCommand('vite', ['build', ...createViteArgs(args)], {
     SVEDOCS_BUILD_MODE: mode,
     ...createConfigEnv(configFile)
   });
   if (!result.ok) return fail('build', args, `${warning}${result.message}`);
-  const ogResult = await runConfiguredOgGeneration(configFile, args, config.seo.ogImage);
   const message = ogResult ? `${result.message}\n${ogResult.message}` : result.message;
   return ok('build', args, `${warning}${message}`);
 }

@@ -1,5 +1,9 @@
 <script lang="ts">
+  import type { HTMLLinkAttributes, HTMLMetaAttributes } from 'svelte/elements';
+  import { withThemeSlots } from './slots.js';
   import { onDestroy, onMount } from 'svelte';
+  import { writable } from 'svelte/store';
+  import { provideSvedocsTheme } from './context.js';
   import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
   import { createJsonLdScript, createPageAlternates, createPageMetadata } from '../og/metadata.js';
   import { createDomId, createMobileNavController, createThemeContext, createThemeStyle } from './headless.js';
@@ -28,6 +32,9 @@
   let mobileMenuOpen = false;
   let unsubscribeMobileMenu: (() => void) | undefined;
   let stopScrollbarVisibility: (() => void) | undefined;
+  const inheritedContext = writable(createThemeContext({ config, pages, tree, search }));
+  provideSvedocsTheme(inheritedContext);
+  $: inheritedContext.set(context);
 
   $: metadata = page ? createPageMetadata(config, page, pages) : undefined;
   $: alternates = page ? createPageAlternates(config, page, pages) : [];
@@ -51,7 +58,7 @@
   $: title = headTitle || metadata?.title || (page ? config.site.title : `Error - ${config.site.title}`);
   $: description = headDescription || metadata?.description || config.site.description;
   $: robots = headRobots || metadata?.robots || (!page ? 'noindex' : '');
-  $: Layout = themeComponents.Layout ?? LayoutShell;
+  $: Layout = withThemeSlots(themeComponents.Layout ?? LayoutShell);
 
   onMount(() => {
     mounted = true;
@@ -135,6 +142,18 @@
   function isScrollableElement(element: HTMLElement) {
     return element.scrollHeight > element.clientHeight + 1 || element.scrollWidth > element.clientWidth + 1;
   }
+
+  function metaHttpEquiv(value: string | undefined): HTMLMetaAttributes['http-equiv'] {
+    return value as HTMLMetaAttributes['http-equiv'];
+  }
+
+  function linkAs(value: string | undefined): HTMLLinkAttributes['as'] {
+    return value as HTMLLinkAttributes['as'];
+  }
+
+  function linkCrossorigin(value: string | undefined): HTMLLinkAttributes['crossorigin'] {
+    return value as HTMLLinkAttributes['crossorigin'];
+  }
 </script>
 
 <svelte:window on:keydown={mobileNav.handleWindowKeydown} />
@@ -196,7 +215,7 @@
       <meta
         name={tag.name}
         property={tag.property}
-        http-equiv={tag.httpEquiv}
+        http-equiv={metaHttpEquiv(tag.httpEquiv)}
         itemprop={tag.itemprop}
         content={tag.content}
       />
@@ -210,8 +229,8 @@
         media={tag.media}
         title={tag.title}
         sizes={tag.sizes}
-        as={tag.as}
-        crossorigin={tag.crossorigin}
+        as={linkAs(tag.as)}
+        crossorigin={linkCrossorigin(tag.crossorigin)}
       />
     {/each}
     {#each jsonLdScripts as script}

@@ -62,8 +62,8 @@ svedocs({
   tree={data.tree}
   search={data.search}
   config={data.config}
-  components={contentComponents}
-  layouts={layouts}
+  content={data.content}
+  layout={data.layout}
   themeComponents={{ Navbar: CustomNavbar }}
   loadSearch={loadSearch}
 />
@@ -123,6 +123,17 @@ svedocs({
 
 自定义外壳可以用 `createThemeContext` 创建同样的对象。
 
+在 `DocsApp` 或 `RootLayout` 内的自定义组件中，可在组件初始化时调用 `useSvedocsTheme()`，得到 `Readable<SvedocsThemeContext>`。在模板中使用 `$theme`，切换页面和语言时会自动更新。完全自定义的外壳可使用 `provideSvedocsTheme(store)` 提供上下文；该 store 应属于当前组件树，不要放在服务端共享的模块级变量中。
+
+```svelte
+<script lang="ts">
+  import { useSvedocsTheme } from 'svedocs/theme/headless';
+  const theme = useSvedocsTheme();
+</script>
+
+<p>{$theme.config.site.name} · {$theme.languageTag}</p>
+```
+
 ## DocsApp
 
 `DocsApp` 是完整的路由渲染器。需要由 svedocs 连接路由、元数据、布局、插槽和替换组件时，直接使用它即可。
@@ -134,6 +145,8 @@ svedocs({
 | `pages` | `SvedocsPage[]` | 可选，默认 `[]`。 |
 | `tree` | `SvedocsTreeItem[]` | 可选，默认 `[]`。 |
 | `search` | `SvedocsSearchRecord[]` | 可选，默认 `[]`。 |
+| `content` | `Component` | 当前页面的正文组件，优先于 `components` 映射。 |
+| `layout` | `Component<SvedocsCustomLayoutProps>` | 当前页的命名布局，优先于 `layouts` 映射。 |
 | `components` | `Record<string, Component>` | 编译后的 `.svx` / `.mdx` 页面组件。 |
 | `layouts` | `Record<string, Component>` | 命名单页布局。 |
 | `themeComponents` | `Partial<SvedocsThemeComponentMap>` | 主题组件替换。 |

@@ -43,3 +43,22 @@ svedocs({
 ```
 
 Generated routes pass `virtual:svedocs/theme-components` into `DocsApp`, and `src/routes/+error.svelte` uses the same map for custom error pages with a safe fallback to the default `ErrorPage`.
+
+
+## Custom pages and layouts
+
+Keep page metadata and searchable text in `content/pages/playground.md`, then replace its body with a Svelte component:
+
+```ts
+svedocs({
+  config: svedocsConfig,
+  pageComponents: { '/playground': '$lib/Playground.svelte' },
+  layouts: { feature: '$lib/FeatureLayout.svelte' }
+});
+```
+
+Set `layout: feature` in frontmatter to use a named layout. Layouts receive `SvedocsCustomLayoutProps` from `svedocs/theme/types`. Forward `page`, `pages`, `tree`, `search`, `config`, `loadSearch`, and `themeComponents` when composing `RootLayout`.
+
+Inside `DocsApp` or `RootLayout`, `useSvedocsTheme()` from `svedocs/theme/headless` returns a reactive store with page, locale, configuration, and localized links. Read it as `$theme` in a component.
+
+The generated universal `+page.ts` routes use `loadSvedocsPage` with lazy page, component, and layout loaders. Keep component loading there; server-only load functions cannot serialize Svelte components. `pnpm check` checks Svelte components as well as TypeScript.

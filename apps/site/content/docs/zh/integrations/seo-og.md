@@ -85,7 +85,7 @@ import {
 import config from 'virtual:svedocs/server-config';
 import pages from 'virtual:svedocs/pages';
 
-export const prerender = isOgImageEnabled(config);
+export const prerender = isOgImageEnabled(config) ? 'auto' : false;
 
 const format = createConfiguredOgImageFormat(config);
 const template = createConfiguredOgImageTemplate(config);
@@ -140,3 +140,7 @@ svedocs og --renderer satori --font ./Inter-Regular.ttf --format png
 Satori 渲染需要显式指定字体文件，这样输出才会在不同机器和部署环境里保持稳定。
 
 无论运行 `svedocs og`，还是通过 `svedocs build` 自动生成图片，`svedocs.config.ts` 中的函数模板都会保留。动态路由也可以在目标运行时支持时复用同一模板；否则应优先使用兼容性更好的默认 SVG 渲染器。
+
+## 自动生成与 OG 路由
+
+`svedocs build` 会先生成 OG 图片，再交给 Vite 复制到部署产物中。如果项目还提供 `/og/[...path]` 路由，将其 `prerender` 设为启用时的 `'auto'`（禁用时为 `false`）。这样已生成的静态图片可以满足对应路径，没有静态文件时仍会预渲染路由的 `entries()`。三个新建模板已采用对应配置；旧项目应同步更新，避免 SvelteKit 报告 OG 路由未被爬取。

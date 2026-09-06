@@ -141,7 +141,7 @@ export default defineConfig({
       { label: '参考', href: '/docs/zh/reference/api' }
     ],
     social: [
-      { label: 'GitHub', href: 'https://github.com/svedocs/svedocs', external: true }
+      { label: 'GitHub', href: 'https://github.com/backrunner/svedocs', external: true }
     ],
     footer: {
       text: 'MIT licensed.',
@@ -165,6 +165,8 @@ export default defineConfig({
 
 将 `theme.defaultMode` 设置为 `light` 或 `dark` 可以锁定站点的配色模式。固定模式只应用所选的 design token，不渲染主题切换按钮，不注入主题初始化脚本，并使用所选的代码主题生成代码块。默认的 `system` 模式会保留切换按钮、已保存偏好和系统配色同步。
 
+这些示例使用生成模板中的通用 `+page.ts` 加载器提供的 `data.content` 和 `data.layout`。旧项目的迁移方法、自定义正文和命名布局示例见[自定义页面](/docs/zh/configuration/pages)。
+
 ## 主题插槽
 
 `DocsApp` 提供命名插槽，可以只替换页面中的某个区域，不必重新实现路由、元数据、页头、页脚、搜索、Ask AI 和文档导航。
@@ -172,8 +174,6 @@ export default defineConfig({
 ```svelte title="src/routes/+page.svelte"
 <script lang="ts">
   import { DocsApp } from 'svedocs/theme';
-  import components from 'virtual:svedocs/components';
-  import layouts from 'virtual:svedocs/layouts';
   import loadSearch from 'virtual:svedocs/search-loader';
 
   export let data;
@@ -185,8 +185,8 @@ export default defineConfig({
   tree={data.tree}
   search={data.search}
   config={data.config}
-  {components}
-  {layouts}
+  content={data.content}
+  layout={data.layout}
   {loadSearch}
 >
   <div slot="background" class="brand-background"></div>
@@ -208,8 +208,8 @@ export default defineConfig({
   tree={data.tree}
   search={data.search}
   config={data.config}
-  {components}
-  {layouts}
+  content={data.content}
+  layout={data.layout}
   {loadSearch}
 >
   <div slot="home-hero-visual" class="product-orbit" aria-hidden="true"></div>
@@ -234,8 +234,8 @@ export default defineConfig({
   tree={data.tree}
   search={data.search}
   config={data.config}
-  {components}
-  {layouts}
+  content={data.content}
+  layout={data.layout}
   {loadSearch}
 >
   <section slot="landing" let:page let:context class="custom-landing">
@@ -261,8 +261,8 @@ export default defineConfig({
   tree={data.tree}
   search={data.search}
   config={data.config}
-  {components}
-  {layouts}
+  content={data.content}
+  layout={data.layout}
   {loadSearch}
 >
   <header slot="doc-header" let:page let:breadcrumbs class="article-hero">
@@ -316,8 +316,6 @@ svedocs({
 ```svelte title="src/routes/+page.svelte"
 <script lang="ts">
   import { DocsApp } from 'svedocs/theme';
-  import components from 'virtual:svedocs/components';
-  import layouts from 'virtual:svedocs/layouts';
   import themeComponents from 'virtual:svedocs/theme-components';
   import loadSearch from 'virtual:svedocs/search-loader';
 
@@ -330,8 +328,8 @@ svedocs({
   tree={data.tree}
   search={data.search}
   config={data.config}
-  {components}
-  {layouts}
+  content={data.content}
+  layout={data.layout}
   {themeComponents}
   {loadSearch}
 />

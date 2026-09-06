@@ -59,7 +59,7 @@ export function resolvePageMarkdown(
   const page = resolution.page;
   if (!isDiscoverablePage(page)) return { status: 'missing' };
   const source = markdown?.[page.id] ?? page.markdown;
-  if (typeof source !== 'string' || !source.trim()) return { status: 'missing' };
+  if (typeof source !== 'string') return { status: 'missing' };
   return { status: 'found', page, source };
 }
 
@@ -97,7 +97,7 @@ export function createPageMarkdownEntries(
 ): Array<{ path: string }> {
   if (!config.agent.enabled || !config.agent.markdown) return [];
   return pages
-    .filter((page) => page.routePath !== '/' && isDiscoverablePage(page) && (markdown?.[page.id] ?? page.markdown)?.trim())
+    .filter((page) => page.routePath !== '/' && isDiscoverablePage(page) && typeof (markdown?.[page.id] ?? page.markdown) === 'string')
     .map((page) => ({ path: page.routePath.replace(/^\/+|\/+$/g, '') }));
 }
 

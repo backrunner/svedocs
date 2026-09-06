@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { withThemeSlots } from './slots.js';
   import { onMount } from 'svelte';
   import type { Component } from 'svelte';
   import type { SvedocsPage, SvedocsResolvedConfig, SvedocsSearchRecord, SvedocsTreeItem } from '../core/types.js';
@@ -28,8 +29,8 @@
   $: showDocHeaderSlot = hasDocHeaderSlot ?? Boolean($$slots['doc-header']);
   $: context = createThemeContext({ config, page, pages, tree: navigationTree, search, ...(loadSearch ? { loadSearch } : {}) });
   $: tocController.setPage(page);
-  $: Root = themeComponents.Root ?? RootLayout;
-  $: Shell = themeComponents.DocsShell ?? DocsShell;
+  $: Root = withThemeSlots(themeComponents.Root ?? RootLayout);
+  $: Shell = withThemeSlots(themeComponents.DocsShell ?? DocsShell);
   $: ErrorComponent = SafeRenderError;
 
   onMount(() => tocController.mount());
@@ -40,7 +41,7 @@
   }
 </script>
 
-{#if Root !== RootLayout}
+{#if Boolean(themeComponents.Root)}
   <ThemeInit
     defaultMode={config.theme.defaultMode}
     languageTag={context.languageTag}

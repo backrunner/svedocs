@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { withThemeSlots } from './slots.js';
   import Article from './Article.svelte';
   import SafeRenderError from './SafeRenderError.svelte';
   import SidebarTree from './SidebarTree.svelte';
@@ -20,7 +21,7 @@
   export let themeComponents: Partial<SvedocsThemeComponentMap> = {};
 
   $: Sidebar = themeComponents.Sidebar ?? SidebarTree;
-  $: ArticleComponent = themeComponents.Article ?? Article;
+  $: ArticleComponent = withThemeSlots(themeComponents.Article ?? Article);
   $: Toc = themeComponents.Toc ?? TableOfContents;
   $: ErrorComponent = SafeRenderError;
 </script>

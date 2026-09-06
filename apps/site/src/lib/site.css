@@ -1,0 +1,21 @@
+/* The official site's quieter reading surface; package theme defaults stay configurable. */
+.sd-root,
+.sd-root[data-surface='reading'] { background: var(--sd-bg); }
+.sd-root[data-surface='reading']::after,
+.sd-doc-corner { display: none; }
+.sd-doc,
+.sd-page { box-shadow: none; }
+.sd-page h1,
+.sd-doc h1 {
+  max-width: none;
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -.025em;
+}
+.sd-kicker {
+  color: var(--sd-muted);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
