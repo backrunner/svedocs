@@ -149,3 +149,7 @@ import {
 ```
 
 这些 API 可用于自定义路由处理函数、布局和构建期 OG 图片生成。
+
+## 虚拟模块类型
+
+在 `src/app.d.ts` 中添加 `/// <reference types="svedocs/virtual" />`，为 `virtual:svedocs/*` 导入提供类型。此入口仅包含 TypeScript 声明，不能作为运行时模块导入。

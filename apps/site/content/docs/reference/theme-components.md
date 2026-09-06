@@ -154,6 +154,8 @@ Inside `DocsApp` or `RootLayout`, call `useSvedocsTheme()` during component init
 
 Slots: `background`, `landing`, `home-hero-visual`, `home-features`, and `doc-header`.
 
+The built-in page layouts also accept an optional `context`. `DocsApp` resolves the locale and navigation once and forwards this context through the layouts to `Root`. Forward `{context}` when composing `RootLayout` in a named layout. A standalone layout resolves its own context when this prop is omitted. A supplied `tree` retains its order, labels, and custom groups; only pages in other locales are filtered out.
+
 ## Root
 
 `Root` handles document metadata, the theme initialization script, route hydration state, scrollbar visibility, and the shared background slot. Its default visual shell is `Layout`.

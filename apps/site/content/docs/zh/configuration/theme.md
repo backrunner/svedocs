@@ -22,6 +22,16 @@ order: 2
 
 这份样式定义了 `--sd-*` 变量，并通过 `data-theme` 切换明暗模式。
 
+## 阅读样式
+
+设置 `theme.readingStyle: 'plain'` 可以关闭阅读页面的动画网格、角标和卡片阴影。默认值 `'decorated'` 保留原有主题表现。颜色、字体、自定义背景插槽和首页布局仍可独立配置。
+
+```ts
+export default defineConfig({
+  theme: { readingStyle: 'plain' }
+});
+```
+
 ## 在自定义布局中使用优化图片
 
 自定义 landing 页面或主题组件需要本地图片时，可以使用导出的 `SvedocsImage` 组件。Vite 插件会在构建阶段处理它的静态 `src`，使用与 Markdown 内容相同的 `images` 配置；运行时组件仍然只是一个普通的 `<img>`。

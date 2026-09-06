@@ -71,7 +71,7 @@ pnpm create svedocs my-docs --template cloudflare
 
 ```sh
 pnpm add svedocs
-pnpm add -D svedocs-cli
+pnpm add -D svedocs-cli @tailwindcss/vite tailwindcss
 ```
 
 创建 `svedocs.config.ts`：
@@ -90,34 +90,116 @@ export default defineConfig({
     root: 'content',
     docs: 'content/docs',
     pages: 'content/pages'
-  }
+  },
+  ai: false
 });
 ```
 
 注册 Vite 插件：
 
 ```ts title="vite.config.ts"
+import tailwindcss from '@tailwindcss/vite';
+import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vite';
 import { svedocs } from 'svedocs/vite';
 import svedocsConfig from './svedocs.config';
 
-export default {
-  plugins: [
-    svedocs({ config: svedocsConfig })
-  ]
-};
+export default defineConfig({
+  plugins: [svedocs({ config: svedocsConfig }), tailwindcss(), sveltekit()]
+});
 ```
 
 在根布局里引入默认主题样式：
 
 ```svelte title="src/routes/+layout.svelte"
-<script>
+<script lang="ts">
   import 'svedocs/theme/styles.css';
+  import type { Snippet } from 'svelte';
+  let { children }: { children: Snippet } = $props();
 </script>
 
-<slot />
+{@render children()}
 ```
 
-然后按需要添加路由。最小配置只要渲染 `svedocs/theme` 里的 `DocsApp`；生成模板都包含 sitemap、robots 和可选 RSS 路由，`docs` 和 `cloudflare` 还展示了完整的搜索、Ask AI 和 OG 配置。
+合并配置时，保留应用已有的 SvelteKit 插件和布局内容。这份最小配置使用本地搜索，暂时关闭 Ask AI，等添加对应的运行时路由后再启用。
+
+在 `svelte.config.js` 中注册内容扩展名和预处理器。下面使用 `adapter-auto`；已有部署目标的应用应保留当前 adapter 和其他 `kit` 设置。如果直接使用此示例，请将 `@sveltejs/adapter-auto` 安装为开发依赖。
+
+```js title="svelte.config.js"
+import adapter from '@sveltejs/adapter-auto';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import { svedocsPreprocess, svedocsSvelteExtensions } from 'svedocs/svelte';
+
+export default {
+  extensions: svedocsSvelteExtensions,
+  preprocess: [vitePreprocess(), svedocsPreprocess()],
+  kit: { adapter: adapter() }
+};
+```
+
+### 加载当前文档
+
+创建下面的兜底路由。它处理多语言 URL，为未知文档返回真正的 404，并按需加载当前页面和正文组件。应用已有的具体 SvelteKit 路由优先于此兜底路由。
+
+```ts title="src/routes/[...path]/+page.ts"
+import componentLoaders from 'virtual:svedocs/component-loaders';
+import layoutLoaders from 'virtual:svedocs/layout-loaders';
+import { loadSvedocsPage } from 'svedocs/routes';
+import { error, redirect } from '@sveltejs/kit';
+import config from 'virtual:svedocs/config';
+import pageLoaders from 'virtual:svedocs/page-loaders';
+import pages from 'virtual:svedocs/page-index';
+import tree from 'virtual:svedocs/tree';
+import { svedocsPagePrerender } from 'svedocs/cloudflare';
+import type { SvedocsPage } from 'svedocs/core';
+import { createSvedocsRouteEntries, resolveSvedocsPageRoute } from 'svedocs/routes';
+import type { PageLoad } from './$types';
+
+export const prerender = svedocsPagePrerender(undefined, config);
+
+export function entries() {
+  return createSvedocsRouteEntries(pages, config)
+    .map((path) => ({ path: path.replace(/^\//, '') }));
+}
+
+export const load: PageLoad = async ({ params }) => {
+  const routePath = `/${params.path ?? ''}`.replace(/\/$/, '') || '/';
+  const resolution = resolveSvedocsPageRoute(routePath, pages, config);
+  if (resolution.status === 'redirect') redirect(307, resolution.location);
+  if (resolution.status === 'missing') error(404, `No page found for ${routePath}`);
+  const pageIndex = resolution.page;
+  const loaded = await loadSvedocsPage(pageIndex, { pages: pageLoaders, components: componentLoaders, layouts: layoutLoaders });
+  const { page } = loaded;
+  return { ...loaded, pages: mergeCurrentPage(pages, page), search: [], tree, config };
+};
+
+function mergeCurrentPage(pages: SvedocsPage[], current: SvedocsPage): SvedocsPage[] {
+  return pages.map((page) => page.id === current.id ? current : page);
+}
+```
+
+### 渲染文档
+
+把加载好的页面和主题组件传给 `DocsApp`。搜索索引会在需要时加载。
+
+```svelte title="src/routes/[...path]/+page.svelte"
+<script lang="ts">
+  import { DocsApp } from 'svedocs/theme';
+  import themeComponents from 'virtual:svedocs/theme-components';
+  import loadSearch from 'virtual:svedocs/search-loader';
+  export let data;
+</script>
+
+<DocsApp page={data.page} pages={data.pages} tree={data.tree} search={data.search} config={data.config} content={data.content} layout={data.layout} {themeComponents} {loadSearch} />
+```
+
+如果项目还没有引用虚拟模块类型，在 `src/app.d.ts` 中添加：
+
+```ts title="src/app.d.ts"
+/// <reference types="svedocs/virtual" />
+```
+
+现在 `/docs` 和未被现有路由占用的独立内容页面都可以渲染，应用可以保留原来的首页。之后再按需添加[搜索和 Ask AI 接口](/docs/zh/integrations/search-ai)、[SEO 路由](/docs/zh/integrations/seo-og)和 [Agent 路由](/docs/zh/integrations/agent-interface)；生成模板已经包含这些接线。
 
 ## 添加内容
 
@@ -148,7 +230,7 @@ pnpm check
 pnpm build
 ```
 
-`pnpm check` 会检查内容和路由；`pnpm build` 会确认 SvelteKit、svedocs Vite 插件、路由、主题和构建模式可以正常配合。
+`pnpm check` 运行应用的 Svelte 和 TypeScript 检查。另行运行 `pnpm exec svedocs check --strict`，检查内容链接、页面描述和翻译缺口。用 `pnpm dev` 打开 `/docs`，再运行 `pnpm build` 验证它与当前 adapter 的配合。
 
 ## 升级 svedocs
 

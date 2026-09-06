@@ -154,6 +154,8 @@ svedocs({
 
 可用插槽：`background`、`landing`、`home-hero-visual`、`home-features` 和 `doc-header`。
 
+内置页面布局也接受可选的 `context`。`DocsApp` 统一解析当前语言和导航，并将上下文经布局传给 `Root`。命名布局组合 `RootLayout` 时，请继续传入 `{context}`；独立使用布局且未传入时，布局会自行解析。传入的 `tree` 保留排序、标签和自定义分组，只过滤其他语言的页面。
+
 ## Root
 
 `Root` 负责文档元数据、主题初始化脚本、路由 hydration 状态、滚动条显隐和共享背景插槽。默认的可视外壳是 `Layout`。

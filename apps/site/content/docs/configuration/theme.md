@@ -22,6 +22,16 @@ Import the theme stylesheet from the SvelteKit root layout:
 
 The stylesheet defines `--sd-*` tokens and uses `data-theme` for light and dark mode.
 
+## Reading style
+
+Set `theme.readingStyle: 'plain'` for a quiet article surface without the animated grid, corner marks, or card shadow. The default `'decorated'` preserves the existing theme. Colors, fonts, custom background slots, and home layouts remain independently configurable.
+
+```ts
+export default defineConfig({
+  theme: { readingStyle: 'plain' }
+});
+```
+
 ## Optimized images in custom layouts
 
 Use the exported `SvedocsImage` component when a custom landing page or theme component needs a local image. The Vite plugin resolves its static `src` during the build, using the same `images` configuration as Markdown content, and the component renders a normal `<img>` at runtime.

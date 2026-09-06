@@ -149,3 +149,7 @@ import {
 ```
 
 Use these APIs for custom route handlers, custom layouts, and build-time OG generation.
+
+## Virtual module types
+
+Add `/// <reference types="svedocs/virtual" />` to `src/app.d.ts` to type the `virtual:svedocs/*` imports. This export contains TypeScript declarations; it is not a runtime module.

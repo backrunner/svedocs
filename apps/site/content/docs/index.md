@@ -21,25 +21,7 @@ pnpm dev
 
 Open the local URL printed by the dev server. The `docs` template is ready to use: it includes sample pages, local search, an Ask AI route that works without credentials, sitemap and robots routes, an optional RSS route, and Open Graph images.
 
-Use a smaller template when you want less surface area:
-
-| Template | Use it when |
-| --- | --- |
-| `minimal` | You want a small SvelteKit docs shell and plan to add integrations later. |
-| `docs` | You want search, Ask AI, SEO, and OG routes set up from the start. |
-| `cloudflare` | You plan to deploy to Cloudflare Pages and want Wrangler bindings from the start. |
-
-## What's included
-
-| Layer | What it does |
-| --- | --- |
-| Content | Reads Markdown, MDX-style, and SVX files, including frontmatter, headings, and links. |
-| Navigation | Builds sidebars, previous/next links, localized routes, and page outlines from the content tree. |
-| Theme | Provides a Svelte theme, Tailwind CSS v4 variables, light/dark modes, code blocks, diffs, callouts, forms, and docs layouts. |
-| Search | Creates page and section records for local MiniSearch, Algolia, Typesense, and Cloudflare AI Search. |
-| Ask AI | Uses search records as citations and supports local answers, Cloudflare AI Search, Workers AI, and OpenAI-compatible services. |
-| SEO | Generates canonical URLs, language alternates, JSON-LD, sitemap, optional RSS, robots, and OG images. |
-| CLI | Creates, checks, builds, indexes, upgrades, and deploys documentation projects. |
+For a smaller starting point or Cloudflare bindings, see [Choose a template](/docs/installation#choose-a-template). To integrate an existing app, follow [Installation](/docs/installation#add-svedocs-to-an-existing-app).
 
 ## Project anatomy
 
@@ -98,22 +80,15 @@ Keep these commands running as part of the writing loop:
 ```sh
 pnpm dev
 pnpm check
+pnpm exec svedocs check --strict
 pnpm build
 ```
 
 `svedocs check` catches missing descriptions, duplicate routes, duplicate canonical URLs, broken internal links, missing anchors, missing assets, translation gaps, and package export issues when requested.
 
-## Production checklist
+## Prepare to publish
 
-Before shipping a public docs site:
-
-- Set `site.name`, `site.title`, `site.description`, and `site.url`.
-- Give every important page a unique `description`.
-- Run `svedocs check --strict`.
-- Decide whether the site should build as `edge`, `static`, or `spa`.
-- Configure search and Ask AI providers only after local content is stable.
-- Keep secrets in environment variables or `.dev.vars`, never in committed docs files.
-- Generate or route OG images for pages that will be shared publicly.
+Set `site.name`, `site.description`, and `site.url` in `svedocs.config.ts`, then rerun the checks and build. Follow [Cloudflare deployment](/docs/integrations/cloudflare) to publish the default edge build, or choose [static output](/docs/configuration#build-modes) for a static host.
 
 ## Where to go next
 
