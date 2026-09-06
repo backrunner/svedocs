@@ -1,0 +1,129 @@
+.sd-search-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  border-radius: 0;
+  color: var(--sd-muted);
+}
+
+.sd-theme-toggle:hover,
+.sd-menu-button:hover,
+.sd-search-trigger:hover,
+.sd-floating-tool:hover,
+.sd-button:hover {
+  border-color: color-mix(in srgb, var(--sd-accent) 55%, var(--sd-line));
+  transform: translateY(-1px);
+}
+
+.sd-search-trigger {
+  min-width: min(16rem, 28vw);
+  justify-content: space-between;
+}
+
+.sd-search-trigger kbd {
+  border: 1px solid var(--sd-line);
+  padding: .05rem .35rem;
+  color: var(--sd-muted);
+  font: .72rem var(--font-mono);
+}
+
+.sd-dialog-backdrop,
+.sd-search-dialog::backdrop,
+.sd-chat-panel::backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: color-mix(in srgb, var(--sd-bg) 70%, transparent);
+  backdrop-filter: blur(8px);
+  animation: sd-fade-in .14s ease both;
+}
+
+.sd-search-dialog {
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  right: auto;
+  bottom: auto;
+  position: fixed;
+  z-index: 70;
+  border: 1px solid var(--sd-line);
+  background: var(--sd-panel);
+  color: var(--sd-ink);
+  box-shadow: 0 24px 80px color-mix(in srgb, var(--sd-ink) 18%, transparent);
+  animation: sd-dialog-in .16s ease both;
+}
+
+.sd-search-dialog {
+  left: 50%;
+  top: 50%;
+  width: min(44rem, calc(100vw - 2rem));
+  transform: translate(-50%, -50%);
+}
+
+.sd-search-box {
+  display: block;
+  border-bottom: 1px solid var(--sd-line);
+}
+
+.sd-search-box input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 0;
+  background: transparent;
+  color: var(--sd-ink);
+  font: inherit;
+}
+
+.sd-search-box input {
+  min-height: 3.6rem;
+  padding: 0 1rem;
+  font-size: 1.05rem;
+}
+
+.sd-search-box input:focus {
+  outline: none;
+}
+
+.sd-search-results {
+  display: grid;
+  max-height: min(32rem, 70vh);
+  overflow: auto;
+  padding: .45rem;
+}
+
+.sd-search-results a {
+  display: grid;
+  gap: .22rem;
+  padding: .8rem;
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.sd-search-results a.sd-active,
+.sd-search-results a:hover {
+  border-color: var(--sd-line);
+  background: color-mix(in srgb, var(--sd-accent) 10%, transparent);
+}
+
+.sd-search-results span {
+  font-family: var(--font-sans);
+  font-weight: 650;
+}
+
+.sd-search-results small,
+.sd-search-results p,
+.sd-empty-state {
+  color: var(--sd-muted);
+}
+
+.sd-search-results p,
+.sd-empty-state {
+  margin: 0;
+  font-size: .9rem;
+  line-height: 1.5;
+}
+
+.sd-empty-state {
+  padding: 1rem;
+}

@@ -1,0 +1,202 @@
+@theme {
+  --font-sans: "IBM Plex Sans", "Avenir Next", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", monospace;
+  --color-sd-bg: #f8f7f2;
+  --color-sd-ink: #161612;
+  --color-sd-muted: #68675f;
+  --color-sd-line: #dedbd0;
+  --color-sd-panel: #fffdf7;
+  --color-sd-accent: #007f68;
+  --color-sd-accent-2: #d64735;
+}
+
+:root {
+  color-scheme: light;
+  --sd-bg: #f8f7f2;
+  --sd-ink: #161612;
+  --sd-muted: #68675f;
+  --sd-line: #dedbd0;
+  --sd-grid-line: color-mix(in srgb, var(--sd-line) 42%, transparent);
+  --sd-panel: #fffdf7;
+  --sd-accent: #007f68;
+  --sd-accent-2: #d64735;
+  --sd-radius: 0px;
+  --sd-font-display: var(--font-sans);
+  --sd-scrollbar-size: 10px;
+  --sd-scrollbar-thumb: color-mix(in srgb, var(--sd-ink) 30%, transparent);
+  --sd-scrollbar-thumb-hover: color-mix(in srgb, var(--sd-accent) 62%, var(--sd-ink));
+  --sd-scrollbar-track: transparent;
+}
+
+:root[data-theme="dark"],
+html:has(.sd-root[data-theme="dark"]),
+.sd-root[data-theme="dark"] {
+  color-scheme: dark;
+  --sd-bg: #11130f;
+  --sd-ink: #f4f1e8;
+  --sd-muted: #aaa698;
+  --sd-line: #2f332d;
+  --sd-grid-line: color-mix(in srgb, var(--sd-line) 45%, transparent);
+  --sd-panel: #181b16;
+  --sd-accent: #50d6b3;
+  --sd-accent-2: #ff8a66;
+  --sd-scrollbar-thumb: color-mix(in srgb, var(--sd-ink) 34%, transparent);
+  --sd-scrollbar-thumb-hover: color-mix(in srgb, var(--sd-accent) 70%, var(--sd-ink));
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--sd-bg);
+  color: var(--sd-ink);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--sd-bg);
+  color: var(--sd-ink);
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+:is(
+  html,
+  body,
+  .sd-sidebar,
+  .sd-toc,
+  .sd-topbar-menu,
+  .sd-search-results,
+  .sd-chat-messages,
+  .sd-prose table,
+  .sd-code code,
+  .sd-prose pre code,
+  .sd-diff-scroll
+) {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+html.sd-is-window-scrolling,
+body.sd-is-window-scrolling,
+:is(
+  .sd-sidebar,
+  .sd-toc,
+  .sd-topbar-menu,
+  .sd-search-results,
+  .sd-chat-messages,
+  .sd-prose table,
+  .sd-code code,
+  .sd-prose pre code,
+  .sd-diff-scroll
+):is(:hover, :focus, :focus-within, .sd-is-scrolling) {
+  scrollbar-color: var(--sd-scrollbar-thumb) var(--sd-scrollbar-track);
+}
+
+:is(
+  html,
+  body,
+  .sd-sidebar,
+  .sd-toc,
+  .sd-topbar-menu,
+  .sd-search-results,
+  .sd-chat-messages,
+  .sd-prose table,
+  .sd-code code,
+  .sd-prose pre code,
+  .sd-diff-scroll
+)::-webkit-scrollbar {
+  width: var(--sd-scrollbar-size);
+  height: var(--sd-scrollbar-size);
+}
+
+:is(
+  html,
+  body,
+  .sd-sidebar,
+  .sd-toc,
+  .sd-topbar-menu,
+  .sd-search-results,
+  .sd-chat-messages,
+  .sd-prose table,
+  .sd-code code,
+  .sd-prose pre code,
+  .sd-diff-scroll
+)::-webkit-scrollbar-track {
+  background: var(--sd-scrollbar-track);
+}
+
+:is(
+  html,
+  body,
+  .sd-sidebar,
+  .sd-toc,
+  .sd-topbar-menu,
+  .sd-search-results,
+  .sd-chat-messages,
+  .sd-prose table,
+  .sd-code code,
+  .sd-prose pre code,
+  .sd-diff-scroll
+)::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  background-clip: padding-box;
+}
+
+html.sd-is-window-scrolling::-webkit-scrollbar-thumb,
+body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
+:is(
+  .sd-sidebar,
+  .sd-toc,
+  .sd-topbar-menu,
+  .sd-search-results,
+  .sd-chat-messages,
+  .sd-prose table,
+  .sd-code code,
+  .sd-prose pre code,
+  .sd-diff-scroll
+):is(:hover, :focus, :focus-within, .sd-is-scrolling)::-webkit-scrollbar-thumb {
+  background-color: var(--sd-scrollbar-thumb);
+}
+
+:is(
+  html,
+  body,
+  .sd-sidebar,
+  .sd-toc,
+  .sd-topbar-menu,
+  .sd-search-results,
+  .sd-chat-messages,
+  .sd-prose table,
+  .sd-code code,
+  .sd-prose pre code,
+  .sd-diff-scroll
+)::-webkit-scrollbar-thumb:hover {
+  background-color: var(--sd-scrollbar-thumb-hover);
+}
+
+@supports (overflow: overlay) {
+  html {
+    overflow-y: overlay;
+  }
+
+  .sd-sidebar,
+  .sd-toc,
+  .sd-topbar-menu,
+  .sd-search-results,
+  .sd-chat-messages,
+  .sd-prose table,
+  .sd-diff-scroll {
+    overflow: overlay;
+  }
+
+  .sd-code code,
+  .sd-prose pre code {
+    overflow-x: overlay;
+    overflow-y: hidden;
+  }
+}

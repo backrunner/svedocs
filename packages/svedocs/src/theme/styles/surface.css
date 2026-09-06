@@ -1,0 +1,89 @@
+.sd-root {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  background:
+    linear-gradient(var(--sd-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--sd-grid-line) 1px, transparent 1px),
+    var(--sd-bg);
+  background-size: 48px 48px;
+}
+
+.sd-root[data-surface="reading"] {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--sd-panel) 58%, transparent), transparent 18rem),
+    var(--sd-bg);
+}
+
+.sd-root.sd-has-background-slot,
+.sd-root.sd-has-background-slot[data-surface="reading"] {
+  background: var(--sd-bg);
+}
+
+.sd-root.sd-has-background-slot[data-surface="reading"]::after {
+  display: none;
+}
+
+.sd-root.sd-has-background-slot .sd-home-hero::before {
+  display: none;
+}
+
+.sd-background-slot {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.sd-background-slot > * {
+  width: 100%;
+  min-height: 100%;
+}
+
+.sd-root[data-surface="reading"]::after {
+  content: "";
+  position: fixed;
+  inset: auto 0 0;
+  height: min(22rem, 42vh);
+  pointer-events: none;
+  z-index: 0;
+  background:
+    linear-gradient(var(--sd-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--sd-grid-line) 1px, transparent 1px),
+    radial-gradient(circle at 72% 86%, color-mix(in srgb, var(--sd-accent) 13%, transparent), transparent 19rem);
+  background-size: 56px 56px, 56px 56px, 100% 100%;
+  mask-image: linear-gradient(to top, black 12%, transparent 100%);
+  opacity: .72;
+  animation: sd-reading-grid-drift 24s linear infinite;
+}
+
+.sd-root[data-surface="reading"] > main,
+.sd-root[data-surface="reading"] > .sd-doc-shell,
+.sd-root[data-surface="reading"] > .sd-page,
+.sd-root[data-surface="reading"] > .sd-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.sd-root.sd-has-background-slot > main,
+.sd-root.sd-has-background-slot > .sd-doc-shell,
+.sd-root.sd-has-background-slot > .sd-page,
+.sd-root.sd-has-background-slot > .sd-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.sd-skip {
+  position: fixed;
+  left: 1rem;
+  top: -4rem;
+  z-index: 50;
+  background: var(--sd-ink);
+  color: var(--sd-bg);
+  padding: .6rem .8rem;
+}
+
+.sd-skip:focus {
+  top: 1rem;
+}

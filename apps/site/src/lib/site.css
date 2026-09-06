@@ -1,10 +1,5 @@
 /* The official site's quieter reading surface; package theme defaults stay configurable. */
-.sd-root,
-.sd-root[data-surface='reading'] { background: var(--sd-bg); }
-.sd-root[data-surface='reading']::after,
-.sd-doc-corner { display: none; }
-.sd-doc,
-.sd-page { box-shadow: none; }
+.sd-root[data-surface='home'] { background: var(--sd-bg); }
 .sd-page h1,
 .sd-doc h1 {
   max-width: none;

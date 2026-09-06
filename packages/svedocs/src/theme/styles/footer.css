@@ -1,0 +1,54 @@
+.sd-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 2rem 1.2rem;
+  border-top: 2px solid color-mix(in srgb, var(--sd-ink) 28%, transparent);
+  color: var(--sd-muted);
+  font-size: .9rem;
+}
+
+.sd-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .8rem;
+}
+
+.sd-footer nav a {
+  border: 1px solid color-mix(in srgb, var(--sd-line) 80%, transparent);
+  background: color-mix(in srgb, var(--sd-panel) 76%, transparent);
+  padding: .42rem .62rem;
+  color: var(--sd-ink);
+  font-size: .84rem;
+}
+
+.sd-footer nav a.sd-footer-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  line-height: 0;
+}
+
+.sd-footer nav a.sd-footer-icon svg {
+  display: block;
+  width: 1.05rem;
+  height: 1.05rem;
+  fill: currentColor;
+}
+
+.sd-footer nav a:last-child {
+  background: var(--sd-ink);
+  color: var(--sd-bg);
+}
+
+.sd-footer nav a:hover {
+  border-color: color-mix(in srgb, var(--sd-accent) 55%, var(--sd-line));
+  transform: translateY(-1px);
+}

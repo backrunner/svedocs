@@ -1,0 +1,68 @@
+.sd-prose table {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  max-height: min(32rem, 72vh);
+  overflow: auto;
+  scrollbar-gutter: auto;
+  border: 1px solid var(--sd-line);
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 6px;
+  background: var(--sd-panel);
+  color: var(--sd-ink);
+  font-size: .875rem;
+}
+
+.sd-prose th,
+.sd-prose td {
+  min-width: 8rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--sd-line) 70%, transparent);
+  padding: .7rem .9rem;
+  vertical-align: top;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.sd-prose thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: color-mix(in srgb, var(--sd-panel) 70%, var(--sd-bg) 30%);
+  background-image: none;
+  border-bottom: 1px solid var(--sd-line);
+  color: color-mix(in srgb, var(--sd-ink) 90%, var(--sd-muted));
+  font-weight: 600;
+  font-size: .82rem;
+  letter-spacing: .005em;
+  white-space: nowrap;
+}
+
+.sd-prose td {
+  background: var(--sd-panel);
+  color: color-mix(in srgb, var(--sd-ink) 92%, var(--sd-muted));
+}
+
+.sd-prose tbody tr:hover td {
+  background: color-mix(in srgb, var(--sd-accent) 4%, var(--sd-panel));
+}
+
+.sd-prose tbody tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--sd-panel) 92%, var(--sd-bg) 8%);
+}
+
+.sd-prose tbody tr:nth-child(even):hover td {
+  background: color-mix(in srgb, var(--sd-accent) 4%, color-mix(in srgb, var(--sd-panel) 92%, var(--sd-bg) 8%));
+}
+
+.sd-prose tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.sd-prose :is(th, td) code {
+  padding: .08rem .35rem;
+  font-size: .82em;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--sd-accent) 8%, color-mix(in srgb, var(--sd-bg) 70%, var(--sd-panel)));
+  border: 1px solid color-mix(in srgb, var(--sd-line) 60%, transparent);
+}

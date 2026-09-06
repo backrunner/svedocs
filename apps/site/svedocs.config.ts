@@ -14,6 +14,7 @@ export default defineConfig({
   },
   theme: {
     defaultMode: 'system',
+    readingStyle: 'plain',
     palette: {
       accent: 'emerald',
       neutral: 'zinc'

@@ -1,0 +1,125 @@
+.sd-floating-toolbar {
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  border: 1px solid color-mix(in srgb, var(--sd-line) 86%, transparent);
+  background: color-mix(in srgb, var(--sd-panel) 88%, transparent);
+  box-shadow: 0 18px 42px color-mix(in srgb, var(--sd-ink) 13%, transparent);
+  backdrop-filter: blur(14px);
+  padding: .3rem;
+  transition: padding .24s cubic-bezier(.4, 0, .2, 1), gap .24s cubic-bezier(.4, 0, .2, 1), background .24s ease, border-color .24s ease;
+}
+
+.sd-floating-toolbar[data-mode='solo'] {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  padding: 0;
+  gap: 0;
+}
+
+.sd-floating-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .42rem;
+  min-width: 2.2rem;
+  min-height: 2.2rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--sd-muted);
+  padding: 0 .6rem;
+  font: .82rem var(--font-sans);
+  border-radius: var(--sd-radius);
+  cursor: pointer;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease, padding .24s cubic-bezier(.4, 0, .2, 1), min-width .24s cubic-bezier(.4, 0, .2, 1), width .24s cubic-bezier(.4, 0, .2, 1);
+}
+
+.sd-floating-tool-icon {
+  padding: 0;
+  min-width: 2.2rem;
+  width: 2.2rem;
+}
+
+.sd-floating-tool svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  flex-shrink: 0;
+}
+
+.sd-floating-tool-ai {
+  background: var(--sd-ink);
+  color: var(--sd-bg);
+  overflow: hidden;
+  padding: 0 .8rem 0 .65rem;
+}
+
+.sd-floating-tool-label {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 8rem;
+  opacity: 1;
+  transition: max-width .28s cubic-bezier(.4, 0, .2, 1), opacity .2s ease, margin .28s cubic-bezier(.4, 0, .2, 1);
+}
+
+.sd-floating-tool-ai[data-collapsed='true'] {
+  padding: 0;
+  min-width: 2.2rem;
+  width: 2.2rem;
+  gap: 0;
+}
+
+.sd-floating-tool-ai[data-collapsed='true'] .sd-floating-tool-label {
+  max-width: 0;
+  opacity: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.sd-floating-tool-back {
+  animation: sd-floating-tool-pop .22s cubic-bezier(.4, 0, .2, 1) both;
+}
+
+@keyframes sd-floating-tool-pop {
+  0% { opacity: 0; transform: scale(.85); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.sd-floating-tool:hover {
+  background: color-mix(in srgb, var(--sd-accent) 10%, transparent);
+  color: var(--sd-ink);
+}
+
+.sd-floating-tool-ai:hover {
+  background: color-mix(in srgb, var(--sd-ink) 86%, var(--sd-accent) 14%);
+  color: var(--sd-bg);
+}
+
+.sd-floating-toolbar[data-mode='solo'] .sd-floating-tool-icon {
+  background: color-mix(in srgb, var(--sd-panel) 92%, transparent);
+  border-color: color-mix(in srgb, var(--sd-line) 86%, transparent);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--sd-ink) 12%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sd-floating-toolbar,
+  .sd-floating-tool,
+  .sd-floating-tool-label {
+    transition: none;
+  }
+  .sd-floating-tool-back {
+    animation: none;
+  }
+}

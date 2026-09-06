@@ -1,0 +1,12 @@
+/* Plain reading surfaces retain content and custom background slots. */
+.sd-root[data-surface="reading"][data-reading-style="plain"] {
+  background: var(--sd-bg);
+}
+.sd-root[data-reading-style="plain"]::after,
+.sd-root[data-reading-style="plain"] .sd-doc-corner {
+  display: none;
+}
+.sd-root[data-reading-style="plain"] .sd-doc,
+.sd-root[data-reading-style="plain"] .sd-page {
+  box-shadow: none;
+}

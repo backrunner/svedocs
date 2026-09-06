@@ -113,6 +113,7 @@ export interface SvedocsConfig {
   };
   theme?: {
     defaultMode?: 'light' | 'dark' | 'system';
+    readingStyle?: 'decorated' | 'plain';
     palette?: SvedocsThemePalette;
     fonts?: SvedocsThemeFonts;
     radius?: string;
@@ -228,6 +229,7 @@ export const svedocsConfigSchema = z.object({
   theme: z
     .object({
       defaultMode: z.enum(['light', 'dark', 'system']).optional(),
+      readingStyle: z.enum(['decorated', 'plain']).optional(),
       palette: z
         .object({
           accent: z.string().optional(),

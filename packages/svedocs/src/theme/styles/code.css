@@ -1,0 +1,196 @@
+.sd-code,
+.sd-prose pre {
+  position: relative;
+  display: block;
+  margin: 1.5rem 0;
+  border: 1px solid color-mix(in srgb, var(--sd-line) 90%, transparent);
+  background: #fbfbfa;
+  color: var(--sd-ink);
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 20px;
+  counter-reset: sd-code-line;
+  border-radius: 6px;
+  tab-size: 2;
+  overflow: hidden;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--sd-ink) 4%, transparent);
+}
+
+.sd-code.shiki,
+.sd-prose pre.shiki {
+  background-color: #fbfbfa !important;
+}
+
+.sd-code.shiki[style*="--shiki-light:"],
+.sd-prose pre.shiki[style*="--shiki-light:"] {
+  color: var(--shiki-light) !important;
+}
+
+.sd-code.shiki code,
+.sd-prose pre.shiki code {
+  color: inherit !important;
+}
+
+.sd-code.shiki [style*="--shiki-light:"],
+.sd-prose pre.shiki [style*="--shiki-light:"] {
+  color: var(--shiki-light) !important;
+  font-style: var(--shiki-light-font-style, normal) !important;
+  font-weight: var(--shiki-light-font-weight, inherit) !important;
+  text-decoration: var(--shiki-light-text-decoration, none) !important;
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code,
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-prose pre {
+  background: #1e1e1e;
+  border-color: color-mix(in srgb, var(--sd-line) 90%, transparent);
+  box-shadow: none;
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code.shiki,
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-prose pre.shiki {
+  background-color: #1e1e1e !important;
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code.shiki[style*="--shiki-dark:"],
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-prose pre.shiki[style*="--shiki-dark:"] {
+  color: var(--shiki-dark) !important;
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code.shiki [style*="--shiki-dark:"],
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-prose pre.shiki [style*="--shiki-dark:"] {
+  color: var(--shiki-dark) !important;
+  font-style: var(--shiki-dark-font-style, normal) !important;
+  font-weight: var(--shiki-dark-font-weight, inherit) !important;
+  text-decoration: var(--shiki-dark-text-decoration, none) !important;
+}
+
+.sd-code code,
+.sd-prose pre code {
+  display: block;
+  width: 100%;
+  padding: .75rem 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  white-space: pre;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-gutter: auto;
+}
+
+.sd-code[data-wrap="true"] code,
+.sd-prose pre[data-wrap="true"] code {
+  white-space: pre-wrap;
+  overflow-x: hidden;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.sd-code[data-wrap="true"] .sd-line-content,
+.sd-prose pre[data-wrap="true"] .sd-line-content {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.sd-code[data-wrap="true"] .line,
+.sd-prose pre[data-wrap="true"] .line {
+  width: 100%;
+  min-width: 0;
+}
+
+.sd-code .line {
+  display: flex;
+  align-items: stretch;
+  position: relative;
+  width: max-content;
+  min-width: 100%;
+  padding: 0 1.2rem;
+  background: transparent;
+  line-height: 20px;
+  min-height: 20px;
+}
+
+.sd-code .sd-line-no {
+  flex: 0 0 auto;
+  width: 1.8rem;
+  margin-right: .9rem;
+  padding-right: .9rem;
+  border-right: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  text-align: right;
+  color: color-mix(in srgb, currentColor 35%, transparent);
+  font-size: inherit;
+  line-height: inherit;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  pointer-events: none;
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code .sd-line-no {
+  border-right-color: color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.sd-code .sd-line-no::selection {
+  background: transparent;
+  color: inherit;
+}
+
+.sd-code .sd-line-content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sd-code .sd-line-content[data-empty="true"]::before,
+.sd-code .sd-line-content:empty::before {
+  content: "\00a0";
+}
+
+.sd-code[data-language='text'] .sd-line-no,
+.sd-code[data-language='txt'] .sd-line-no,
+.sd-code[data-language='plaintext'] .sd-line-no,
+.sd-code[data-no-line-numbers="true"] .sd-line-no {
+  display: none;
+}
+
+.sd-code .sd-line-add {
+  background: color-mix(in srgb, #2ea043 16%, transparent);
+}
+
+.sd-code .sd-line-remove {
+  background: color-mix(in srgb, #f85149 16%, transparent);
+}
+
+.sd-code .sd-line-add > .sd-line-no {
+  color: #2ea043;
+}
+
+.sd-code .sd-line-remove > .sd-line-no {
+  color: #f85149;
+}
+
+.sd-code .sd-line-meta {
+  background: color-mix(in srgb, var(--sd-accent) 8%, transparent);
+  color: color-mix(in srgb, var(--sd-accent) 80%, currentColor);
+}
+
+.sd-code .sd-line-meta > .sd-line-no {
+  color: var(--sd-accent);
+}
+
+.sd-code .sd-line-highlight {
+  background: color-mix(in srgb, var(--sd-accent) 10%, transparent);
+  box-shadow: inset 2px 0 0 var(--sd-accent);
+}
+
+.sd-code .sd-line-focus {
+  background: color-mix(in srgb, var(--sd-accent-2) 10%, transparent);
+  box-shadow: inset 2px 0 0 var(--sd-accent-2);
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code .sd-line-add { background: color-mix(in srgb, #3fb950 18%, transparent); }
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code .sd-line-remove { background: color-mix(in srgb, #ff7b72 18%, transparent); }

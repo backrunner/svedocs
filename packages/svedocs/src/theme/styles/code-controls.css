@@ -1,0 +1,170 @@
+.sd-code-header {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  padding: .35rem .35rem .35rem .85rem;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  background: color-mix(in srgb, currentColor 4%, transparent);
+  color: inherit;
+  font-family: var(--font-sans);
+  font-size: .78rem;
+  line-height: 1;
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code-header {
+  background: #181818;
+  border-bottom-color: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code-language {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  border-color: color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.sd-code-language {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .22rem .5rem;
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  color: color-mix(in srgb, currentColor 78%, transparent);
+  font: 600 .7rem var(--font-mono);
+  letter-spacing: .03em;
+  text-transform: none;
+}
+
+.sd-code-language::before {
+  content: "";
+  display: inline-block;
+  width: .4rem;
+  height: .4rem;
+  border-radius: 0;
+  background: var(--sd-code-language-color, color-mix(in srgb, var(--sd-accent) 70%, currentColor 30%));
+}
+
+.sd-code-language[data-language="ts"],
+.sd-code-language[data-language="tsx"] { --sd-code-language-color: #3178c6; }
+.sd-code-language[data-language="js"],
+.sd-code-language[data-language="jsx"],
+.sd-code-language[data-language="mjs"],
+.sd-code-language[data-language="cjs"] { --sd-code-language-color: #f1c40f; }
+.sd-code-language[data-language="svelte"],
+.sd-code-language[data-language="svx"] { --sd-code-language-color: #ff3e00; }
+.sd-code-language[data-language="vue"] { --sd-code-language-color: #41b883; }
+.sd-code-language[data-language="html"] { --sd-code-language-color: #e34f26; }
+.sd-code-language[data-language="css"] { --sd-code-language-color: #2965f1; }
+.sd-code-language[data-language="scss"],
+.sd-code-language[data-language="sass"] { --sd-code-language-color: #c69; }
+.sd-code-language[data-language="json"],
+.sd-code-language[data-language="jsonc"] { --sd-code-language-color: #cbcb41; }
+.sd-code-language[data-language="yaml"],
+.sd-code-language[data-language="yml"] { --sd-code-language-color: #cb171e; }
+.sd-code-language[data-language="toml"] { --sd-code-language-color: #9c4221; }
+.sd-code-language[data-language="md"],
+.sd-code-language[data-language="mdx"] { --sd-code-language-color: #519aba; }
+.sd-code-language[data-language="sh"],
+.sd-code-language[data-language="bash"],
+.sd-code-language[data-language="zsh"] { --sd-code-language-color: #4eaa25; }
+.sd-code-language[data-language="ps1"] { --sd-code-language-color: #2671be; }
+.sd-code-language[data-language="python"],
+.sd-code-language[data-language="py"] { --sd-code-language-color: #3572a5; }
+.sd-code-language[data-language="rs"] { --sd-code-language-color: #dea584; }
+.sd-code-language[data-language="go"] { --sd-code-language-color: #00add8; }
+.sd-code-language[data-language="java"] { --sd-code-language-color: #b07219; }
+.sd-code-language[data-language="kt"] { --sd-code-language-color: #a97bff; }
+.sd-code-language[data-language="swift"] { --sd-code-language-color: #f05138; }
+.sd-code-language[data-language="c"] { --sd-code-language-color: #555555; }
+.sd-code-language[data-language="cpp"] { --sd-code-language-color: #f34b7d; }
+.sd-code-language[data-language="cs"] { --sd-code-language-color: #178600; }
+.sd-code-language[data-language="sql"] { --sd-code-language-color: #e38c00; }
+.sd-code-language[data-language="diff"] { --sd-code-language-color: #2ea043; }
+
+.sd-code-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: color-mix(in srgb, currentColor 80%, transparent);
+  font-weight: 600;
+  letter-spacing: -.005em;
+}
+
+.sd-code-stats {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  font: 600 .7rem var(--font-mono);
+  letter-spacing: .02em;
+}
+
+.sd-code-stat-add { color: #2ea043; }
+.sd-code-stat-remove { color: #d1242f; }
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code-stat-add { color: #3fb950; }
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code-stat-remove { color: #ff7b72; }
+
+.sd-code-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  margin-left: auto;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: color-mix(in srgb, currentColor 65%, transparent);
+  cursor: pointer;
+  transition: background .14s ease, color .14s ease, border-color .14s ease, opacity .14s ease, transform .14s ease;
+}
+
+.sd-code-copy svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.sd-code-copy:hover {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  color: color-mix(in srgb, currentColor 90%, transparent);
+  border-color: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.sd-code-copy:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--sd-accent) 70%, transparent);
+  outline-offset: 1px;
+}
+
+.sd-code-copy[data-state="copied"] {
+  color: #2ea043;
+  border-color: color-mix(in srgb, #2ea043 35%, transparent);
+  background: color-mix(in srgb, #2ea043 10%, transparent);
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-code-copy[data-state="copied"] {
+  color: #3fb950;
+  background: color-mix(in srgb, #3fb950 16%, transparent);
+}
+
+.sd-code-copy[data-state="copied"] svg {
+  animation: sd-code-copy-pop .3s ease both;
+}
+
+@keyframes sd-code-copy-pop {
+  0% { transform: scale(.6); opacity: 0; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.sd-code:not(:has(.sd-code-header)) .sd-code-copy {
+  position: absolute;
+  top: .5rem;
+  right: .5rem;
+}

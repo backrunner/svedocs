@@ -59,7 +59,7 @@ test('localizes interactive controls on zh docs pages', async ({ page }) => {
   await expect(page.getByRole('navigation', { name: '主导航' }).getByRole('link', { name: '配置' })).toHaveAttribute('href', '/docs/zh/configuration');
   await expect(page.getByRole('button', { name: '搜索文档' })).toBeVisible();
   await expect(page.getByRole('button', { name: '问 AI' })).toBeVisible();
-  await expect(page.getByLabel('本页内容')).toBeVisible();
+  await expect(page.getByRole('complementary', { name: '本页内容' })).toBeVisible();
 
   const sectionHeading = page.getByRole('heading', { name: '创建站点 链接到此章节' });
   const headingAnchor = sectionHeading.getByRole('link', { name: '链接到此章节' });

@@ -50,6 +50,17 @@
     {/if}
     <svelte:component this={Mobile} items={mobileTree} currentPath={mobileCurrentPath} {themeComponents} {context} />
   </div>
+  {#if context.config.search.enabled}
+    <button
+      class="sd-mobile-search-button"
+      type="button"
+      aria-label={context.t('search.dialog')}
+      aria-haspopup="dialog"
+      on:click={() => window.dispatchEvent(new Event('svedocs:open-search'))}
+    >
+      <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></svg>
+    </button>
+  {/if}
   <button
     class="sd-menu-button"
     type="button"

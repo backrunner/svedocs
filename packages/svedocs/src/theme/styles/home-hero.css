@@ -1,0 +1,197 @@
+.sd-home {
+  max-width: none;
+}
+
+.sd-home-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr);
+  align-items: center;
+  gap: clamp(2rem, 4vw, 3.5rem);
+  min-height: min(720px, calc(100vh - 140px));
+  padding: clamp(3rem, 7vw, 5.5rem) clamp(1.2rem, 6vw, 5rem);
+  overflow: hidden;
+}
+
+.sd-home-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(color-mix(in srgb, var(--sd-grid-line) 55%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--sd-grid-line) 55%, transparent) 1px, transparent 1px),
+    radial-gradient(ellipse at 78% 22%, color-mix(in srgb, var(--sd-accent-2) 14%, transparent), transparent 26rem),
+    radial-gradient(ellipse at 12% 78%, color-mix(in srgb, var(--sd-accent) 12%, transparent), transparent 24rem);
+  background-size: 64px 64px, 64px 64px, 100% 100%, 100% 100%;
+  mask-image: radial-gradient(ellipse at 50% 40%, black 55%, transparent 100%);
+  opacity: .55;
+}
+
+.sd-home-hero-tape {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 18px;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      var(--sd-ink) 0 14px,
+      transparent 14px 28px
+    );
+  opacity: .14;
+  mask-image: linear-gradient(90deg, transparent, black 18%, black 82%, transparent);
+}
+
+.sd-home-copy,
+.sd-home-visual,
+.sd-pixel-stage {
+  position: relative;
+  z-index: 1;
+}
+
+.sd-home-copy h1 {
+  margin-top: .55rem;
+}
+
+.sd-home-copy > p {
+  margin-top: 1.15rem;
+}
+
+.sd-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .8rem;
+  margin-top: 1.8rem;
+}
+
+.sd-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  min-width: 8rem;
+}
+
+.sd-button-primary {
+  background: var(--sd-ink);
+  color: var(--sd-bg);
+}
+
+.sd-button-arrow {
+  display: inline-block;
+  width: .55rem;
+  height: .55rem;
+  image-rendering: pixelated;
+  background:
+    linear-gradient(currentColor, currentColor) 0 100% / 100% 25% no-repeat,
+    linear-gradient(currentColor, currentColor) 100% 0 / 25% 100% no-repeat;
+  transition: transform .18s ease;
+}
+
+.sd-button:hover .sd-button-arrow {
+  transform: translate(2px, -2px);
+}
+
+.sd-pixel-stage {
+  position: relative;
+  display: block;
+  aspect-ratio: 14 / 9;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  border: 1px solid var(--sd-line);
+  background:
+    linear-gradient(var(--sd-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--sd-grid-line) 1px, transparent 1px),
+    color-mix(in srgb, var(--sd-panel) 82%, transparent);
+  background-size: 16px 16px;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--sd-bg) 38%, transparent),
+    0 24px 80px color-mix(in srgb, var(--sd-ink) 9%, transparent);
+  overflow: hidden;
+}
+
+.sd-pixel-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 38%, color-mix(in srgb, var(--sd-bg) 28%, transparent) 100%);
+}
+
+.sd-pixel-frame {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--sd-accent), var(--sd-accent)) 0 0 / 100% 2px no-repeat,
+    linear-gradient(var(--sd-accent), var(--sd-accent)) 0 0 / 2px 100% no-repeat;
+}
+
+.sd-pixel-frame[data-corner="tl"] { top: .55rem; left: .55rem; }
+.sd-pixel-frame[data-corner="tr"] { top: .55rem; right: .55rem; transform: scaleX(-1); }
+.sd-pixel-frame[data-corner="bl"] { bottom: .55rem; left: .55rem; transform: scaleY(-1); }
+.sd-pixel-frame[data-corner="br"] { bottom: .55rem; right: .55rem; transform: scale(-1); }
+
+.sd-pixel-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+}
+
+.sd-pixel-grid > span {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  background: color-mix(in srgb, var(--sd-accent) var(--mix), var(--sd-line));
+  opacity: .42;
+  animation: sd-pixel-wave 8.4s ease-in-out infinite;
+  animation-delay: var(--wave-delay);
+  transition: background .28s ease, opacity .28s ease, transform .28s ease;
+  will-change: background-color, opacity;
+}
+
+.sd-pixel-grid > span.sd-pixel-hot {
+  background: color-mix(in srgb, var(--sd-accent) 78%, var(--sd-ink));
+  opacity: .92;
+}
+
+.sd-pixel-grid > span.sd-pixel-accent {
+  background: color-mix(in srgb, var(--sd-accent-2) 65%, var(--sd-accent));
+  opacity: .94;
+}
+
+.sd-pixel-stage:hover .sd-pixel-grid > span:not(.sd-pixel-hot) {
+  opacity: .62;
+}
+
+.sd-pixel-tag {
+  position: absolute;
+  right: .85rem;
+  bottom: .65rem;
+  z-index: 3;
+  border: 1px solid color-mix(in srgb, var(--sd-line) 88%, transparent);
+  background: color-mix(in srgb, var(--sd-panel) 92%, transparent);
+  color: var(--sd-muted);
+  padding: .12rem .42rem;
+  font-family: var(--font-sans);
+  font-size: .68rem;
+  font-weight: 650;
+  letter-spacing: .03em;
+}
+
+.sd-home-visual {
+  display: block;
+  width: 100%;
+  aspect-ratio: 14 / 9;
+  object-fit: cover;
+  border: 1px solid var(--sd-line);
+  background: var(--sd-panel);
+}

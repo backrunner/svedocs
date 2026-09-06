@@ -1,0 +1,212 @@
+.sd-home-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--sd-line);
+  border-bottom: 1px solid var(--sd-line);
+  background: color-mix(in srgb, var(--sd-panel) 60%, transparent);
+}
+
+.sd-home-grid a {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto auto 1fr auto;
+  gap: 1rem;
+  color: inherit;
+  min-height: 17.5rem;
+  padding: 1.4rem 1.3rem 1.55rem;
+  text-decoration: none;
+  border-right: 1px solid var(--sd-line);
+  background: transparent;
+  overflow: hidden;
+  transition: background .22s ease, transform .22s ease, color .22s ease;
+}
+
+.sd-home-grid a:last-child {
+  border-right: 0;
+}
+
+.sd-home-grid a::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 3px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      var(--sd-accent) 0 6px,
+      transparent 6px 12px
+    );
+  transform: scaleX(.18);
+  transform-origin: left;
+  transition: transform .35s ease;
+}
+
+.sd-home-grid a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--sd-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--sd-grid-line) 1px, transparent 1px);
+  background-size: 12px 12px;
+  background-position: 100% 100%;
+  mask-image: radial-gradient(circle at 100% 100%, black 0%, transparent 55%);
+  opacity: .42;
+  transition: opacity .22s ease;
+}
+
+.sd-home-grid a:hover {
+  background: color-mix(in srgb, var(--sd-accent) 7%, var(--sd-panel));
+  transform: translateY(-2px);
+}
+
+.sd-home-grid a:hover::before {
+  transform: scaleX(1);
+}
+
+.sd-home-grid a:hover::after {
+  opacity: .74;
+}
+
+.sd-home-card-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: .42rem;
+  width: max-content;
+  border: 1px solid color-mix(in srgb, var(--sd-accent) 45%, var(--sd-line));
+  color: var(--sd-accent);
+  padding: .18rem .5rem .18rem .42rem;
+  font-family: var(--font-sans);
+  font-size: .72rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+
+.sd-home-card-tag i {
+  width: .42rem;
+  height: .42rem;
+  background: var(--sd-accent);
+  display: inline-block;
+}
+
+.sd-home-card-glyph {
+  display: grid;
+  gap: 2px;
+  width: max-content;
+  padding: 4px;
+  border: 1px solid color-mix(in srgb, var(--sd-line) 70%, transparent);
+  background: color-mix(in srgb, var(--sd-panel) 60%, transparent);
+}
+
+.sd-home-card-glyph > div {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 2px;
+}
+
+.sd-home-card-glyph i {
+  display: block;
+  width: 7px;
+  height: 7px;
+  background: color-mix(in srgb, var(--sd-line) 80%, transparent);
+  transition: background .25s ease;
+}
+
+.sd-home-card-glyph i[data-on="true"] {
+  background: color-mix(in srgb, var(--sd-accent) 75%, var(--sd-ink));
+}
+
+.sd-home-grid a:hover .sd-home-card-glyph i[data-on="true"] {
+  background: var(--sd-accent-2);
+}
+
+.sd-home-grid strong {
+  display: block;
+  align-self: end;
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.sd-home-grid small {
+  color: var(--sd-muted);
+  min-height: 4.2em;
+  line-height: 1.6;
+  font-size: .92rem;
+}
+
+.sd-home-card-arrow {
+  position: absolute;
+  right: 1.2rem;
+  bottom: 1.2rem;
+  color: var(--sd-muted);
+  font: 1.05rem var(--font-mono);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity .22s ease, transform .22s ease, color .22s ease;
+}
+
+.sd-home-grid a:hover .sd-home-card-arrow {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--sd-accent);
+}
+
+.sd-home-body {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: clamp(3rem, 6vw, 5rem) 1.2rem;
+}
+
+.sd-home-body.sd-prose {
+  max-width: 1100px;
+  line-height: 1.65;
+}
+
+.sd-qa {
+  display: grid;
+  gap: 1.6rem;
+  margin: 2rem 0 0;
+}
+
+.sd-qa-head {
+  display: grid;
+  gap: .55rem;
+  max-width: 56ch;
+}
+
+.sd-qa-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  margin: 0;
+  color: var(--sd-muted);
+  font-family: var(--font-sans);
+  font-size: .74rem;
+  font-weight: 650;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.sd-qa-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--sd-accent);
+  image-rendering: pixelated;
+}
+
+.sd-qa-head h2 {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: clamp(1.7rem, 3vw, 2.25rem);
+  font-weight: 650;
+  line-height: 1.14;
+  letter-spacing: -.005em;
+  color: var(--sd-ink);
+  border: 0;
+  padding: 0;
+}

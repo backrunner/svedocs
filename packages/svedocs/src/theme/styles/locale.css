@@ -1,0 +1,111 @@
+.sd-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.sd-scope-switcher {
+  display: inline-flex;
+  gap: .45rem;
+}
+
+.sd-scope-menu {
+  position: relative;
+}
+
+.sd-scope-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .55rem;
+  min-width: 5.7rem;
+  min-height: 2.35rem;
+  box-sizing: border-box;
+  border: 1px solid var(--sd-line);
+  background: var(--sd-panel);
+  color: var(--sd-ink);
+  padding: 0 .72rem;
+  font: .86rem var(--font-sans);
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+
+.sd-scope-trigger span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sd-scope-label-short {
+  display: none;
+}
+
+.sd-scope-trigger::after {
+  content: "";
+  width: .42rem;
+  height: .42rem;
+  flex: 0 0 auto;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform .16s ease;
+}
+
+.sd-scope-menu.sd-open .sd-scope-trigger {
+  border-color: color-mix(in srgb, var(--sd-accent) 55%, var(--sd-line));
+}
+
+.sd-scope-menu.sd-open .sd-scope-trigger::after {
+  transform: translateY(2px) rotate(225deg);
+}
+
+.sd-scope-trigger:hover {
+  border-color: color-mix(in srgb, var(--sd-accent) 55%, var(--sd-line));
+  transform: translateY(-1px);
+}
+
+.sd-scope-options {
+  position: absolute;
+  right: 0;
+  top: calc(100% + .45rem);
+  z-index: 40;
+  display: grid;
+  min-width: 11rem;
+  border: 1px solid var(--sd-line);
+  background: var(--sd-panel);
+  box-shadow: 0 18px 46px color-mix(in srgb, var(--sd-ink) 14%, transparent);
+  padding: .35rem;
+  animation: sd-fade-in .12s ease both;
+}
+
+.sd-scope-options a,
+.sd-scope-options span {
+  display: block;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--sd-muted);
+  text-align: left;
+  font: .9rem var(--font-sans);
+  padding: .62rem .72rem;
+  text-decoration: none;
+}
+
+.sd-scope-options a {
+  cursor: pointer;
+}
+
+.sd-scope-options a:hover,
+.sd-scope-options a[aria-checked="true"] {
+  border-color: var(--sd-line);
+  background: color-mix(in srgb, var(--sd-accent) 10%, transparent);
+  color: var(--sd-ink);
+}
+
+.sd-scope-options span[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: .42;
+}

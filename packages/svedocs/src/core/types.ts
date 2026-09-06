@@ -347,6 +347,7 @@ export interface SvedocsResolvedConfig {
     mode: 'edge' | 'static' | 'spa';
   };
   theme: {
+    readingStyle: 'decorated' | 'plain';
     defaultMode: 'light' | 'dark' | 'system';
     palette: {
       accent: string;

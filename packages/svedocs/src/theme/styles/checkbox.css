@@ -1,0 +1,107 @@
+.sd-checkbox {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: flex-start;
+  gap: .55rem;
+  max-width: 100%;
+  color: var(--sd-ink);
+  font: .9rem/1.4 var(--font-sans);
+  cursor: pointer;
+}
+
+.sd-checkbox input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sd-checkbox-box {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 1px solid var(--sd-line);
+  background: var(--sd-panel);
+  color: var(--sd-bg);
+  transition: background .14s ease, border-color .14s ease, opacity .14s ease;
+}
+
+.sd-checkbox[data-density='sm'] .sd-checkbox-box {
+  width: .95rem;
+  height: .95rem;
+  margin-top: .13rem;
+}
+
+.sd-checkbox[data-density='md'] .sd-checkbox-box {
+  width: 1.08rem;
+  height: 1.08rem;
+  margin-top: .12rem;
+}
+
+.sd-checkbox[data-density='lg'] .sd-checkbox-box {
+  width: 1.22rem;
+  height: 1.22rem;
+  margin-top: .14rem;
+}
+
+.sd-checkbox-box svg {
+  position: absolute;
+  width: 78%;
+  height: 78%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  opacity: 0;
+}
+
+.sd-checkbox input:checked + .sd-checkbox-box,
+.sd-checkbox input:indeterminate + .sd-checkbox-box {
+  border-color: var(--sd-accent);
+  background: var(--sd-accent);
+}
+
+.sd-checkbox input:checked + .sd-checkbox-box .sd-checkbox-check,
+.sd-checkbox input:indeterminate + .sd-checkbox-box .sd-checkbox-minus {
+  opacity: 1;
+}
+
+.sd-checkbox input:focus-visible + .sd-checkbox-box {
+  outline: 2px solid var(--sd-accent);
+  outline-offset: 2px;
+}
+
+.sd-checkbox[data-invalid='true'] .sd-checkbox-box {
+  border-color: color-mix(in srgb, var(--sd-accent-2) 74%, var(--sd-line));
+}
+
+.sd-checkbox:has(input:disabled) {
+  cursor: not-allowed;
+  color: var(--sd-muted);
+}
+
+.sd-checkbox input:disabled + .sd-checkbox-box,
+.sd-checkbox:has(input:disabled) .sd-checkbox-copy {
+  opacity: .58;
+}
+
+.sd-checkbox-copy {
+  display: grid;
+  gap: .12rem;
+  min-width: 0;
+}
+
+.sd-checkbox-label {
+  font-weight: 650;
+}
+
+.sd-checkbox-description {
+  color: var(--sd-muted);
+  font-size: .82rem;
+}

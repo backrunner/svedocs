@@ -48,6 +48,24 @@
       </svelte:boundary>
     </nav>
   </aside>
+  <svelte:boundary>
+    <svelte:component this={Toc} {page} controller={tocController} {context} />
+    {#snippet failed(error, reset)}
+      <aside class="sd-toc" aria-label={context.t('toc.label')}>
+        <svelte:component
+          this={ErrorComponent} component={themeComponents.RenderError}
+          {error}
+          {reset}
+          {page}
+          {context}
+          variant="navigation"
+          label={context.t('render.outline.label')}
+          title={context.t('render.outline.title')}
+          message={context.t('render.outline.message')}
+        />
+      </aside>
+    {/snippet}
+  </svelte:boundary>
   <main id="content" class="sd-content">
     <svelte:boundary>
       <svelte:component this={ArticleComponent} {page} {content} {context} {hasDocHeaderSlot} {themeComponents}>
@@ -71,22 +89,5 @@
       {/snippet}
     </svelte:boundary>
   </main>
-  <svelte:boundary>
-    <svelte:component this={Toc} {page} controller={tocController} {context} />
-    {#snippet failed(error, reset)}
-      <aside class="sd-toc" aria-label={context.t('toc.label')}>
-        <svelte:component
-          this={ErrorComponent} component={themeComponents.RenderError}
-          {error}
-          {reset}
-          {page}
-          {context}
-          variant="navigation"
-          label={context.t('render.outline.label')}
-          title={context.t('render.outline.title')}
-          message={context.t('render.outline.message')}
-        />
-      </aside>
-    {/snippet}
-  </svelte:boundary>
+
 </div>

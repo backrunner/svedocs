@@ -93,6 +93,7 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
     },
     theme: {
       defaultMode: config.theme?.defaultMode ?? 'system',
+      readingStyle: config.theme?.readingStyle ?? 'decorated',
       palette: {
         accent: config.theme?.palette?.accent ?? 'emerald',
         neutral: config.theme?.palette?.neutral ?? 'zinc'

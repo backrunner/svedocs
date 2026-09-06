@@ -1,0 +1,196 @@
+.sd-sidebar-root {
+  display: grid;
+  gap: .15rem;
+}
+
+.sd-sidebar-section-heading {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  padding: 1rem .55rem .35rem;
+  font-family: var(--font-sans);
+  font-size: .72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: color-mix(in srgb, var(--sd-ink) 70%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--sd-line) 70%, transparent);
+  margin-top: .35rem;
+}
+
+.sd-sidebar-section-heading.sd-first {
+  margin-top: 0;
+  padding-top: .25rem;
+  border-top: none;
+}
+
+.sd-sidebar-section-heading.sd-active {
+  color: var(--sd-ink);
+}
+
+.sd-sidebar-section-link {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  color: inherit;
+}
+
+.sd-sidebar-section-link:hover {
+  color: var(--sd-accent);
+}
+
+.sd-sidebar-section-link.sd-active {
+  color: var(--sd-ink);
+}
+
+.sd-sidebar-section-link.sd-active::after {
+  content: "";
+  position: absolute;
+  inset: -.28rem -.38rem;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--sd-accent) 36%, transparent);
+  background:
+    linear-gradient(135deg, var(--sd-accent) 0 1px, transparent 1px) top left/4px 4px no-repeat,
+    linear-gradient(225deg, var(--sd-accent) 0 1px, transparent 1px) top right/4px 4px no-repeat,
+    linear-gradient(45deg, var(--sd-accent) 0 1px, transparent 1px) bottom left/4px 4px no-repeat,
+    linear-gradient(315deg, var(--sd-accent) 0 1px, transparent 1px) bottom right/4px 4px no-repeat;
+  opacity: .75;
+}
+
+.sd-sidebar-section-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+}
+
+.sd-sidebar-list {
+  display: grid;
+  gap: .05rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sd-sidebar-item {
+  margin: 0;
+}
+
+.sd-sidebar-group {
+  display: grid;
+}
+
+.sd-sidebar-group > summary {
+  list-style: none;
+}
+
+.sd-sidebar-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.sd-sidebar-summary {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .35rem .55rem;
+  cursor: pointer;
+  color: var(--sd-muted);
+  font-size: .855rem;
+  border-radius: 4px;
+  transition: background .14s ease, color .14s ease;
+}
+
+.sd-sidebar-summary:hover {
+  background: color-mix(in srgb, var(--sd-accent) 6%, transparent);
+  color: var(--sd-ink);
+}
+
+.sd-sidebar-item.sd-branch-active > .sd-sidebar-group > .sd-sidebar-summary {
+  color: var(--sd-ink);
+}
+
+.sd-sidebar-summary-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sd-sidebar-summary-link,
+.sd-sidebar-summary-text {
+  display: inline-block;
+  color: inherit;
+}
+
+.sd-sidebar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  font-size: .9rem;
+  color: color-mix(in srgb, var(--sd-ink) 75%, transparent);
+}
+
+.sd-sidebar-link.sd-active .sd-sidebar-icon,
+.sd-sidebar-summary.sd-active .sd-sidebar-icon {
+  color: var(--sd-accent);
+}
+
+.sd-sidebar-chevron {
+  display: inline-flex;
+  width: .9rem;
+  height: .9rem;
+  flex: 0 0 auto;
+  color: color-mix(in srgb, var(--sd-muted) 80%, transparent);
+  transition: transform .18s ease, color .18s ease;
+}
+
+.sd-sidebar-list:not([data-depth="0"]) .sd-sidebar-chevron {
+  order: -1;
+}
+
+.sd-sidebar-list[data-depth="0"] > .sd-sidebar-item > .sd-sidebar-group > .sd-sidebar-summary > .sd-sidebar-chevron {
+  margin-left: auto;
+  width: .8rem;
+  height: .8rem;
+}
+
+.sd-sidebar-chevron svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sd-sidebar-group[open] > .sd-sidebar-summary > .sd-sidebar-chevron {
+  transform: rotate(90deg);
+}
+
+.sd-sidebar-group::details-content {
+  block-size: 0;
+  overflow: hidden;
+  transition: block-size .22s ease, content-visibility .22s ease allow-discrete;
+}
+
+.sd-sidebar-group[open]::details-content {
+  block-size: auto;
+}
+
+.sd-sidebar-group-body {
+  display: grid;
+}
+
+.sd-sidebar-list:not([data-depth="0"]) {
+  position: relative;
+  padding-left: .85rem;
+  margin-left: .9rem;
+  border-left: 1px solid color-mix(in srgb, var(--sd-line) 60%, transparent);
+}

@@ -1,0 +1,100 @@
+.sd-qa-stack {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid var(--sd-line);
+  background: var(--sd-panel);
+}
+
+.sd-qa-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem 1.1rem;
+  margin: 0;
+  padding: 1.4rem 1.5rem 1.5rem;
+  background: transparent;
+  transition: background-color .2s ease;
+}
+
+.sd-qa-card + .sd-qa-card {
+  border-left: 1px solid var(--sd-line);
+}
+
+.sd-qa-card:nth-child(n+3) {
+  border-top: 1px solid var(--sd-line);
+}
+
+.sd-qa-card:nth-child(odd) {
+  border-left: 0;
+}
+
+.sd-qa-card:hover {
+  background: color-mix(in srgb, var(--sd-accent) 5%, transparent);
+}
+
+.sd-qa-num {
+  display: inline-flex;
+  align-items: flex-start;
+  font-family: var(--font-sans);
+  font-size: .82rem;
+  font-weight: 650;
+  letter-spacing: .03em;
+  color: var(--sd-accent);
+  padding-top: .2rem;
+}
+
+.sd-qa-body {
+  display: grid;
+  gap: .55rem;
+  min-width: 0;
+}
+
+.sd-qa-body h3 {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 1.04rem;
+  font-weight: 650;
+  line-height: 1.32;
+  letter-spacing: -.003em;
+  color: var(--sd-ink);
+}
+
+.sd-qa-body p {
+  margin: 0;
+  max-width: 50ch;
+  color: color-mix(in srgb, var(--sd-ink) 72%, var(--sd-muted));
+  font-size: .94rem;
+  line-height: 1.62;
+}
+
+.sd-qa-chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin: .15rem 0 0;
+  padding: 0;
+}
+
+.sd-qa-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  border: 1px solid color-mix(in srgb, var(--sd-line) 90%, transparent);
+  background: color-mix(in srgb, var(--sd-bg) 60%, var(--sd-panel));
+  padding: .28rem .55rem;
+  color: color-mix(in srgb, var(--sd-ink) 80%, var(--sd-muted));
+  font-family: var(--font-sans);
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+
+.sd-qa-chips li::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  background: var(--sd-accent);
+  image-rendering: pixelated;
+}

@@ -1,0 +1,152 @@
+.sd-diff-split {
+  display: block;
+  padding: 0;
+}
+
+.sd-diff-panes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.sd-diff-pane {
+  min-width: 0;
+  background: color-mix(in srgb, var(--sd-bg) 76%, var(--sd-panel));
+}
+
+.sd-diff-pane[data-side="old"] {
+  border-right: 1px solid color-mix(in srgb, var(--sd-line) 86%, transparent);
+}
+
+.sd-diff-column-label {
+  padding: .42rem .75rem .42rem 4.15rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--sd-line) 86%, transparent);
+  background: color-mix(in srgb, var(--sd-ink) 4%, transparent);
+  color: color-mix(in srgb, var(--sd-ink) 58%, transparent);
+  font: 600 .68rem var(--font-sans);
+  text-transform: uppercase;
+}
+
+.sd-diff-scroll {
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-gutter: auto;
+}
+
+.sd-diff-scroll:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--sd-accent) 70%, transparent);
+  outline-offset: -2px;
+}
+
+.sd-diff-lines {
+  width: max-content;
+  min-width: 100%;
+  padding: .15rem 0 .55rem;
+}
+
+.sd-diff-row {
+  display: block;
+}
+
+.sd-diff-meta {
+  display: block;
+}
+
+.sd-diff-cell {
+  display: grid;
+  grid-template-columns: 3ch max-content;
+  align-items: start;
+  gap: .75rem;
+  width: max-content;
+  min-width: 100%;
+  min-height: 20px;
+  padding: 0 .8rem 0 .65rem;
+  border-top: 1px solid color-mix(in srgb, var(--sd-line) 44%, transparent);
+  white-space: pre;
+}
+
+.sd-diff-line-no {
+  font-size: .72rem;
+  line-height: inherit;
+  color: color-mix(in srgb, var(--sd-ink) 35%, transparent);
+  text-align: right;
+  user-select: none;
+}
+
+.sd-diff-code {
+  display: inline;
+  min-width: max-content;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  white-space: pre;
+  font-family: var(--font-mono);
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.sd-diff-add {
+  background: color-mix(in srgb, #2ea043 15%, transparent);
+}
+
+.sd-diff-remove {
+  background: color-mix(in srgb, #d1242f 13%, transparent);
+}
+
+.sd-diff-add .sd-diff-line-no {
+  color: #2ea043;
+}
+
+.sd-diff-remove .sd-diff-line-no {
+  color: #d1242f;
+}
+
+.sd-diff-empty {
+  background: color-mix(in srgb, var(--sd-line) 16%, transparent);
+}
+
+.sd-diff-meta-cell {
+  color: color-mix(in srgb, var(--sd-accent) 80%, var(--sd-ink));
+  background: color-mix(in srgb, var(--sd-accent) 9%, transparent);
+  font-size: .78rem;
+  white-space: pre;
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-diff-pane {
+  background: color-mix(in srgb, #1e1e1e 88%, var(--sd-panel));
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-diff-column-label {
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  border-bottom-color: color-mix(in srgb, currentColor 13%, transparent);
+  color: color-mix(in srgb, currentColor 58%, transparent);
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-diff-pane[data-side="old"] {
+  border-right-color: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-diff-cell {
+  border-top-color: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-diff-add {
+  background: color-mix(in srgb, #3fb950 17%, transparent);
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-diff-remove {
+  background: color-mix(in srgb, #ff7b72 17%, transparent);
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-diff-add .sd-diff-line-no {
+  color: #3fb950;
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-diff-remove .sd-diff-line-no {
+  color: #ff7b72;
+}

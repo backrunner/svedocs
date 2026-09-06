@@ -1,0 +1,178 @@
+.sd-content {
+  min-width: 0;
+}
+
+.sd-doc,
+.sd-page {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--sd-line) 86%, transparent);
+  background: var(--sd-panel);
+  box-shadow: 0 18px 50px color-mix(in srgb, var(--sd-ink) 5%, transparent);
+}
+
+.sd-doc-corner {
+  position: absolute;
+  top: -1px;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--sd-accent), var(--sd-accent)) 0 0 / 100% 2px no-repeat,
+    linear-gradient(var(--sd-accent), var(--sd-accent)) 0 0 / 2px 100% no-repeat;
+}
+
+.sd-doc-corner[data-corner="tl"] {
+  left: -1px;
+}
+
+.sd-doc-corner[data-corner="tr"] {
+  right: -1px;
+  transform: scaleX(-1);
+}
+
+.sd-doc {
+  padding: 0 clamp(1.1rem, 3vw, 2.8rem) 2.4rem;
+}
+
+.sd-page {
+  max-width: 920px;
+  margin: 1.5rem auto 5rem;
+  padding: 0 clamp(1.1rem, 3vw, 2.8rem) 2.6rem;
+}
+
+.sd-breadcrumb {
+  display: none;
+}
+
+.sd-doc-eyebrow {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+  margin: 0 0 .75rem;
+  color: var(--sd-muted);
+  font-family: var(--font-sans);
+  font-size: .76rem;
+  font-weight: 650;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.sd-doc-eyebrow-mark {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--sd-accent);
+  image-rendering: pixelated;
+}
+
+.sd-doc-eyebrow a {
+  color: inherit;
+  text-decoration: none;
+  transition: color .15s ease;
+}
+
+.sd-doc-eyebrow a:hover {
+  color: var(--sd-accent);
+}
+
+.sd-doc-eyebrow a:last-of-type {
+  color: var(--sd-ink);
+}
+
+.sd-doc-eyebrow-sep {
+  color: color-mix(in srgb, var(--sd-muted) 50%, transparent);
+  font-weight: 400;
+}
+
+.sd-doc-lede {
+  margin: .9rem 0 0;
+  max-width: 62ch;
+  color: var(--sd-muted);
+  font-size: 1.08rem;
+  line-height: 1.62;
+}
+
+.sd-doc {
+  max-width: 880px;
+}
+
+.sd-page {
+  max-width: 920px;
+}
+
+.sd-home {
+  max-width: none;
+}
+
+.sd-doc-header,
+.sd-page-hero {
+  position: relative;
+  padding: 2.6rem 0 2.2rem;
+  border-bottom: 1px solid var(--sd-line);
+}
+
+.sd-doc-header-rule {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 80px;
+  height: 2px;
+  background: var(--sd-accent);
+}
+
+.sd-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  color: var(--sd-accent);
+  font-size: .78rem;
+  font-family: var(--font-sans);
+  font-weight: 650;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.sd-kicker-mark {
+  position: relative;
+  display: inline-block;
+  width: .82rem;
+  height: .82rem;
+  image-rendering: pixelated;
+  background:
+    linear-gradient(90deg, var(--sd-accent) 50%, transparent 0) 0 0 / 50% 50%,
+    linear-gradient(90deg, transparent 50%, var(--sd-accent-2) 0) 0 100% / 50% 50%,
+    color-mix(in srgb, var(--sd-accent) 22%, var(--sd-line));
+  background-repeat: no-repeat;
+}
+
+.sd-page h1,
+.sd-home h1 {
+  margin: .35rem 0 0;
+  font-size: clamp(2.2rem, 7vw, 5.9rem);
+  line-height: .92;
+  letter-spacing: 0;
+  font-family: var(--font-sans);
+  font-weight: 650;
+}
+
+.sd-doc h1 {
+  margin: .45rem 0 0;
+  max-width: 14ch;
+  font-family: var(--font-sans);
+  font-size: clamp(2rem, 4.2vw, 3.65rem);
+  font-weight: 640;
+  line-height: 1.06;
+  letter-spacing: 0;
+}
+
+.sd-doc-header p:last-child,
+.sd-page-hero p:last-child,
+.sd-home-copy > p:last-of-type {
+  color: var(--sd-muted);
+  font-size: 1.1rem;
+  line-height: 1.65;
+  max-width: 62ch;
+}

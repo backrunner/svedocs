@@ -1,0 +1,59 @@
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes sd-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sd-dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% - 8px)) scale(.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes sd-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes sd-pixel-wave {
+  0%, 100% {
+    opacity: .52;
+    background: color-mix(in srgb, var(--sd-accent) var(--mix), var(--sd-line));
+  }
+  38% {
+    opacity: .96;
+    background: color-mix(in srgb, var(--sd-accent-2) 42%, var(--sd-accent));
+  }
+  64% {
+    opacity: .76;
+    background: color-mix(in srgb, var(--sd-accent) 64%, var(--sd-line));
+  }
+}
+
+@keyframes sd-reading-grid-drift {
+  from {
+    background-position: 0 0, 0 0, 0 0;
+  }
+  to {
+    background-position: 56px 56px, 56px 56px, 0 0;
+  }
+}

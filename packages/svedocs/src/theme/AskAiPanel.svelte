@@ -4,6 +4,7 @@
   import type { SearchScope } from '../search/types.js';
   import { createAskAiController, fallbackTranslate } from './headless.js';
   import { portal } from './portal.js';
+  import { dialogBehavior, isComposingKey } from './dialog.js';
   import type { SvedocsAskAiController, SvedocsAskAiMessage, SvedocsThemeContext } from './types.js';
 
   export let config: SvedocsResolvedConfig;
@@ -21,7 +22,7 @@
   let input = '';
   let messages: SvedocsAskAiMessage[] = [];
   let loading = false;
-  let panel: HTMLDivElement | undefined;
+  let panel: HTMLDialogElement | undefined;
   let textarea: HTMLTextAreaElement | undefined;
   let scrollEl: HTMLDivElement | undefined;
   let previousFocus: HTMLElement | undefined;
@@ -46,7 +47,7 @@
 
   function show() {
     if (!enabled) return;
-    previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
+    if (!open) previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
     activeController.show();
     tick().then(() => {
       textarea?.focus();
@@ -80,14 +81,15 @@
   }
 
   function handleKeydown(event: KeyboardEvent) {
+    if (isComposingKey(event)) return;
     if (event.key === 'Escape') {
       event.preventDefault();
       hide();
     }
-    if (event.key === 'Tab') trapFocus(event, panel);
   }
 
   function handleComposerKeydown(event: KeyboardEvent) {
+    if (isComposingKey(event)) return;
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       void send(input);
@@ -112,22 +114,6 @@
     };
   }
 
-  function trapFocus(event: KeyboardEvent, root: HTMLElement | undefined) {
-    if (!root) return;
-    const focusable = Array.from(
-      root.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')
-    ).filter((element) => !element.hasAttribute('disabled') && element.offsetParent !== null);
-    const first = focusable[0];
-    const last = focusable.at(-1);
-    if (!first || !last) return;
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
 
   onMount(() => {
     window.addEventListener('svedocs:open-ai', show);
@@ -142,11 +128,10 @@
 
 {#if open}
   <div class="sd-chat-portal" use:portal>
-    <div
+    <dialog
+      use:dialogBehavior={{ modal: 'mobile', onClose: hide }}
       bind:this={panel}
       class="sd-chat-panel"
-      role="dialog"
-      aria-modal="true"
       aria-label={label}
       tabindex="-1"
       on:keydown={handleKeydown}
@@ -222,6 +207,7 @@
           value={input}
           rows="1"
           placeholder={placeholder}
+          aria-label={placeholder}
           on:input={handleInput}
           on:keydown={handleComposerKeydown}
         ></textarea>
@@ -237,6 +223,6 @@
           </svg>
         </button>
       </form>
-    </div>
+    </dialog>
   </div>
 {/if}

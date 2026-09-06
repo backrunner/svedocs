@@ -1,0 +1,93 @@
+.sd-control-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  border: 1px solid var(--sd-line);
+  border-radius: var(--sd-radius);
+  background: var(--sd-panel);
+  color: var(--sd-ink);
+  font: 650 .9rem/1 var(--font-sans);
+  max-width: 100%;
+  text-align: center;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  cursor: pointer;
+  transition: background .14s ease, border-color .14s ease, color .14s ease, opacity .14s ease, transform .14s ease;
+}
+
+.sd-control-button[data-density='sm'] {
+  min-height: 2rem;
+  padding: 0 .68rem;
+  font-size: .82rem;
+}
+
+.sd-control-button[data-density='md'] {
+  min-height: 2.35rem;
+  padding: 0 .82rem;
+}
+
+.sd-control-button[data-density='lg'] {
+  min-height: 2.8rem;
+  padding: 0 1rem;
+  font-size: .96rem;
+}
+
+.sd-control-button[data-variant='primary'] {
+  border-color: var(--sd-ink);
+  background: var(--sd-ink);
+  color: var(--sd-bg);
+}
+
+.sd-control-button[data-variant='ghost'] {
+  background: transparent;
+}
+
+.sd-control-button[data-variant='danger'] {
+  border-color: color-mix(in srgb, var(--sd-accent-2) 72%, var(--sd-line));
+  background: color-mix(in srgb, var(--sd-accent-2) 10%, var(--sd-panel));
+  color: color-mix(in srgb, var(--sd-accent-2) 84%, var(--sd-ink));
+}
+
+.sd-control-button:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--sd-accent) 55%, var(--sd-line));
+  transform: translateY(-1px);
+}
+
+.sd-control-button[data-variant='primary']:not(:disabled):hover {
+  background: color-mix(in srgb, var(--sd-ink) 84%, var(--sd-accent) 16%);
+}
+
+.sd-control-button[data-variant='danger']:not(:disabled):hover {
+  border-color: var(--sd-accent-2);
+  background: color-mix(in srgb, var(--sd-accent-2) 14%, var(--sd-panel));
+}
+
+.sd-control-button:focus-visible {
+  outline: 2px solid var(--sd-accent);
+  outline-offset: 2px;
+}
+
+.sd-control-button:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+
+.sd-menu-button {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.45rem;
+  padding: 0;
+  margin-left: auto;
+}
+
+.sd-menu-button svg {
+  width: 1.08rem;
+  height: 1.08rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}

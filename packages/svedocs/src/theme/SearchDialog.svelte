@@ -4,7 +4,8 @@
   import type { SvedocsSearchRecord } from '../core/types.js';
   import type { SearchResult, SearchScope } from '../search/types.js';
   import { createSearchController, fallbackTranslate } from './headless.js';
-  import { lockDocumentScroll, portal } from './portal.js';
+  import { portal } from './portal.js';
+  import { dialogBehavior, isComposingKey } from './dialog.js';
   import type { SvedocsSearchController, SvedocsThemeContext } from './types.js';
 
   export let records: SvedocsSearchRecord[] = [];
@@ -27,11 +28,10 @@
   let recordsStatus: 'idle' | 'loading' | 'ready' | 'error' = records.length > 0 ? 'ready' : 'idle';
   let trigger: HTMLButtonElement | undefined;
   let input: HTMLInputElement | undefined;
-  let dialog: HTMLDivElement | undefined;
+  let dialog: HTMLDialogElement | undefined;
   let previousFocus: HTMLElement | undefined;
   let boundController: SvedocsSearchController | undefined;
   let unsubscribeController: (() => void) | undefined;
-  let releaseScrollLock: (() => void) | undefined;
 
   $: t = context?.t ?? fallbackTranslate;
   $: activeController = controller ?? internalController;
@@ -39,7 +39,7 @@
   $: bindController(activeController);
 
   function show() {
-    previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
+    if (!open) previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
     activeController.show();
     tick().then(() => input?.focus());
   }
@@ -50,6 +50,7 @@
   }
 
   function handleKeydown(event: KeyboardEvent) {
+    if (isComposingKey(event)) return;
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault();
       show();
@@ -58,9 +59,7 @@
   }
 
   function handleDialogKeydown(event: KeyboardEvent) {
-    if (event.key === 'Tab') {
-      trapFocus(event, dialog);
-    }
+    if (isComposingKey(event)) return;
     if (event.key === 'Escape') {
       hide();
     }
@@ -72,7 +71,8 @@
       event.preventDefault();
       activeController.moveActive(-1);
     }
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && event.target === input) {
+      event.preventDefault();
       const result = activeController.select();
       if (result) void goto(result.url, { keepFocus: false });
     }
@@ -87,14 +87,7 @@
     unsubscribeController?.();
     boundController = nextController;
     const unsubscribers = [
-      nextController.open.subscribe((value) => {
-        open = value;
-        if (value && !releaseScrollLock) releaseScrollLock = lockDocumentScroll();
-        if (!value && releaseScrollLock) {
-          releaseScrollLock();
-          releaseScrollLock = undefined;
-        }
-      }),
+      nextController.open.subscribe((value) => (open = value)),
       nextController.query.subscribe((value) => (query = value)),
       nextController.activeIndex.subscribe((value) => (activeIndex = value)),
       nextController.results.subscribe((value) => (results = value)),
@@ -119,25 +112,8 @@
   onDestroy(() => {
     internalController.hide();
     unsubscribeController?.();
-    releaseScrollLock?.();
   });
 
-  function trapFocus(event: KeyboardEvent, root: HTMLElement | undefined) {
-    if (!root) return;
-    const focusable = Array.from(
-      root.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')
-    ).filter((element) => !element.hasAttribute('disabled') && element.offsetParent !== null);
-    const first = focusable[0];
-    const last = focusable.at(-1);
-    if (!first || !last) return;
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
 </script>
 
 <button bind:this={trigger} class="sd-search-trigger" type="button" aria-label={t('search.dialog')} aria-haspopup="dialog" aria-expanded={open} on:click={show} data-theme-component="search-trigger">
@@ -147,12 +123,10 @@
 
 {#if open}
   <div class="sd-dialog-portal" use:portal>
-  <div class="sd-dialog-backdrop" role="presentation" on:click={hide}></div>
-  <div
+  <dialog
+    use:dialogBehavior={{ modal: true, onClose: hide }}
     bind:this={dialog}
     class="sd-search-dialog"
-    role="dialog"
-    aria-modal="true"
     aria-label={t('search.dialog')}
     tabindex="-1"
     on:keydown={handleDialogKeydown}
@@ -207,6 +181,6 @@
         <p class="sd-empty-state">{t('search.empty')}</p>
       {/if}
     </div>
-  </div>
+  </dialog>
   </div>
 {/if}

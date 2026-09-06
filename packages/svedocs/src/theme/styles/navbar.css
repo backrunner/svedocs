@@ -1,0 +1,254 @@
+.sd-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  height: 64px;
+  padding: 0 clamp(1.2rem, 4vw, 2rem);
+  border-bottom: 1px solid var(--sd-line);
+  background: color-mix(in srgb, var(--sd-bg) 88%, transparent);
+  backdrop-filter: blur(16px);
+  white-space: nowrap;
+}
+
+.sd-topbar-menu {
+  display: contents;
+}
+
+.sd-topbar-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+}
+
+.sd-mobile-docnav {
+  display: none;
+}
+
+.sd-brand,
+.sd-topnav a,
+.sd-socialnav a,
+.sd-sidebar a,
+.sd-sidebar-link,
+.sd-sidebar-summary-link,
+.sd-sidebar-section-link,
+.sd-toc-link,
+.sd-button,
+.sd-prev-next,
+.sd-footer a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sd-brand,
+.sd-brand *,
+.sd-topnav a,
+.sd-socialnav a,
+.sd-theme-toggle,
+.sd-menu-button,
+.sd-search-trigger,
+.sd-search-trigger kbd,
+.sd-search-results a,
+.sd-scope-trigger,
+.sd-scope-options a,
+.sd-checkbox,
+.sd-checkbox *,
+.sd-control-button,
+.sd-floating-toolbar,
+.sd-floating-tool,
+.sd-floating-tool-label,
+.sd-sidebar-section-heading,
+.sd-sidebar-section-heading *,
+.sd-sidebar-section-label,
+.sd-sidebar-summary,
+.sd-sidebar-summary *,
+.sd-sidebar-link,
+.sd-sidebar-link *,
+.sd-toc-title,
+.sd-toc-link,
+.sd-doc-eyebrow,
+.sd-doc-eyebrow *,
+.sd-kicker,
+.sd-kicker *,
+.sd-heading-anchor,
+.sd-code-header,
+.sd-code-header *,
+.sd-code-copy,
+.sd-diff-column-label,
+.sd-diff-line-no,
+.sd-prev-next,
+.sd-prev-next *,
+.sd-button,
+.sd-button *,
+.sd-pixel-stage,
+.sd-pixel-stage *,
+.sd-home-grid a,
+.sd-home-grid a *,
+.sd-qa-num,
+.sd-qa-chips li,
+.sd-chat-header,
+.sd-chat-header *,
+.sd-chat-icon-button,
+.sd-chat-suggestions,
+.sd-chat-suggestions button,
+.sd-chat-send,
+.sd-footer a,
+.sd-footer a * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.sd-brand,
+.sd-brand *,
+.sd-brand-logo,
+.sd-topnav a,
+.sd-socialnav a,
+.sd-search-results a,
+.sd-scope-options a,
+.sd-sidebar a,
+.sd-sidebar-link,
+.sd-sidebar-summary-link,
+.sd-toc-link,
+.sd-button,
+.sd-button *,
+.sd-prev-next,
+.sd-prev-next *,
+.sd-code-copy,
+.sd-home-visual,
+.sd-home-grid a,
+.sd-home-grid a *,
+.sd-chat-citations a,
+.sd-chat-suggestions button,
+.sd-footer a,
+.sd-footer a * {
+  -webkit-user-drag: none;
+}
+
+.sd-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -.005em;
+  margin-right: 1.4rem;
+}
+
+.sd-brand-mark {
+  width: 1.3rem;
+  height: 1.3rem;
+  image-rendering: pixelated;
+  background:
+    linear-gradient(90deg, var(--sd-accent) 50%, transparent 0) 0 0 / 50% 50%,
+    linear-gradient(90deg, transparent 50%, var(--sd-accent-2) 0) 0 100% / 50% 50%,
+    var(--sd-ink);
+}
+
+.sd-brand-logo {
+  width: 1.35rem;
+  height: 1.35rem;
+  object-fit: contain;
+}
+
+.sd-topnav {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  color: var(--sd-muted);
+  font-family: var(--font-sans);
+  font-size: .885rem;
+  font-weight: 500;
+  letter-spacing: -.005em;
+}
+
+.sd-socialnav {
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+  color: var(--sd-muted);
+  font-family: var(--font-sans);
+  font-size: .885rem;
+  font-weight: 500;
+}
+
+.sd-topbar-spacer {
+  flex: 1 1 auto;
+}
+
+.sd-topbar-tools .sd-search-trigger {
+  margin-left: 0;
+  margin-right: .35rem;
+}
+
+.sd-topnav a:hover,
+.sd-socialnav a:hover,
+.sd-sidebar a:hover,
+.sd-sidebar-summary-link:hover,
+.sd-toc-link:hover,
+.sd-footer a:hover {
+  color: var(--sd-accent);
+}
+
+.sd-topnav a.sd-active {
+  color: var(--sd-accent);
+}
+
+.sd-theme-toggle,
+.sd-menu-button,
+.sd-search-trigger,
+.sd-button {
+  border: 1px solid var(--sd-line);
+  background: var(--sd-panel);
+  color: var(--sd-ink);
+  min-height: 2.35rem;
+  padding: 0 .8rem;
+  font: inherit;
+  border-radius: var(--sd-radius);
+  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+}
+
+.sd-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  padding: 0;
+}
+
+.sd-theme-toggle svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+.sd-theme-toggle [data-theme-icon="light"],
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-theme-toggle [data-theme-icon="dark"] {
+  display: none;
+}
+
+:is(:root[data-theme="dark"], html:has(.sd-root[data-theme="dark"])) .sd-theme-toggle [data-theme-icon="light"] {
+  display: block;
+}
+
+.sd-theme-toggle:focus-visible,
+.sd-menu-button:focus-visible,
+.sd-button:focus-visible,
+.sd-search-trigger:focus-visible,
+.sd-floating-tool:focus-visible,
+.sd-sidebar a:focus-visible,
+.sd-sidebar-link:focus-visible,
+.sd-sidebar-summary:focus-visible,
+.sd-sidebar-summary-link:focus-visible,
+.sd-sidebar-section-link:focus-visible,
+.sd-toc-link:focus-visible {
+  outline: 2px solid var(--sd-accent);
+  outline-offset: 2px;
+}

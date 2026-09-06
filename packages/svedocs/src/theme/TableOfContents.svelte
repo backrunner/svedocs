@@ -17,12 +17,14 @@
   let indicatorReady = false;
   let boundController: SvedocsTocController | undefined;
   let unsubscribeController: (() => void) | undefined;
+  let mobileOpen = false;
 
   $: activeController = controller ?? internalController;
   $: t = context?.t ?? fallbackTranslate;
   $: activeController.setPage(page);
   $: activeController.setContainer(tocEl);
   $: bindController(activeController);
+  $: { page.routePath; mobileOpen = false; }
 
   onMount(() => {
     if (controller) return;
@@ -48,6 +50,21 @@
     };
   }
 </script>
+
+{#if page.headings.length > 0}
+  <details class="sd-mobile-toc" bind:open={mobileOpen}>
+    <summary>{t('toc.label')}</summary>
+    <nav aria-label={t('toc.label')}>
+      {#each page.headings as heading}
+        <a class="sd-toc-link sd-depth-{heading.depth}" href={'#' + heading.id}
+          aria-current={heading.id === activeHeading ? 'location' : undefined}
+          on:click={() => { activeController.activate(heading.id); mobileOpen = false; }}>
+          {heading.text}
+        </a>
+      {/each}
+    </nav>
+  </details>
+{/if}
 
 <aside
   bind:this={tocEl}
