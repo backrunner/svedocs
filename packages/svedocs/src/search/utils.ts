@@ -1,5 +1,4 @@
-export function createExcerpt(content: string, query: string): string {
-  const terms = tokenizeSearchQuery(query);
+export function createExcerpt(content: string, query: string, terms = tokenizeSearchQuery(query)): string {
   const haystack = content.toLowerCase();
   const index = terms.reduce((best, term) => {
     const next = haystack.indexOf(term);
@@ -28,6 +27,13 @@ export function tokenizeSearchText(value: string): string[] {
 
 export function tokenizeSearchQuery(query: string): string[] {
   return normalizeSearchText(query).split(/\s+/).filter(Boolean);
+}
+
+/** Reuse query analysis across MiniSearch passes, reranking, and result excerpts. */
+export function analyzeSearchQuery(value: string) {
+  const normalized = normalizeSearchText(value);
+  const terms = normalized.split(/\s+/).filter(Boolean);
+  return { normalized, terms, tokens: terms.flatMap(tokenizeSearchSegment) };
 }
 
 export function stringMetadata(value: unknown): string | undefined {

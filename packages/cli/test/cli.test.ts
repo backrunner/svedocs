@@ -870,9 +870,21 @@ describe('svedocs-cli Batch 0 shell', () => {
         expect((await readdir(path.join(target, '.svelte-kit/cloudflare/og'))).some((file) => file.endsWith('.svg'))).toBe(true);
         if (template === 'minimal') {
           await writeFile(path.join(target, 'content/pages/index.md'), '# Title only\n');
-          await runCommand('pnpm', ['exec', 'svedocs', 'build', '--mode', 'static'], target);
+          const fixture = path.join(target, 'content/docs/ssg-cache-fixture.md');
+          await writeFile(fixture, '# Static fixture\n\n## Repeated\n\nInline math $x^2$.\n\n## Repeated\n\n```js\nconst stable = 1;\n```\n');
+          await runCommand('pnpm', ['exec', 'svedocs', 'ssg'], target);
           expect(await readFile(path.join(target, 'build/index.md'), 'utf8')).toContain('# Title only');
           expect((await readdir(path.join(target, 'build/og'))).some((file) => file.endsWith('.svg'))).toBe(true);
+          const fixtureHtml = await readFile(path.join(target, 'build/docs/ssg-cache-fixture/index.html'), 'utf8');
+          expect(fixtureHtml).toContain('id="repeated-1"');
+          expect(fixtureHtml).toContain('katex');
+          expect(fixtureHtml).toContain('stable');
+          await rm(fixture);
+          await writeFile(path.join(target, 'content/pages/index.md'), '# Changed title\n');
+          await runCommand('pnpm', ['exec', 'svedocs', 'ssg', '--no-og'], target);
+          expect(await readFile(path.join(target, 'build/index.md'), 'utf8')).toContain('# Changed title');
+          expect(await readFile(path.join(target, 'build/index.html'), 'utf8')).not.toContain('Title only');
+          await expect(readFile(path.join(target, 'build/docs/ssg-cache-fixture/index.html'))).rejects.toMatchObject({ code: 'ENOENT' });
         } else {
           await runCommand('pnpm', ['exec', 'svedocs', 'build', '--mode', 'static', '--no-og'], target);
           const docsFallback = await readFile(path.join(target, 'build/docs/zh/index.html'), 'utf8');

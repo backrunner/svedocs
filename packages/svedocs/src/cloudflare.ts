@@ -1,4 +1,5 @@
 import type { SvedocsResolvedConfig } from './core.js';
+export { createSvedocsHtmlCacheHandle, type SvedocsHtmlCacheOptions } from './cloudflare/html-cache.js';
 
 export type SvedocsBuildMode = 'edge' | 'static' | 'spa';
 export type SvedocsPagePrerenderOption = true | false | 'auto';

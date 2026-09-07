@@ -8,7 +8,7 @@ import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
 import { unified } from 'unified';
 import type { SvedocsCodeBlock, SvedocsHeading } from '../core/types.js';
-import { extractMarkdownOutline, markdownAstToPlainText } from './ast.js';
+import { outlineFromAst, plainTextFromAst, parseMarkdownAst, type MarkdownNode } from './ast.js';
 import { extractCodeBlocks, rehypeCodeBlocks, remarkSvedocsCodeBlocks, type SvedocsMarkdownMessages } from './code.js';
 import { createDiffRows, createDiffSplitRows } from './diff.js';
 import { rehypeSvedocsHeadingAnchors } from './headings.js';
@@ -42,7 +42,12 @@ export async function compileMarkdown(
   markdown: string,
   options: CompileMarkdownOptions = {}
 ): Promise<CompiledMarkdown> {
-  const extracted = extractMarkdownOutline(markdown);
+  return compileMarkdownWithAst(markdown, options, parseMarkdownAst(markdown));
+}
+
+/** Analysis stays separate from the mutable rendering plugin tree. */
+export async function compileMarkdownWithAst(markdown: string, options: CompileMarkdownOptions, analysis: MarkdownNode): Promise<CompiledMarkdown> {
+  const extracted = outlineFromAst(analysis);
   const codeBlocks = extractCodeBlocks(markdown);
   const processor = unified()
     .use(remarkParse)
@@ -91,7 +96,7 @@ export async function compileMarkdown(
 
   return {
     html: String(file),
-    plainText: markdownAstToPlainText(markdown),
+    plainText: plainTextFromAst(analysis),
     headings: extracted.headings,
     codeBlocks,
     ...(extracted.title ? { title: extracted.title } : {})

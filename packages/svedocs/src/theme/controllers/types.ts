@@ -19,6 +19,7 @@ export interface SvedocsSearchController {
   activate(index: number): void;
   select(index?: number): SearchResult | undefined;
   ensureRecords(): Promise<SvedocsSearchRecord[]>;
+  destroy?(): void;
 }
 
 export interface SvedocsSearchControllerOptions {
@@ -57,6 +58,7 @@ export interface SvedocsAskAiController {
   setInput(value: string): void;
   send(text?: string): Promise<void>;
   ensureRecords(): Promise<SvedocsSearchRecord[]>;
+  destroy?(): void;
 }
 
 export interface SvedocsAskAiControllerOptions {

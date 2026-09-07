@@ -1,4 +1,4 @@
-import { extractMarkdownSections } from '../mdx/ast.js';
+import { extractMarkdownSections, type MarkdownSection } from '../mdx/ast.js';
 import type { SvedocsPage, SvedocsSearchRecord } from './types.js';
 
 export function createSearchRecords(pages: readonly SvedocsPage[] = []): SvedocsSearchRecord[] {
@@ -27,7 +27,11 @@ export function createPageSearchRecord(page: SvedocsPage): SvedocsSearchRecord {
 }
 
 function createSectionSearchRecords(page: SvedocsPage, markdown: string): SvedocsSearchRecord[] {
-  return extractMarkdownSections(markdown).map((section) => ({
+  return createSectionRecords(page, extractMarkdownSections(markdown));
+}
+
+export function createSectionRecords(page: SvedocsPage, sections: MarkdownSection[]): SvedocsSearchRecord[] {
+  return sections.map((section) => ({
     id: `${page.id}:${section.id}`,
     pageId: page.id,
     url: `${page.routePath}#${section.id}`,

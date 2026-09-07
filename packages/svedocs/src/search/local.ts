@@ -1,7 +1,9 @@
 import MiniSearch from 'minisearch';
+import { matchesSearchScope } from './scope.js';
+export { filterSearchRecords, matchesSearchScope } from './scope.js';
 import type { SvedocsSearchRecord } from '../core.js';
 import type { SearchProvider, SearchQuery, SearchResult, SearchScope } from './types.js';
-import { createExcerpt, jsonResponse, normalizeSearchText, tokenizeSearchQuery, tokenizeSearchText } from './utils.js';
+import { analyzeSearchQuery, createExcerpt, jsonResponse, normalizeSearchText, tokenizeSearchText } from './utils.js';
 
 interface MiniSearchDocument {
   id: string;
@@ -48,17 +50,17 @@ export function createLocalSearchProvider(records: SvedocsSearchRecord[] = []): 
 export const localSearchProvider = createLocalSearchProvider();
 
 export function searchRecords(records: SvedocsSearchRecord[], input: SearchQuery): SearchResult[] {
-  const query = normalizeSearchText(input.query);
+  const { normalized: query, terms, tokens } = analyzeSearchQuery(input.query);
   if (!query) return [];
   const limit = input.limit ?? 10;
   const entry = getMiniSearchIndex(records);
-  const primary = runLocalSearch(entry, input, 'AND');
+  const primary = runLocalSearch(entry, input, 'AND', query, terms, tokens);
   const selected = primary.slice(0, limit);
-  if (selected.length < limit && tokenizeSearchQuery(input.query).length > 1) {
+  if (selected.length < limit && terms.length > 1) {
     const seen = new Set(selected.map((hit) => hit.record.id));
     const fallbackScoreCeiling = selected.at(-1)?.score;
     selected.push(
-      ...runLocalSearch(entry, input, 'OR')
+      ...runLocalSearch(entry, input, 'OR', query, terms, tokens)
         .filter((hit) => !seen.has(hit.record.id))
         .map((hit) => ({
           ...hit,
@@ -73,7 +75,7 @@ export function searchRecords(records: SvedocsSearchRecord[], input: SearchQuery
     title: record.title,
     url: record.url,
     ...(record.section ? { section: record.section } : {}),
-    excerpt: createExcerpt(record.content, input.query),
+    excerpt: createExcerpt(record.content, input.query, terms),
     score,
     metadata: record.metadata
   }));
@@ -82,9 +84,14 @@ export function searchRecords(records: SvedocsSearchRecord[], input: SearchQuery
 function runLocalSearch(
   entry: MiniSearchCacheEntry,
   input: SearchQuery,
-  combineWith: 'AND' | 'OR'
+  combineWith: 'AND' | 'OR',
+  normalizedQuery: string,
+  terms: string[],
+  tokens: string[]
 ): LocalSearchHit[] {
   const scoped = entry.index.search(input.query, {
+    tokenize: () => tokens,
+    processTerm: (term) => term,
     prefix: true,
     fuzzy: (term) => term.length > 4 ? 0.18 : false,
     combineWith,
@@ -94,24 +101,11 @@ function runLocalSearch(
   return scoped
     .map((hit) => {
       const record = entry.recordsById.get(hit.id);
-      return record ? { record, score: scoreLocalSearchHit(record, hit.score, input.query) } : undefined;
+      return record && matchesSearchScope(record, input) ? { record, score: scoreLocalSearchHit(record, hit.score, normalizedQuery, terms) } : undefined;
     })
     .filter((item): item is { record: SvedocsSearchRecord; score: number } => Boolean(item))
-    .filter((item) => matchesSearchScope(item.record, input))
     .sort((a, b) => b.score - a.score)
     .map((hit) => ({ ...hit, score: Number(hit.score.toFixed(4)) }));
-}
-
-export function filterSearchRecords(
-  records: SvedocsSearchRecord[],
-  scope: SearchScope = {}
-): SvedocsSearchRecord[] {
-  return records.filter((record) => matchesSearchScope(record, scope));
-}
-
-export function matchesSearchScope(record: SvedocsSearchRecord, scope: SearchScope = {}): boolean {
-  return matchesMetadata(record.metadata.locale, scope.locale)
-    && matchesMetadata(record.metadata.kind, scope.kind);
 }
 
 export async function createSearchResponse(records: SvedocsSearchRecord[], request: Request): Promise<Response> {
@@ -129,28 +123,50 @@ export async function createSearchResponse(records: SvedocsSearchRecord[], reque
   return jsonResponse({ query, results });
 }
 
+function createMiniSearchIndex(records: SvedocsSearchRecord[]): MiniSearchCacheEntry {
+  return {
+    index: new MiniSearch<MiniSearchDocument>({
+      fields: ['title', 'section', 'url', 'content', 'metadataText'],
+      storeFields: [],
+      idField: 'id',
+      searchOptions: { prefix: true, fuzzy: 0.18 },
+      tokenize: tokenizeSearchText,
+      processTerm: (term) => normalizeSearchText(term) || false
+    }),
+    recordsById: new Map(records.map((record) => [record.id, record]))
+  };
+}
+
 function getMiniSearchIndex(records: SvedocsSearchRecord[]): MiniSearchCacheEntry {
   const cached = miniSearchCache.get(records);
   if (cached) return cached;
-  const documents = records.map(toMiniSearchDocument);
-  const index = new MiniSearch<MiniSearchDocument>({
-    fields: ['title', 'section', 'url', 'content', 'metadataText'],
-    storeFields: ['id', 'title', 'section', 'url', 'content', 'metadata'],
-    idField: 'id',
-    searchOptions: {
-      prefix: true,
-      fuzzy: 0.18
-    },
-    tokenize: tokenizeSearchText,
-    processTerm: (term) => normalizeSearchText(term) || false
-  });
-  index.addAll(documents);
-  const entry = {
-    index,
-    recordsById: new Map(records.map((record) => [record.id, record]))
-  };
+  const entry = createMiniSearchIndex(records);
+  entry.index.addAll(records.map(toMiniSearchDocument));
   miniSearchCache.set(records, entry);
   return entry;
+}
+
+const preparing = new WeakMap<SvedocsSearchRecord[], Promise<void>>();
+
+/** Yield on the UI thread; Workers can build continuously without blocking input. */
+export async function prepareSearchIndex(records: SvedocsSearchRecord[], cooperative = true): Promise<void> {
+  if (miniSearchCache.has(records)) return;
+  const existing = preparing.get(records);
+  if (existing) return existing;
+  const pending = (async () => {
+    const entry = createMiniSearchIndex(records);
+    let started = performance.now();
+    for (const record of records) {
+      entry.index.add(toMiniSearchDocument(record));
+      if (cooperative && performance.now() - started >= 8) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        started = performance.now();
+      }
+    }
+    if (!miniSearchCache.has(records)) miniSearchCache.set(records, entry);
+  })();
+  preparing.set(records, pending);
+  try { await pending; } finally { preparing.delete(records); }
 }
 
 function toMiniSearchDocument(record: SvedocsSearchRecord): MiniSearchDocument {
@@ -165,19 +181,11 @@ function toMiniSearchDocument(record: SvedocsSearchRecord): MiniSearchDocument {
   };
 }
 
-function matchesMetadata(value: unknown, expected: string | undefined): boolean {
-  if (!expected) return true;
-  if (Array.isArray(value)) return value.some((item) => String(item) === expected);
-  return value === expected;
-}
-
-function scoreLocalSearchHit(record: SvedocsSearchRecord, score: number, query: string): number {
-  const normalizedQuery = normalizeSearchText(query);
+function scoreLocalSearchHit(record: SvedocsSearchRecord, score: number, normalizedQuery: string, terms: string[]): number {
   const title = normalizeSearchText(record.title);
   const section = normalizeSearchText(record.section ?? '');
   const url = normalizeSearchText(record.url);
   const sourcePath = normalizeSearchText(typeof record.metadata.sourcePath === 'string' ? record.metadata.sourcePath : '');
-  const terms = tokenizeSearchQuery(query);
   let multiplier = 1;
   if (title === normalizedQuery || section === normalizedQuery) {
     multiplier *= 1.6;

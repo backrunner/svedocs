@@ -70,3 +70,34 @@ AI Search is opt-in. A default project keeps MiniSearch local search, and only e
 Template routes remain usable without Cloudflare bindings. `createConfiguredSearchResponse` uses local JSON search when AI Search is unavailable, while `createConfiguredAskResponse` returns a mock answer with local citations when no AI Search, Workers AI, or OpenAI-compatible credentials are present.
 
 Use `.dev.vars.example` for environment names and keep real tokens out of the repository.
+
+## Cache public SSR pages
+
+Markdown is compiled to HTML during the Vite build, so production SSR does not parse it again. For public documentation whose entire HTML is independent of cookies, headers, user identity and request-local data, `createSvedocsHtmlCacheHandle` can also reuse the rendered page within a Worker isolate. Enable this explicitly for selected routes:
+
+```ts title="src/hooks.server.ts"
+import { building, dev } from '$app/environment';
+import { sequence } from '@sveltejs/kit/hooks';
+import { createSvedocsAgentHandle } from 'svedocs/agent';
+import { createSvedocsHtmlCacheHandle } from 'svedocs/cloudflare';
+import config from 'virtual:svedocs/config';
+import pages from 'virtual:svedocs/page-index';
+import markdown from 'virtual:svedocs/markdown';
+
+export const handle = sequence(
+  createSvedocsAgentHandle({ config, pages, markdown }),
+  createSvedocsHtmlCacheHandle({
+    config, pages,
+    enabled: !dev && !building,
+    include: (page) => page.kind === 'doc' && page.sourcePath.endsWith('.md')
+      && (!page.frontmatter.layout || page.frontmatter.layout === 'docs'),
+    maxAge: 60
+  })
+);
+```
+
+The example assumes the default documentation theme and no request-dependent page overrides. Do not include personalized themes, custom layouts or components whose SSR output depends on a request. Keep authentication outside the cache, and put agent negotiation before it as shown.
+
+The cache defaults to 60 seconds, 128 entries, 8 MiB total body bytes and 512 KiB per page. Configure `maxAge`, `maxEntries`, `maxBytes` and `maxEntryBytes` on the handle. Responses larger than the limit, or bodies that do not finish within 100 ms, are returned normally without caching. Each hit gets its own response/body, while simultaneous eligible misses share the fill. Entries expire or are evicted when full; a new handle or deployment starts empty. This is in-memory reuse, not persistent Cloudflare Cache API storage, and it adds no public cache headers.
+
+Cookie/authorization requests, query strings, range/precondition requests, explicit revalidation, agent negotiation and non-page routes bypass the cache. Private/no-store responses, cookies set during rendering, non-200 responses, `Vary`, encoded responses and nonce CSP are not stored. HEAD and ETag conditional GET work on cached HTML. Static and SPA builds always bypass this hook; keep `!building` and `!dev` to disable it during prerendering and development as well.

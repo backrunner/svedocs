@@ -7,7 +7,7 @@ import { visit } from 'unist-util-visit';
 import type { SvedocsHeading, SvedocsLinkReference } from '../core/types.js';
 import { stripHtml } from '../core/utils.js';
 
-interface MarkdownNode {
+export interface MarkdownNode {
   type: string;
   value?: string;
   alt?: string;
@@ -42,7 +42,11 @@ export function parseMarkdownAst(markdown: string): MarkdownNode {
 
 /** Strip only a leading title node, never heading-like text inside code. */
 export function prepareMarkdownTitle(markdown: string, explicitTitle?: string): { markdown: string; title?: string } {
-  const nodes = parseMarkdownAst(markdown).children ?? [];
+  return prepareMarkdownTitleFromAst(markdown, parseMarkdownAst(markdown), explicitTitle);
+}
+
+export function prepareMarkdownTitleFromAst(markdown: string, tree: MarkdownNode, explicitTitle?: string): { markdown: string; title?: string } {
+  const nodes = tree.children ?? [];
   const heading = nodes.find((node) => node.type === 'heading' && node.depth === 1);
   const title = explicitTitle ?? (heading ? nodeToText(heading).trim() : undefined);
   const leading = nodes.find((node) => !(node.type === 'html' && /^\s*<(script|style)\b/i.test(node.value ?? '')));
@@ -56,7 +60,10 @@ export function prepareMarkdownTitle(markdown: string, explicitTitle?: string): 
 }
 
 export function extractMarkdownOutline(markdown: string): { title?: string; headings: SvedocsHeading[] } {
-  const tree = parseMarkdownAst(markdown);
+  return outlineFromAst(parseMarkdownAst(markdown));
+}
+
+export function outlineFromAst(tree: MarkdownNode): { title?: string; headings: SvedocsHeading[] } {
   const slugger = new GithubSlugger();
   const headings: SvedocsHeading[] = [];
   let title: string | undefined;
@@ -76,11 +83,18 @@ export function extractMarkdownOutline(markdown: string): { title?: string; head
 }
 
 export function markdownAstToPlainText(markdown: string): string {
-  return nodeToText(parseMarkdownAst(markdown)).replace(/\s+/g, ' ').trim();
+  return plainTextFromAst(parseMarkdownAst(markdown));
+}
+
+export function plainTextFromAst(tree: MarkdownNode): string {
+  return nodeToText(tree).replace(/\s+/g, ' ').trim();
 }
 
 export function extractMarkdownSections(markdown: string): MarkdownSection[] {
-  const tree = parseMarkdownAst(markdown);
+  return sectionsFromAst(parseMarkdownAst(markdown));
+}
+
+export function sectionsFromAst(tree: MarkdownNode): MarkdownSection[] {
   const slugger = new GithubSlugger();
   const sections: MarkdownSection[] = [];
   let current: { id: string; depth: 2 | 3 | 4; title: string; nodes: MarkdownNode[] } | undefined;
@@ -119,7 +133,10 @@ export function extractMarkdownSections(markdown: string): MarkdownSection[] {
 }
 
 export function extractMarkdownLinksFromAst(markdown: string): SvedocsLinkReference[] {
-  const tree = parseMarkdownAst(markdown);
+  return linksFromAst(parseMarkdownAst(markdown));
+}
+
+export function linksFromAst(tree: MarkdownNode): SvedocsLinkReference[] {
   const definitions = new Map<string, string>();
   const links: SvedocsLinkReference[] = [];
 

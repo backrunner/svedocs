@@ -2,7 +2,9 @@
   import { onDestroy, onMount, tick } from 'svelte';
   import type { SvedocsResolvedConfig, SvedocsSearchRecord } from '../core/types.js';
   import type { SearchScope } from '../search/types.js';
-  import { createAskAiController, fallbackTranslate } from './headless.js';
+  import { fallbackTranslate } from './controllers/context.js';
+  import { createAskAiControllerWithAdapter } from './controllers/ask-controller.js';
+  import { createBrowserSearchAdapter } from '../search/client.js';
   import { portal } from './portal.js';
   import { dialogBehavior, isComposingKey } from './dialog.js';
   import type { SvedocsAskAiController, SvedocsAskAiMessage, SvedocsThemeContext } from './types.js';
@@ -16,7 +18,7 @@
   export let controller: SvedocsAskAiController | undefined = undefined;
   export let context: SvedocsThemeContext | undefined = undefined;
 
-  const internalController = createAskAiController({ config, records, loadRecords, scope, buildMode, endpoint });
+  const internalController = createAskAiControllerWithAdapter({ config, records, loadRecords, scope, buildMode, endpoint }, createBrowserSearchAdapter());
   let activeController: SvedocsAskAiController = internalController;
   let open = false;
   let input = '';
@@ -121,6 +123,7 @@
   });
 
   onDestroy(() => {
+    internalController.destroy?.();
     internalController.hide();
     unsubscribeController?.();
   });

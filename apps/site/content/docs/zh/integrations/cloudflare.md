@@ -70,3 +70,34 @@ AI Search 是可选项。新项目默认使用本地 MiniSearch；只有把 `sea
 即使没有 Cloudflare 绑定，模板路由也能继续使用。搜索路由通过 `createConfiguredSearchResponse` 改用本地 JSON 搜索；Ask AI 路由通过 `createConfiguredAskResponse` 返回带本地引用的模拟回答。
 
 需要哪些环境变量可以记录在 `.dev.vars.example` 中，真实令牌不要提交到仓库。
+
+## 缓存公开的 SSR 页面
+
+Markdown 在 Vite 构建时已经编译为 HTML，生产 SSR 不会再次解析。对于整页 HTML 不依赖 Cookie、请求头、用户身份或请求局部数据的公开文档，可以用 `createSvedocsHtmlCacheHandle` 在 Worker isolate 内复用渲染结果，按路由显式启用：
+
+```ts title="src/hooks.server.ts"
+import { building, dev } from '$app/environment';
+import { sequence } from '@sveltejs/kit/hooks';
+import { createSvedocsAgentHandle } from 'svedocs/agent';
+import { createSvedocsHtmlCacheHandle } from 'svedocs/cloudflare';
+import config from 'virtual:svedocs/config';
+import pages from 'virtual:svedocs/page-index';
+import markdown from 'virtual:svedocs/markdown';
+
+export const handle = sequence(
+  createSvedocsAgentHandle({ config, pages, markdown }),
+  createSvedocsHtmlCacheHandle({
+    config, pages,
+    enabled: !dev && !building,
+    include: (page) => page.kind === 'doc' && page.sourcePath.endsWith('.md')
+      && (!page.frontmatter.layout || page.frontmatter.layout === 'docs'),
+    maxAge: 60
+  })
+);
+```
+
+示例假定使用默认文档主题，没有依赖请求数据的页面替换。不要把个性化主题、自定义布局或依赖请求的 SSR 组件纳入缓存。认证逻辑应放在缓存外层，Agent 协商按示例放在缓存之前。
+
+默认有效期 60 秒，最多 128 项，总正文大小 8 MiB，单页上限 512 KiB；可以通过 `maxAge`、`maxEntries`、`maxBytes` 和 `maxEntryBytes` 调整。超过大小限制或 100 ms 内未读取完的响应正常返回，不写入缓存。每次命中创建独立响应和正文，同时到达的可缓存请求共享填充过程。条目到期或容量不足时淘汰，新建 handle 或新部署从空缓存开始。这是内存缓存，不写 Cloudflare Cache API，也不添加公开缓存响应头。
+
+带 Cookie、认证信息、查询参数、Range/前置条件、强制重新验证的请求，以及 Agent 协商和非页面路由都会绕过缓存。私有或 no-store 响应、渲染期间设置 Cookie、非 200 状态、`Vary`、已编码响应和带 nonce 的 CSP 不会写入。缓存支持 HEAD 和 ETag 条件 GET。static 与 SPA 模式始终绕过缓存；保留 `!building`、`!dev`，也让预渲染和开发模式禁用缓存。

@@ -4,7 +4,6 @@
   import config from 'virtual:svedocs/config';
   import pages from 'virtual:svedocs/page-index';
   import tree from 'virtual:svedocs/tree';
-  import search from 'virtual:svedocs/search';
   import loadSearch from 'virtual:svedocs/search-loader';
   import themeComponents from 'virtual:svedocs/theme-components';
 
@@ -21,7 +20,7 @@
     {config}
     {pages}
     {tree}
-    {search}
+    search={[]}
     {loadSearch}
     {themeComponents}
   />
@@ -34,7 +33,7 @@
       {config}
       {pages}
       {tree}
-      {search}
+      search={[]}
       {loadSearch}
       {themeComponents}
     />

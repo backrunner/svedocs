@@ -3,7 +3,9 @@
   import { onDestroy, onMount, tick } from 'svelte';
   import type { SvedocsSearchRecord } from '../core/types.js';
   import type { SearchResult, SearchScope } from '../search/types.js';
-  import { createSearchController, fallbackTranslate } from './headless.js';
+  import { fallbackTranslate } from './controllers/context.js';
+  import { createSearchControllerWithAdapter } from './controllers/search-controller.js';
+  import { createBrowserSearchAdapter } from '../search/client.js';
   import { portal } from './portal.js';
   import { dialogBehavior, isComposingKey } from './dialog.js';
   import type { SvedocsSearchController, SvedocsThemeContext } from './types.js';
@@ -17,7 +19,7 @@
   export let controller: SvedocsSearchController | undefined = undefined;
   export let context: SvedocsThemeContext | undefined = undefined;
 
-  const internalController = createSearchController({ records, loadRecords, scope, provider, endpoint, buildMode });
+  const internalController = createSearchControllerWithAdapter({ records, loadRecords, scope, provider, endpoint, buildMode }, createBrowserSearchAdapter());
   let activeController: SvedocsSearchController = internalController;
   let open = false;
   let query = '';
@@ -110,6 +112,7 @@
   });
 
   onDestroy(() => {
+    internalController.destroy?.();
     internalController.hide();
     unsubscribeController?.();
   });

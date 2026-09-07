@@ -1203,7 +1203,7 @@ describe('svedocs Batch 0 skeleton', () => {
       const loaded = await plugin.load('\0virtual:svedocs/server-config');
 
       expect(loaded).toContain('svedocs.config.mjs');
-      expect(loaded).toContain('loadSvedocsConfig(userConfig)');
+      expect(loaded).toContain('loadSvedocsConfig({ ...userConfig, build:');
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }

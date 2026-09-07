@@ -75,7 +75,8 @@ export async function loadPageComponent(
   pages: SvedocsPage[],
   components: Record<string, string>,
   rawConfig: SvedocsConfig | undefined,
-  manifestConfig: SvedocsContentManifest['config']
+  manifestConfig: SvedocsContentManifest['config'],
+  onDependency?: (file: string) => void
 ): Promise<string> {
   const pageId = decodeURIComponent(id.slice(`\0${componentVirtualPrefix}`.length).replace(/\.svelte$/, ''));
   const page = pages.find((item) => item.id === pageId);
@@ -89,6 +90,7 @@ export async function loadPageComponent(
   try {
     const transformedSource = await transformSvedocsImageComponents(source, {
       ...manifestConfig.images,
+      onDependency,
       projectRoot: root,
       sourcePath: page.sourcePath,
       skip: shouldSkipPageImages(parsed.data as Record<string, unknown>)
@@ -118,6 +120,7 @@ export async function loadPageComponent(
           ...(rawConfig?.markdown?.shiki?.transformers ? { shikiTransformers: rawConfig.markdown.shiki.transformers } : {}),
           imageOptimization: {
             ...manifestConfig.images,
+      onDependency,
             projectRoot: root,
             sourcePath: page.sourcePath,
             skip: shouldSkipPageImages(parsed.data as Record<string, unknown>)

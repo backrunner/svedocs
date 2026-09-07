@@ -21,7 +21,7 @@ export function createServerConfigModule(
     `import * as userConfigModule from ${JSON.stringify(configFile)};`,
     `import { loadSvedocsConfig } from 'svedocs/config';`,
     `const userConfig = userConfigModule.default ?? userConfigModule.config ?? {};`,
-    `export default loadSvedocsConfig(userConfig);`
+    `export default loadSvedocsConfig({ ...userConfig, build: { ...userConfig.build, mode: ${JSON.stringify(config.build.mode)} } });`
   ].join('\n');
 }
 

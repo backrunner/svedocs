@@ -1,4 +1,8 @@
+import { readFile } from 'node:fs/promises';
 import { expect, test, type APIResponse } from '@playwright/test';
+
+const staticRoutes = ['static', 'spa'].includes(process.env.SVEDOCS_BUILD_MODE ?? 'edge');
+const canonicalPath = (route: string) => staticRoutes && route !== '/' ? `${route}/` : route;
 
 test('serves the official home and docs entry', async ({ request }) => {
   const home = await request.get('/');
@@ -7,7 +11,7 @@ test('serves the official home and docs entry', async ({ request }) => {
     'svedocs',
     'Read docs',
     'rel="canonical" href="https://svedocs.pwp.sh/"',
-    'hreflang="zh-CN" href="https://svedocs.pwp.sh/zh"',
+    `hreflang="zh-CN" href="https://svedocs.pwp.sh${canonicalPath('/zh')}"`,
     'hreflang="x-default" href="https://svedocs.pwp.sh/"',
     'property="og:locale" content="en"',
     '"inLanguage":"en"'
@@ -19,9 +23,9 @@ test('serves the official home and docs entry', async ({ request }) => {
     '为 Cloudflare 或静态托管构建 SvelteKit 文档站。',
     '阅读文档',
     '文档入口',
-    'rel="canonical" href="https://svedocs.pwp.sh/zh"',
+    `rel="canonical" href="https://svedocs.pwp.sh${canonicalPath('/zh')}"`,
     'hreflang="en" href="https://svedocs.pwp.sh/"',
-    'hreflang="zh-CN" href="https://svedocs.pwp.sh/zh"',
+    `hreflang="zh-CN" href="https://svedocs.pwp.sh${canonicalPath('/zh')}"`,
     'hreflang="x-default" href="https://svedocs.pwp.sh/"',
     'property="og:locale" content="zh_CN"',
     'property="og:locale:alternate" content="en"',
@@ -40,10 +44,10 @@ test('serves the official home and docs entry', async ({ request }) => {
     '问 AI',
     '本页内容',
     '编辑此页',
-    'rel="canonical" href="https://svedocs.pwp.sh/docs/zh"',
-    'hreflang="en" href="https://svedocs.pwp.sh/docs"',
-    'hreflang="zh-CN" href="https://svedocs.pwp.sh/docs/zh"',
-    'hreflang="x-default" href="https://svedocs.pwp.sh/docs"',
+    `rel="canonical" href="https://svedocs.pwp.sh${canonicalPath('/docs/zh')}"`,
+    `hreflang="en" href="https://svedocs.pwp.sh${canonicalPath('/docs')}"`,
+    `hreflang="zh-CN" href="https://svedocs.pwp.sh${canonicalPath('/docs/zh')}"`,
+    `hreflang="x-default" href="https://svedocs.pwp.sh${canonicalPath('/docs')}"`,
     'property="og:locale" content="zh_CN"',
     '"inLanguage":"zh-CN"'
   ]);
@@ -52,7 +56,7 @@ test('serves the official home and docs entry', async ({ request }) => {
 test('localizes interactive controls on zh docs pages', async ({ page }) => {
   await page.goto('/docs/zh');
 
-  await expect(page).toHaveURL(/\/docs\/zh$/);
+  await expect(page).toHaveURL(/\/docs\/zh\/?$/);
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
   await expect(page.locator('a.sd-brand')).toHaveAttribute('href', '/zh');
@@ -94,6 +98,8 @@ test('searches beta docs and falls back Ask AI without remote bindings', async (
   const search = page.getByRole('combobox', { name: 'Search query' });
   await expect(search).toHaveAttribute('aria-expanded', 'true');
   await search.fill('beta channel');
+  await expect(page.getByRole('option', { name: /Create a new project/ })).toBeVisible();
+  await expect.poll(() => page.workers().length).toBe(1);
   await page.getByRole('option', { name: /Create a new project/ }).click();
   await expect(page).toHaveURL(/\/docs\/installation#create-a-new-project$/);
 
@@ -115,23 +121,27 @@ async function expectResponseToContain(response: APIResponse, texts: string[]) {
 }
 
 test('loads custom content on demand and updates its theme context across locales', async ({ page }) => {
+  const manifest = process.env.SVEDOCS_E2E_PREVIEW
+    ? JSON.parse(await readFile('.svelte-kit/output/client/.vite/manifest.json', 'utf8')) as Record<string, { file: string }>
+    : undefined;
+  const componentFile = (name: string) => manifest ? manifest[`src/lib/${name}.svelte`]!.file : `/${name}.svelte`;
   const requests: string[] = [];
   const errors: string[] = [];
   page.on('request', (request) => requests.push(decodeURIComponent(request.url())));
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('data-svedocs-route', '/');
-  expect(requests.some((url) => url.includes('/SiteHome.svelte'))).toBe(true);
-  expect(requests.some((url) => /ThemePreview\.svelte|FeatureLayout\.svelte|virtual:svedocs\/component\//.test(url))).toBe(false);
+  expect(requests.some((url) => url.includes(componentFile('SiteHome')))).toBe(true);
+  expect(requests.some((url) => ['ThemePreview', 'FeatureLayout'].some((name) => url.includes(componentFile(name))) || url.includes('virtual:svedocs/component/'))).toBe(false);
 
   await page.getByRole('link', { name: 'Theme preview' }).click();
   await expect(page.getByRole('heading', { name: 'A Svelte page of your own' })).toBeVisible();
-  expect(requests.some((url) => url.includes('/ThemePreview.svelte'))).toBe(true);
+  expect(requests.some((url) => url.includes(componentFile('ThemePreview')))).toBe(true);
   await page.getByRole('slider', { name: 'Corner radius' }).fill('16');
   await expect(page.locator('.preview')).toHaveCSS('border-radius', '16px');
   await page.getByRole('button', { name: /^(Locale|Language)$/ }).click();
   await page.getByRole('menuitemradio', { name: '中文' }).click();
-  await expect(page).toHaveURL(/\/zh\/theme-preview$/);
+  await expect(page).toHaveURL(/\/zh\/theme-preview\/?$/);
   await expect(page.getByRole('heading', { name: '这是你自己的 Svelte 页面' })).toBeVisible();
   await expect(page.getByRole('link', { name: '查看主题文档' })).toHaveAttribute('href', '/docs/zh/configuration/theme');
   await expect(page.getByRole('slider', { name: '圆角' })).toHaveValue('16');
@@ -150,7 +160,7 @@ test('supports mobile navigation and persists the selected theme', async ({ page
   await page.locator('.sd-theme-toggle').click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.getByRole('navigation', { name: '主导航' }).getByRole('link', { name: '文档', exact: true }).click();
-  await expect(page).toHaveURL(/\/docs\/zh$/);
+  await expect(page).toHaveURL(/\/docs\/zh\/?$/);
   await expect(page.getByRole('button', { name: '打开菜单' })).toHaveAttribute('aria-expanded', 'false');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
