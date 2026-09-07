@@ -1,7 +1,7 @@
 import type { SvedocsPage, SvedocsResolvedConfig } from '../core.js';
 import { formatRoutePathForBuildMode } from '../core/utils.js';
 import { createDisabledDiscoveryResponse, createDiscoveryResponse, escapeXml } from './response.js';
-import { isDiscoverablePage } from './sitemap.js';
+import { isDiscoverablePage } from '../core/seo.js';
 
 interface RssEntry {
   page: SvedocsPage;
@@ -14,12 +14,12 @@ export function createRssXml(config: SvedocsResolvedConfig, pages: SvedocsPage[]
   if (!rss) return '';
   const locale = rss.locale ?? config.i18n.defaultLocale;
   const entries = pages
-    .filter(isDiscoverablePage)
+    .filter((page) => isDiscoverablePage(page, config))
     .filter((page) => isPageInLocale(config, page, locale))
     .map((page): RssEntry | undefined => {
       const link = createPageUrl(config, page);
       if (!link) return undefined;
-      const date = parseDate(page.seo.updatedTime ?? page.seo.publishedTime ?? page.lastUpdated);
+      const date = parseDate(page.seo.updatedTime ?? page.seo.publishedTime);
       return { page, link, ...(date ? { date } : {}) };
     })
     .filter((entry): entry is RssEntry => Boolean(entry))

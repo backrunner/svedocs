@@ -1,10 +1,10 @@
 ---
-title: Components
+title: Theme components
 description: Look up props, responsibilities, and headless controllers for replaceable svedocs theme components.
 order: 4
 ---
 
-# Components
+# Theme components
 
 The svedocs theme is split into replaceable Svelte components and reusable headless controllers. This page documents the contracts for the navbar, article layout, search dialog, Ask AI panel, table of contents, footer, and floating page tools.
 

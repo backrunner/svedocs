@@ -50,6 +50,10 @@ export interface SvedocsPageMetadata {
     type: string;
     url?: string;
     image?: string;
+    imageAlt?: string;
+    imageWidth?: number;
+    imageHeight?: number;
+    imageType?: string;
     siteName: string;
     locale?: string;
     alternateLocales?: string[];
@@ -59,6 +63,7 @@ export interface SvedocsPageMetadata {
   };
   twitter: {
     card: 'summary' | 'summary_large_image';
+    imageAlt?: string;
     title: string;
     description: string;
     image?: string;

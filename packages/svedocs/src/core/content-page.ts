@@ -77,6 +77,10 @@ export async function loadContentFile(
     ?? dateFrontmatter(frontmatter.updated);
   const canonical = stringFrontmatter(frontmatter.canonical) ?? createPageCanonicalUrl(config, routePath);
   const image = stringFrontmatter(frontmatter.image);
+  const imageAlt = stringFrontmatter(frontmatter.imageAlt);
+  const imageWidth = numberFrontmatter(frontmatter.imageWidth);
+  const imageHeight = numberFrontmatter(frontmatter.imageHeight);
+  const imageType = stringFrontmatter(frontmatter.imageType);
   const page: SvedocsPage = {
     id,
     sourcePath: file,
@@ -101,7 +105,12 @@ export async function loadContentFile(
     codeBlocks: compiled.codeBlocks,
     frontmatter,
     seo: {
-      title,
+      title: stringFrontmatter(frontmatter.seoTitle) ?? title,
+      ...(frontmatter.authorType === 'Person' || frontmatter.authorType === 'Organization' ? { authorType: frontmatter.authorType } : {}),
+      ...(imageAlt ? { imageAlt } : {}),
+      ...(imageWidth ? { imageWidth } : {}),
+      ...(imageHeight ? { imageHeight } : {}),
+      ...(imageType ? { imageType } : {}),
       ...(description ? { description } : {}),
       ...(canonical ? { canonical } : {}),
       ...(image ? { image } : {}),

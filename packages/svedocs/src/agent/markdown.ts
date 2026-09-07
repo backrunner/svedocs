@@ -1,6 +1,6 @@
 import { resolveSvedocsPageRoute } from '../core/routes.js';
 import type { SvedocsPage, SvedocsResolvedConfig } from '../core/types.js';
-import { isDiscoverablePage } from '../og/sitemap.js';
+import { isDiscoverablePage } from '../core/seo.js';
 import { createDisabledDiscoveryResponse, createDiscoveryResponse } from '../og/response.js';
 
 export const markdownContentType = 'text/markdown; charset=utf-8';
@@ -57,7 +57,7 @@ export function resolvePageMarkdown(
   }
   if (resolution.status !== 'found') return { status: 'missing' };
   const page = resolution.page;
-  if (!isDiscoverablePage(page)) return { status: 'missing' };
+  if (!isDiscoverablePage(page, config)) return { status: 'missing' };
   const source = markdown?.[page.id] ?? page.markdown;
   if (typeof source !== 'string') return { status: 'missing' };
   return { status: 'found', page, source };
@@ -97,7 +97,7 @@ export function createPageMarkdownEntries(
 ): Array<{ path: string }> {
   if (!config.agent.enabled || !config.agent.markdown) return [];
   return pages
-    .filter((page) => page.routePath !== '/' && isDiscoverablePage(page) && typeof (markdown?.[page.id] ?? page.markdown) === 'string')
+    .filter((page) => page.routePath !== '/' && isDiscoverablePage(page, config) && typeof (markdown?.[page.id] ?? page.markdown) === 'string')
     .map((page) => ({ path: page.routePath.replace(/^\/+|\/+$/g, '') }));
 }
 

@@ -39,9 +39,14 @@ export interface SvedocsSeo {
   description?: string;
   canonical?: string;
   image?: string;
+  imageAlt?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  imageType?: string;
   keywords?: string[];
   type?: string;
   author?: string;
+  authorType?: 'Person' | 'Organization';
   publishedTime?: string;
   updatedTime?: string;
   robots?: string;
@@ -91,6 +96,7 @@ export interface SvedocsLocale {
   label: string;
   path: string;
   hreflang?: string;
+  ogLocale?: string;
   dir?: 'ltr' | 'rtl';
 }
 
@@ -457,6 +463,7 @@ export interface SvedocsResolvedConfig {
     };
     robots: boolean;
     defaultAuthor?: string;
+    defaultAuthorType?: 'Person' | 'Organization';
     head: SvedocsResolvedSeoHead;
     ogImage: false | {
       template: string | SvedocsOgTemplate;

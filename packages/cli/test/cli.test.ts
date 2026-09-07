@@ -595,7 +595,7 @@ describe('svedocs-cli Batch 0 shell', () => {
   it('generates OG svg assets', async () => {
     const tmp = await mkdtemp(path.join(tmpdir(), 'svedocs-og-'));
     try {
-      const result = await withCwd(fixtureRoot(), () => runSvedocsCli(['og', '--out', tmp]));
+      const result = await withCwd(fixtureRoot(), () => runSvedocsCli(['og', '--format', 'svg', '--out', tmp]));
       const outputName = (await readdir(tmp)).find((file) => file.startsWith('docs-guide') && file.endsWith('.svg'));
       const output = await readFile(path.join(tmp, outputName!), 'utf8');
 
@@ -629,7 +629,7 @@ describe('svedocs-cli Batch 0 shell', () => {
       await mkdir(binDir, { recursive: true });
       await writeFile(
         path.join(binDir, 'vite'),
-        '#!/usr/bin/env node\nconst fs = require("node:fs");\nprocess.exit(fs.existsSync("static/og") && fs.readdirSync("static/og").some(f => f.endsWith(".svg")) ? 0 : 1);\n',
+        '#!/usr/bin/env node\nconst fs = require("node:fs");\nprocess.exit(fs.existsSync("static/og") && fs.readdirSync("static/og").some(f => f.endsWith(".png")) ? 0 : 1);\n',
         { mode: 0o755 }
       );
       const previousPath = process.env.PATH;
@@ -637,12 +637,12 @@ describe('svedocs-cli Batch 0 shell', () => {
       try {
         const result = await withCwd(fixture, () => runSvedocsCli(['build', '--mode', 'static', '--outDir', 'custom-build']));
         const ogDir = path.join(fixture, 'static/og');
-        const outputName = (await readdir(ogDir)).find((file) => file.startsWith('docs-guide') && file.endsWith('.svg'));
-        const output = await readFile(path.join(ogDir, outputName!), 'utf8');
+        const outputName = (await readdir(ogDir)).find((file) => file.startsWith('docs-guide') && file.endsWith('.png'));
+        const output = await readFile(path.join(ogDir, outputName!), undefined);
 
         expect(result.ok).toBe(true);
-        expect(result.message).toContain('Generated 3 OG SVG files');
-        expect(output).toContain('<svg');
+        expect(result.message).toContain('Generated 3 OG PNG files');
+        expect([...output.slice(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
       } finally {
         process.env.PATH = previousPath;
         await rm(path.join(fixture, 'static'), { recursive: true, force: true });
@@ -719,7 +719,7 @@ describe('svedocs-cli Batch 0 shell', () => {
         'utf8'
       );
       const font = new URL('../../../node_modules/.pnpm/katex@0.16.47/node_modules/katex/dist/fonts/KaTeX_Main-Regular.ttf', import.meta.url).pathname;
-      const result = await withCwd(tmp, () => runSvedocsCli(['og', '--renderer', 'satori', '--font', font, '--out', path.join(tmp, 'og')]));
+      const result = await withCwd(tmp, () => runSvedocsCli(['og', '--format', 'svg', '--renderer', 'satori', '--font', font, '--out', path.join(tmp, 'og')]));
       const outputName = (await readdir(path.join(tmp, 'og'))).find((file) => file.startsWith('docs-') && file.endsWith('.svg'));
       const output = await readFile(path.join(tmp, 'og', outputName!), 'utf8');
 
@@ -867,14 +867,14 @@ describe('svedocs-cli Batch 0 shell', () => {
         await runCommand('pnpm', ['install', '--ignore-scripts'], target);
         await runCommand('pnpm', ['check'], target);
         await runCommand('pnpm', ['exec', 'svedocs', 'build'], target);
-        expect((await readdir(path.join(target, '.svelte-kit/cloudflare/og'))).some((file) => file.endsWith('.svg'))).toBe(true);
+        expect((await readdir(path.join(target, '.svelte-kit/cloudflare/og'))).some((file) => file.endsWith('.png'))).toBe(true);
         if (template === 'minimal') {
           await writeFile(path.join(target, 'content/pages/index.md'), '# Title only\n');
           const fixture = path.join(target, 'content/docs/ssg-cache-fixture.md');
           await writeFile(fixture, '# Static fixture\n\n## Repeated\n\nInline math $x^2$.\n\n## Repeated\n\n```js\nconst stable = 1;\n```\n');
           await runCommand('pnpm', ['exec', 'svedocs', 'ssg'], target);
           expect(await readFile(path.join(target, 'build/index.md'), 'utf8')).toContain('# Title only');
-          expect((await readdir(path.join(target, 'build/og'))).some((file) => file.endsWith('.svg'))).toBe(true);
+          expect((await readdir(path.join(target, 'build/og'))).some((file) => file.endsWith('.png'))).toBe(true);
           const fixtureHtml = await readFile(path.join(target, 'build/docs/ssg-cache-fixture/index.html'), 'utf8');
           expect(fixtureHtml).toContain('id="repeated-1"');
           expect(fixtureHtml).toContain('katex');

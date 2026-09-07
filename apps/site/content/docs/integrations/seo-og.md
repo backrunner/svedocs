@@ -107,7 +107,7 @@ export const GET = async ({ params }) => {
 };
 ```
 
-SVG OG routes are portable to edge runtimes. PNG generation is available through the CLI for build-time assets.
+PNG is the default sharing format. Generate it at build time with the CLI or the prerendered OG route; the Node PNG renderer is not available for dynamic Cloudflare requests. SVG remains an explicit option for dynamic edge rendering. Stable OG URLs use `max-age=0, must-revalidate` so content updates do not retain year-long immutable responses. Configure equivalent revalidation on your static host if it overrides asset caching.
 
 Custom root layouts can use `createJsonLdScript(value)` from `svedocs/og` when rendering JSON-LD through Svelte `{@html ...}`. It escapes script-sensitive characters before returning the complete `<script type="application/ld+json">` tag.
 
@@ -120,7 +120,7 @@ export default defineConfig({
   seo: {
     ogImage: {
       template: 'default',
-      format: 'svg',
+      format: 'png',
       outDir: 'static/og',
       renderer: 'svg'
     }
@@ -128,7 +128,7 @@ export default defineConfig({
 });
 ```
 
-`svedocs build` generates these assets after a successful Vite build. Pass `--no-og` to skip automatic generation for CI jobs that only need the application bundle.
+`svedocs build` generates these assets before Vite copies static files. Pass `--no-og` to skip automatic generation for CI jobs that only need the application bundle.
 
 ## PNG and Satori
 
@@ -144,3 +144,32 @@ Build-time `svedocs og` and automatic `svedocs build` generation preserve functi
 ## Automatic generation and OG routes
 
 `svedocs build` generates OG images before Vite copies static assets into the deployment output. If the project also provides an `/og/[...path]` route, set its `prerender` to `'auto'` when enabled and `false` when disabled. Existing static images can then satisfy those paths; when files are absent, SvelteKit still prerenders the route’s `entries()`. Generated templates include the appropriate setup. Update older project routes to avoid an unseen OG route error when static images already exist.
+
+## Titles, indexing, and structured data
+
+Use `seoTitle` in frontmatter to customize the search/share title without changing the visible article or navigation title. Localized homepages do not repeat the site-name suffix.
+
+```yaml
+---
+title: Components
+seoTitle: Theme component reference
+updatedTime: 2026-09-07
+author: Documentation team
+authorType: Organization
+image: /images/components.png
+imageAlt: Component relationships
+imageWidth: 1200
+imageHeight: 630
+imageType: image/png
+---
+```
+
+`updatedTime` supplies sitemap `lastmod`, JSON-LD `dateModified`, article modification tags, and the default theme’s visible update date. Filesystem `lastUpdated` remains available on the page model, but is not used for SEO dates because a checkout can change it. Omit `updatedTime` when no reliable editorial date is available. RSS uses explicit updated/published dates and omits a date when neither exists.
+
+Page `robots` and global/page `head.meta` tags named `robots` combine conservatively: a global `noindex` cannot be overridden by a page's `index`. The same rule filters sitemap, hreflang, RSS, and agent discovery. Hidden pages remain excluded from discovery. Bot-specific tags such as `googlebot` retain their targeted meaning.
+
+The default theme generates `BreadcrumbList` from real localized ancestors and preserves a custom breadcrumb graph supplied through `head.jsonLd`. Configure `seo.defaultAuthorType: 'Organization'` for a team, or use page `authorType`; the backward-compatible default is `Person`.
+
+Set an explicit `ogLocale` on an i18n locale when its `hreflang` contains no region, for example `{ code: 'en', hreflang: 'en', ogLocale: 'en_GB' }`. Language-only hreflang stays unchanged; a territory is never guessed for Open Graph.
+
+The SVG-to-PNG renderer uses fonts installed in the build environment. For reproducible Chinese images across machines, use Satori with explicit `--font` files containing the required glyphs and generate static assets before deployment.

@@ -146,6 +146,10 @@
     {/if}
     {#if metadata.openGraph.image}
       <meta property="og:image" content={metadata.openGraph.image} />
+      {#if metadata.openGraph.imageAlt}<meta property="og:image:alt" content={metadata.openGraph.imageAlt} />{/if}
+      {#if metadata.openGraph.imageWidth}<meta property="og:image:width" content={String(metadata.openGraph.imageWidth)} />{/if}
+      {#if metadata.openGraph.imageHeight}<meta property="og:image:height" content={String(metadata.openGraph.imageHeight)} />{/if}
+      {#if metadata.openGraph.imageType}<meta property="og:image:type" content={metadata.openGraph.imageType} />{/if}
     {/if}
     {#if metadata.openGraph.author}
       <meta property="article:author" content={metadata.openGraph.author} />
@@ -161,6 +165,7 @@
     <meta name="twitter:description" content={metadata.twitter.description} />
     {#if metadata.twitter.image}
       <meta name="twitter:image" content={metadata.twitter.image} />
+      {#if metadata.twitter.imageAlt}<meta name="twitter:image:alt" content={metadata.twitter.imageAlt} />{/if}
     {/if}
     {#each metadata.head.meta as tag}
       <meta

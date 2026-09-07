@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { seoUpdatedTime } from '../core/seo.js';
+  import { pageBreadcrumbs, findDocsRoot } from '../core/breadcrumbs.js';
   import { onMount } from 'svelte';
   import type { Component } from 'svelte';
   import type { SvedocsPage } from '../core/types.js';
@@ -14,9 +16,10 @@
 
   $: ErrorComponent = SafeRenderError;
   $: t = context?.t ?? fallbackTranslate;
-  $: breadcrumbs = createBreadcrumbs(page, context);
+  $: breadcrumbs = pageBreadcrumbs(page, context?.pages ?? [], t('nav.docs'));
+  $: updatedTime = seoUpdatedTime(page);
   $: kind = page.kind === 'doc' ? t('article.kind.doc') : t('article.kind.page');
-  $: eyebrow = breadcrumbs.length > 0 ? breadcrumbs : [{ label: kind, path: page.kind === 'doc' ? findDocsRoot(page, context) : '/' }];
+  $: eyebrow = breadcrumbs.length > 0 ? breadcrumbs : [{ label: kind, path: page.kind === 'doc' ? findDocsRoot(page, context?.pages) : '/' }];
   $: showDocHeaderSlot = hasDocHeaderSlot ?? Boolean($$slots['doc-header']);
 
   onMount(() => {
@@ -40,40 +43,6 @@
     return () => root.removeEventListener('click', handleClick);
   });
 
-  function createBreadcrumbs(page: SvedocsPage, context: SvedocsThemeContext | undefined) {
-    if (page.kind !== 'doc') return [];
-    const docsRoot = findDocsRoot(page, context);
-    if (page.routePath === docsRoot) return [];
-    const segments = page.routePath.split('/').filter(Boolean);
-    const rootLength = docsRoot.split('/').filter(Boolean).length;
-    const breadcrumbs = [{ label: t('nav.docs'), path: docsRoot }];
-    for (let length = rootLength + 1; length < segments.length; length += 1) {
-      const path = `/${segments.slice(0, length).join('/')}`;
-      const target = context?.pages.find((candidate) => candidate.routePath === path);
-      breadcrumbs.push({ label: target?.navTitle ?? target?.title ?? titleFromSegment(segments[length - 1] ?? ''), path });
-    }
-    return breadcrumbs;
-  }
-
-  function titleFromSegment(segment: string): string {
-    return segment
-      .replace(/[-_]+/g, ' ')
-      .replace(/\b\w/g, (letter) => letter.toUpperCase());
-  }
-
-  function findDocsRoot(page: SvedocsPage, context: SvedocsThemeContext | undefined): string {
-    const translatedRoot = context?.pages.find((candidate) => (
-      candidate.kind === 'doc'
-      && candidate.scopePath === '/docs'
-      && candidate.locale === page.locale
-    ));
-    if (translatedRoot) return translatedRoot.routePath;
-    const suffix = page.scopePath === '/docs' ? '' : page.scopePath.slice('/docs'.length);
-    if (suffix && page.routePath.endsWith(suffix)) {
-      return page.routePath.slice(0, -suffix.length) || '/docs';
-    }
-    return page.scopePath === '/docs' ? page.routePath : '/docs';
-  }
 </script>
 
 <article class="sd-doc" data-theme-component="article" data-site={context?.config.site.name}>
@@ -120,8 +89,8 @@
   </div>
   <footer class="sd-doc-footer">
     <div class="sd-doc-meta">
-      {#if page.lastUpdated}
-        <span>{t('article.updated', { date: new Date(page.lastUpdated).toLocaleDateString(context?.languageTag) })}</span>
+      {#if updatedTime}
+        <span>{t('article.updated', { date: new Date(updatedTime).toLocaleDateString(context?.languageTag) })}</span>
       {/if}
       {#if page.editUrl}
         <a href={page.editUrl}>{t('article.edit')}</a>

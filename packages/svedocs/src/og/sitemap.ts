@@ -1,4 +1,5 @@
 import type { SvedocsPage, SvedocsResolvedConfig } from '../core.js';
+import { isDiscoverablePage as isPageDiscoverable, seoUpdatedTime } from '../core/seo.js';
 import { formatRoutePathForBuildMode } from '../core/utils.js';
 import { createPageAlternates } from './metadata.js';
 import { createDisabledDiscoveryResponse, createDiscoveryResponse, escapeXml } from './response.js';
@@ -6,13 +7,15 @@ import type { SvedocsPageAlternate } from './types.js';
 
 export function createSitemapXml(config: SvedocsResolvedConfig, pages: SvedocsPage[]): string {
   if (!config.seo.sitemap) return '';
-  const discoverablePages = pages.filter(isDiscoverablePage);
+  const discoverablePages = pages.filter((page) => isPageDiscoverable(page, config));
   const alternateIndex = createAlternateIndex(config, discoverablePages);
+  const seen = new Set<string>();
   const urls = discoverablePages
     .map((page) => {
       const loc = createSitemapLocation(config, page);
-      if (!loc) return '';
-      const lastmod = page.seo.updatedTime ?? page.lastUpdated;
+      if (!loc || seen.has(loc)) return '';
+      seen.add(loc);
+      const lastmod = seoUpdatedTime(page);
       const alternates = alternateIndex.get(createAlternateKey(page)) ?? [];
       return [
         '  <url>',
@@ -51,8 +54,9 @@ export function createRobotsResponse(config: SvedocsResolvedConfig, request?: Re
   return createDiscoveryResponse(createRobotsTxt(config), 'text/plain; charset=utf-8', request);
 }
 
+/** Retains the public unary predicate signature for Array.filter callers. */
 export function isDiscoverablePage(page: SvedocsPage): boolean {
-  return !page.hidden && !/(?:^|[\s,])(?:noindex|none)(?:$|[\s,])/i.test(page.seo.robots ?? '');
+  return isPageDiscoverable(page);
 }
 
 function createAlternateIndex(

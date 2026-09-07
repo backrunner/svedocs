@@ -13,7 +13,7 @@ test('serves the official home and docs entry', async ({ request }) => {
     'rel="canonical" href="https://svedocs.pwp.sh/"',
     `hreflang="zh-CN" href="https://svedocs.pwp.sh${canonicalPath('/zh')}"`,
     'hreflang="x-default" href="https://svedocs.pwp.sh/"',
-    'property="og:locale" content="en"',
+    'property="og:locale" content="en_US"',
     '"inLanguage":"en"'
   ]);
 
@@ -28,7 +28,7 @@ test('serves the official home and docs entry', async ({ request }) => {
     `hreflang="zh-CN" href="https://svedocs.pwp.sh${canonicalPath('/zh')}"`,
     'hreflang="x-default" href="https://svedocs.pwp.sh/"',
     'property="og:locale" content="zh_CN"',
-    'property="og:locale:alternate" content="en"',
+    'property="og:locale:alternate" content="en_US"',
     '"inLanguage":"zh-CN"'
   ]);
 

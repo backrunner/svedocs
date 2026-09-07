@@ -1,4 +1,5 @@
 export { checkPackagePublication } from './publication.js';
+import { isDiscoverablePage } from './seo.js';
 import { access } from 'node:fs/promises';
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
@@ -18,7 +19,12 @@ export async function checkSvedocsContent(
   const routeDuplicates = findDuplicates(manifest.pages.map((page) => page.routePath));
   const canonicalDuplicates = findDuplicates(
     manifest.pages
-      .map((page) => page.seo.canonical)
+      .map((page) => {
+        const canonical = page.seo.canonical;
+        if (!canonical) return undefined;
+        try { return new URL(canonical, manifest.config.site.url).href; }
+        catch { return canonical; }
+      })
       .filter((canonical): canonical is string => Boolean(canonical))
   );
 
@@ -39,7 +45,7 @@ export async function checkSvedocsContent(
   }
 
   const sitemapPageCount = manifest.pages.filter((page) => (
-    !page.hidden && !/(?:^|[\s,])(?:noindex|none)(?:$|[\s,])/i.test(page.seo.robots ?? '')
+    isDiscoverablePage(page, manifest.config)
   )).length;
   if (manifest.config.seo.sitemap && sitemapPageCount > 50_000) {
     issues.push({

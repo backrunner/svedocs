@@ -1,5 +1,5 @@
 import type { SvedocsPage, SvedocsResolvedConfig } from '../core/types.js';
-import { isDiscoverablePage } from '../og/sitemap.js';
+import { isDiscoverablePage } from '../core/seo.js';
 import { createDisabledDiscoveryResponse, createDiscoveryResponse } from '../og/response.js';
 import { createPageMarkdownPath, sanitizeInline, type SvedocsMarkdownMap } from './markdown.js';
 
@@ -85,7 +85,7 @@ function listLlmsPages(
 ): SvedocsPage[] {
   const defaultLocale = config.i18n.defaultLocale;
   return pages
-    .filter((page) => isDiscoverablePage(page))
+    .filter((page) => isDiscoverablePage(page, config))
     .filter((page) => !defaultLocale || !page.locale || page.locale === defaultLocale)
     .filter((page) => typeof (markdown?.[page.id] ?? page.markdown) === 'string')
     .slice()

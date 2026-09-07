@@ -107,7 +107,7 @@ export const GET = async ({ params }) => {
 };
 ```
 
-SVG OG 路由适合边缘运行时。PNG 图片可以在构建期通过 CLI 生成。
+分享图默认使用 PNG，通过 CLI 或 OG 路由的预渲染在构建期生成；动态 Cloudflare 请求无法调用 Node PNG 渲染器。需要边缘动态渲染时可显式选择 SVG。固定 OG URL 使用 `max-age=0, must-revalidate`，避免内容修改后继续缓存旧图片一年。如果静态托管覆盖了资源缓存规则，也应为 OG 图片设置重新验证。
 
 自定义根布局可以用 `svedocs/og` 中的 `createJsonLdScript(value)` 配合 Svelte `{@html ...}` 渲染 JSON-LD。它会先转义可能影响脚本标签的字符，再返回完整的 `<script type="application/ld+json">` 标签。
 
@@ -120,7 +120,7 @@ export default defineConfig({
   seo: {
     ogImage: {
       template: 'default',
-      format: 'svg',
+      format: 'png',
       outDir: 'static/og',
       renderer: 'svg'
     }
@@ -128,7 +128,7 @@ export default defineConfig({
 });
 ```
 
-`svedocs build` 会在 Vite 构建成功后自动生成这些资源。CI 如果只需要应用包，可以加 `--no-og` 跳过。
+`svedocs build` 会在 Vite 复制静态文件前自动生成这些资源。CI 如果只需要应用包，可以加 `--no-og` 跳过。
 
 ## PNG 和 Satori
 
@@ -144,3 +144,32 @@ Satori 渲染需要显式指定字体文件，这样输出才会在不同机器�
 ## 自动生成与 OG 路由
 
 `svedocs build` 会先生成 OG 图片，再交给 Vite 复制到部署产物中。如果项目还提供 `/og/[...path]` 路由，将其 `prerender` 设为启用时的 `'auto'`（禁用时为 `false`）。这样已生成的静态图片可以满足对应路径，没有静态文件时仍会预渲染路由的 `entries()`。三个新建模板已采用对应配置；旧项目应同步更新，避免 SvelteKit 报告 OG 路由未被爬取。
+
+## 标题、索引与结构化数据
+
+在 frontmatter 中使用 `seoTitle`，可以单独设置搜索和分享标题，保留正文与导航标题。本地化首页不会重复追加站点名称。
+
+```yaml
+---
+title: 组件
+seoTitle: 主题组件参考
+updatedTime: 2026-09-07
+author: 文档团队
+authorType: Organization
+image: /images/components.png
+imageAlt: 组件之间的关系
+imageWidth: 1200
+imageHeight: 630
+imageType: image/png
+---
+```
+
+`updatedTime` 用于 sitemap 的 `lastmod`、JSON-LD 的 `dateModified` 、文章修改时间标签和默认主题的更新时间。页面模型仍保留文件系统的 `lastUpdated`，但 SEO 不再引用它，避免重新检出仓库改变全站日期。没有可靠的编辑日期时，省略 `updatedTime` 即可。RSS 仅使用明确的更新或发布日期，缺失时省略日期。
+
+页面 `robots` 与全局、页面 `head.meta` 中名为 `robots` 的标签按更严格的规则合并：页面的 `index` 不会覆盖全局 `noindex`。sitemap、hreflang、RSS 和 agent 发现入口使用同一规则。隐藏页仍不进入发现入口。`googlebot` 等专用标签保留其针对特定爬虫的语义。
+
+默认主题基于当前语言下真实存在的上级页面生成 `BreadcrumbList`；通过 `head.jsonLd` 提供的自定义面包屑图会保留。团队作者可以设置 `seo.defaultAuthorType: 'Organization'` 或页面的 `authorType`；默认仍为 `Person`。
+
+当 hreflang 没有地区信息时，可显式设置 i18n 语言的 `ogLocale`，例如 `{ code: 'en', hreflang: 'en', ogLocale: 'en_GB' }`。hreflang 保持原样，Open Graph 不会自行猜测地区。
+
+PNG 的 SVG 渲染器使用构建环境中安装的字体。跨机器生成一致的中文图片时，应使用 Satori 和包含中文字形的显式 `--font` 文件，并在部署前生成静态资源。

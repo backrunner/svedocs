@@ -1,5 +1,6 @@
 ---
 title: svedocs
+seoTitle: svedocs — 基于 SvelteKit 的文档框架
 description: 为 Cloudflare 或静态托管构建 SvelteKit 文档站。
 layout: site-home
 ---

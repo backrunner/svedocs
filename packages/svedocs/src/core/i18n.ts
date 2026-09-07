@@ -27,7 +27,7 @@ export function resolveSvedocsI18nConfig(config: SvedocsConfig): SvedocsResolved
   };
 }
 
-function normalizeLocale(locale: string | { code: string; label?: string; path?: string; hreflang?: string; dir?: 'ltr' | 'rtl' }): SvedocsLocale {
+function normalizeLocale(locale: string | { code: string; label?: string; path?: string; hreflang?: string; ogLocale?: string; dir?: 'ltr' | 'rtl' }): SvedocsLocale {
   if (typeof locale === 'string') {
     return {
       code: locale,
@@ -40,6 +40,7 @@ function normalizeLocale(locale: string | { code: string; label?: string; path?:
     label: locale.label ?? locale.code,
     path: locale.path ?? locale.code,
     ...(locale.hreflang ? { hreflang: locale.hreflang } : {}),
+    ...(locale.ogLocale ? { ogLocale: locale.ogLocale } : {}),
     ...(locale.dir ? { dir: locale.dir } : {})
   };
 }

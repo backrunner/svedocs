@@ -148,6 +148,7 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
       rss,
       robots: config.seo?.robots ?? true,
       ...(config.seo?.defaultAuthor ? { defaultAuthor: config.seo.defaultAuthor } : {}),
+      ...(config.seo?.defaultAuthorType ? { defaultAuthorType: config.seo.defaultAuthorType } : {}),
       head: {
         meta: config.seo?.head?.meta ?? [],
         links: config.seo?.head?.links ?? [],
@@ -158,7 +159,7 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
           ? false
           : {
               template: config.seo?.ogImage?.template ?? 'default',
-              format: config.seo?.ogImage?.format ?? 'svg',
+              format: config.seo?.ogImage?.format ?? 'png',
               outDir: config.seo?.ogImage?.outDir ?? 'static/og',
               renderer: config.seo?.ogImage?.renderer ?? 'svg'
             }

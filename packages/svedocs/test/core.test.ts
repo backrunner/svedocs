@@ -35,7 +35,7 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(config.theme.home.kicker).toBe('SvelteKit-native docs');
     expect(config.theme.footer && config.theme.footer.text).toContain('MIT licensed');
     expect(config.seo.ogImage && config.seo.ogImage.outDir).toBe('static/og');
-    expect(config.seo.ogImage && config.seo.ogImage.format).toBe('svg');
+    expect(config.seo.ogImage && config.seo.ogImage.format).toBe('png');
     expect(config.seo.sitemap).toBe(true);
     expect(config.seo.rss).toBe(false);
     expect(config.search.scope).toBe('current');
@@ -1883,10 +1883,10 @@ describe('svedocs Batch 0 skeleton', () => {
       expect(metadata.openGraph.type).toBe('article');
       expect(metadata.openGraph.author).toBe('Docs Team');
     expect(metadata.openGraph.publishedTime).toBe('2026-05-17T00:00:00.000Z');
-    expect(metadata.openGraph.locale).toBe('en');
-    expect(metadata.jsonLd.dateModified).toBe('2026-05-18T00:00:00.000Z');
+    expect(metadata.openGraph.locale).toBeUndefined();
+    expect(metadata.jsonLd.dateModified).toBeUndefined();
     expect(metadata.jsonLd.inLanguage).toBe('en');
-    expect(metadata.openGraph.image).toBe(`https://fixture.test${createPageOgImagePath(page)}`);
+    expect(metadata.openGraph.image).toBe(`https://fixture.test${createPageOgImagePath(page, 'png')}`);
       expect(metadata.keywords).toEqual(['docs', 'guide']);
       expect(metadata.robots).toBe('index,follow');
       expect(metadata.head.meta).toEqual([
@@ -1902,7 +1902,7 @@ describe('svedocs Batch 0 skeleton', () => {
         { '@type': 'BreadcrumbList', name: 'Guide breadcrumb' }
       ]);
     expect(createPageOgImagePath(page)).toMatch(/^\/og\/docs-guide-[a-f0-9]{16}\.svg$/);
-    expect((await createPageOgImageResponse(config, page)).headers.get('content-type')).toContain('image/svg+xml');
+    expect((await createPageOgImageResponse(config, page)).headers.get('content-type')).toContain('image/png');
     expect(createSitemapXml(config, [page])).toContain('<loc>https://fixture.test/docs/guide</loc>');
     expect(createSitemapXml(config, [page])).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
     expect(createRobotsTxt(config)).toContain('Sitemap: https://fixture.test/sitemap.xml');
@@ -2075,7 +2075,7 @@ describe('svedocs Batch 0 skeleton', () => {
 
     expect(metadata.canonical).toBe('https://fixture.test/docs/zh/guide');
     expect(metadata.openGraph.locale).toBe('zh_CN');
-    expect(metadata.openGraph.alternateLocales).toEqual(['en']);
+    expect(metadata.openGraph.alternateLocales).toBeUndefined();
     expect(createPageMetadata(config, zhPage, [zhPage]).openGraph.alternateLocales).toBeUndefined();
     expect(metadata.jsonLd.inLanguage).toBe('zh-CN');
     expect(alternates.map((alternate) => [alternate.lang, alternate.href])).toEqual([
@@ -2100,7 +2100,7 @@ describe('svedocs Batch 0 skeleton', () => {
       seo: { title: 'Guide' }
     });
 
-    expect(createPageMetadata(config, page).openGraph.locale).toBe('zh_Hans_CN');
+    expect(createPageMetadata(config, page).openGraph.locale).toBe('zh_CN');
   });
 
   it('normalizes generated SEO URLs for static output and serializes JSON-LD safely', async () => {

@@ -162,6 +162,7 @@ export interface SvedocsConfig {
     rss?: boolean | SvedocsRssOptions;
     robots?: boolean;
     defaultAuthor?: string;
+    defaultAuthorType?: 'Person' | 'Organization';
     head?: SvedocsSeoHead;
     ogImage?: false | {
       template?: 'default' | string | OgTemplate;
@@ -194,6 +195,7 @@ export interface SvedocsConfig {
       label?: string;
       path?: string;
       hreflang?: string;
+      ogLocale?: string;
       dir?: 'ltr' | 'rtl';
     }>;
     prefixDefaultLocale?: boolean;
@@ -431,6 +433,7 @@ export const svedocsConfigSchema = z.object({
         .optional(),
       robots: z.boolean().optional(),
       defaultAuthor: z.string().optional(),
+      defaultAuthorType: z.enum(['Person', 'Organization']).optional(),
       head: z
         .object({
           meta: z
@@ -516,6 +519,7 @@ export const svedocsConfigSchema = z.object({
                 label: z.string().optional(),
                 path: z.string().optional(),
                 hreflang: z.string().optional(),
+                ogLocale: z.string().regex(/^[a-z]{2,3}_[A-Z]{2}$/).optional(),
                 dir: z.enum(['ltr', 'rtl']).optional()
               })
             ])

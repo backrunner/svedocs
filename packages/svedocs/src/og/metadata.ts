@@ -1,6 +1,8 @@
 import type { SvedocsPage, SvedocsResolvedConfig, SvedocsResolvedSeoHead, SvedocsSeoHead } from '../core.js';
 import { formatRoutePathForBuildMode } from '../core/utils.js';
 import { createConfiguredOgImageFormat, createPageOgImagePath } from './image.js';
+import { effectiveRobots, isRobotsMeta, isDiscoverablePage, seoUpdatedTime } from '../core/seo.js';
+import { breadcrumbJsonLd, hasBreadcrumbJsonLd } from './structured-data.js';
 import type { SvedocsPageAlternate, SvedocsPageMetadata } from './types.js';
 
 export function createPageMetadata(
@@ -8,26 +10,36 @@ export function createPageMetadata(
   page: SvedocsPage,
   pages: SvedocsPage[] = []
 ): SvedocsPageMetadata {
-  const title = page.routePath === '/' ? page.seo.title : `${page.seo.title} | ${config.site.name}`;
+  const title = (page.routePath === '/' || (page.kind === 'page' && page.scopePath === '/') || page.seo.title === config.site.name) ? page.seo.title : `${page.seo.title} | ${config.site.name}`;
   const description = page.seo.description ?? config.site.description;
   const canonical = page.seo.canonical
     ? createAbsoluteUrl(config, page.seo.canonical) ?? page.seo.canonical
     : createAbsoluteRouteUrl(config, page.routePath);
   const keywords = page.seo.keywords ?? [];
-  const robots = page.seo.robots;
+  const robots = effectiveRobots(page, config);
   const head = withRssAlternate(config, mergeSeoHead(config.seo.head, page.seo.head));
+  head.meta = head.meta.filter((tag) => !isRobotsMeta(tag));
+  const breadcrumb = breadcrumbJsonLd(config, page, pages);
+  if (breadcrumb && !hasBreadcrumbJsonLd(head.jsonLd)) head.jsonLd = [...head.jsonLd, breadcrumb];
   const generatedImage = config.seo.ogImage === false
     ? undefined
     : createAbsoluteUrl(config, createPageOgImagePath(page, createConfiguredOgImageFormat(config)));
   const image = page.seo.image ? createAbsoluteUrl(config, page.seo.image) : generatedImage;
   const type = page.seo.type ?? (page.kind === 'doc' ? 'article' : 'website');
   const author = page.seo.author ?? config.seo.defaultAuthor;
-  const updatedTime = page.seo.updatedTime ?? page.lastUpdated;
+  const updatedTime = seoUpdatedTime(page);
   const pageLanguage = getPageLanguage(config, page);
-  const ogLocale = toOpenGraphLocale(pageLanguage);
+  const ogLocale = pageOpenGraphLocale(config, page.locale, pageLanguage);
+  const imageAlt = page.seo.imageAlt ?? page.seo.title;
+  const imageDetails = page.seo.image ? {
+    ...(page.seo.imageWidth && page.seo.imageWidth > 0 ? { imageWidth: page.seo.imageWidth } : {}),
+    ...(page.seo.imageHeight && page.seo.imageHeight > 0 ? { imageHeight: page.seo.imageHeight } : {}),
+    ...(page.seo.imageType ? { imageType: page.seo.imageType } : {})
+  } : { imageWidth: 1200, imageHeight: 630, imageType: createConfiguredOgImageFormat(config) === 'png' ? 'image/png' : 'image/svg+xml' };
   const alternateOgLocales = createPageAlternates(config, page, pages)
     .filter((alternate) => alternate.lang !== 'x-default' && alternate.locale !== page.locale)
-    .map((alternate) => toOpenGraphLocale(alternate.lang));
+    .map((alternate) => pageOpenGraphLocale(config, alternate.locale, alternate.lang))
+    .filter((locale): locale is string => Boolean(locale));
   return {
     title,
     description,
@@ -41,9 +53,9 @@ export function createPageMetadata(
       description,
       type,
       ...(canonical ? { url: canonical } : {}),
-      ...(image ? { image } : {}),
+      ...(image ? { image, imageAlt, ...imageDetails } : {}),
       siteName: config.site.name,
-      locale: ogLocale,
+      ...(ogLocale ? { locale: ogLocale } : {}),
       ...(alternateOgLocales.length > 0 ? { alternateLocales: [...new Set(alternateOgLocales)] } : {}),
       ...(author ? { author } : {}),
       ...(page.seo.publishedTime ? { publishedTime: page.seo.publishedTime } : {}),
@@ -53,7 +65,7 @@ export function createPageMetadata(
       card: image ? 'summary_large_image' : 'summary',
       title,
       description,
-      ...(image ? { image } : {})
+      ...(image ? { image, imageAlt } : {})
     },
     jsonLd: createPageJsonLd(config, page, {
       title,
@@ -69,9 +81,9 @@ export function createPageAlternates(
   page: SvedocsPage,
   pages: SvedocsPage[]
 ): SvedocsPageAlternate[] {
-  if (config.i18n.locales.length === 0) return [];
+  if (config.i18n.locales.length === 0 || !isDiscoverablePage(page, config)) return [];
   const candidates = pages
-    .filter((candidate) => !candidate.hidden)
+    .filter((candidate) => isDiscoverablePage(candidate, config))
     .filter((candidate) => candidate.kind === page.kind)
     .filter((candidate) => candidate.scopePath === page.scopePath);
   const alternates: SvedocsPageAlternate[] = [];
@@ -163,10 +175,10 @@ function createPageJsonLd(
   if (metadata.canonical) graph.url = metadata.canonical;
   if (metadata.image) graph.image = metadata.image;
   const author = page.seo.author ?? config.seo.defaultAuthor;
-  const updatedTime = page.seo.updatedTime ?? page.lastUpdated;
+  const updatedTime = seoUpdatedTime(page);
   if (author) {
     graph.author = {
-      '@type': 'Person',
+      '@type': page.seo.authorType ?? config.seo.defaultAuthorType ?? 'Person',
       name: author
     };
   }
@@ -185,8 +197,12 @@ function getPageLanguage(config: SvedocsResolvedConfig, page: SvedocsPage): stri
   return locale?.hreflang ?? code;
 }
 
-function toOpenGraphLocale(language: string): string {
-  return language.replaceAll('-', '_');
+function pageOpenGraphLocale(config: SvedocsResolvedConfig, code: string | undefined, language: string): string | undefined {
+  const configured = config.i18n.locales.find((locale) => locale.code === (code ?? config.i18n.defaultLocale))?.ogLocale;
+  if (configured) return configured;
+  // Do not guess a territory for a language-only hreflang.
+  const match = /^([a-z]{2,3})(?:-[a-z]{4})?-([a-z]{2})$/i.exec(language);
+  return match ? `${match[1]!.toLowerCase()}_${match[2]!.toUpperCase()}` : undefined;
 }
 
 function createAbsoluteUrl(config: SvedocsResolvedConfig, value: string): string | undefined {

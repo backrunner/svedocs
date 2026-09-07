@@ -76,7 +76,7 @@ export default defineConfig({
   i18n: {
     defaultLocale: 'en',
     locales: [
-      { code: 'en', label: 'English', hreflang: 'en', dir: 'ltr' },
+      { code: 'en', label: 'English', hreflang: 'en', ogLocale: 'en_US', dir: 'ltr' },
       { code: 'zh', label: '中文', hreflang: 'zh-CN', dir: 'ltr' }
     ],
     messages: {
@@ -238,6 +238,7 @@ export default defineConfig({
   },
   seo: {
     defaultAuthor: 'svedocs team',
+    defaultAuthorType: 'Organization',
     rss: {
       title: 'svedocs updates',
       description: 'Documentation and release updates from svedocs.',
@@ -246,7 +247,7 @@ export default defineConfig({
     },
     ogImage: {
       template: 'default',
-      format: 'svg',
+      format: 'png',
       outDir: 'static/og',
       renderer: 'svg'
     }
