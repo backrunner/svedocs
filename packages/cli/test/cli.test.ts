@@ -1001,6 +1001,7 @@ async function runCommand(command: string, args: string[], cwd: string): Promise
   await new Promise<void>((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
+      env: command === 'tar' ? { ...process.env, COPYFILE_DISABLE: '1' } : process.env,
       stdio: 'pipe',
       shell: process.platform === 'win32'
     });
