@@ -1,5 +1,16 @@
 # svedocs-cli
 
+## 0.2.1
+
+### Patch Changes
+
+- 285b4b0: Defer search data and MiniSearch until needed, run default-theme local search in a shared Worker with a cooperative fallback, and reuse Markdown analysis and unchanged content during Vite refreshes. Preserve synchronous headless search APIs and keep generated template error pages lazy.
+- Updated dependencies [d3f87a0]
+- Updated dependencies [285b4b0]
+- Updated dependencies [285b4b0]
+- Updated dependencies [498e180]
+  - svedocs@0.2.1
+
 ## 0.2.0
 
 ### Patch Changes

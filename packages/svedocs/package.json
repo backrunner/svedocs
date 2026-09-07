@@ -1,6 +1,6 @@
 {
   "name": "svedocs",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "SvelteKit-native documentation framework.",
   "license": "MIT",
   "repository": {

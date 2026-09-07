@@ -1,5 +1,17 @@
 # svedocs
 
+## 0.2.1
+
+### Patch Changes
+
+- d3f87a0: Unify robots filtering across metadata and discovery, revalidate stable OG images, and use PNG sharing images by default. Generate localized breadcrumb structured data, support independent SEO titles, author types and explicit Open Graph locales, and include image metadata. Use explicit editorial dates instead of filesystem timestamps in SEO output and deduplicate sitemap canonical URLs.
+
+  PNG assets must be generated during a Node build or prerender; use explicit SVG format for dynamic edge rendering. Modification dates now require editorial `updatedTime` rather than filesystem timestamps. Configure `ogLocale` when a language-only locale needs an Open Graph territory. Existing imports, page fields, and synchronous search APIs remain available.
+
+- 285b4b0: Add an opt-in bounded per-isolate HTML cache for public SSR pages, preserving agent negotiation and conditional requests. Pin server virtual configuration to the effective build mode so CLI static/SPA overrides also reach runtime integrations.
+- 285b4b0: Defer search data and MiniSearch until needed, run default-theme local search in a shared Worker with a cooperative fallback, and reuse Markdown analysis and unchanged content during Vite refreshes. Preserve synchronous headless search APIs and keep generated template error pages lazy.
+- 498e180: Keep localized sidebars at the same depth and preserve custom navigation through a shared theme context. Support IME input in search and Ask AI, native modal behavior, and mobile search and page outlines. Add a plain reading style and virtual-module type declarations while preserving the existing theme CSS entry point.
+
 ## 0.2.0
 
 ### Minor Changes
