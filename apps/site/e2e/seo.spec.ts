@@ -5,7 +5,7 @@ test('search crawlers receive HTML and complete SEO tags without JavaScript', as
     userAgent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' });
   try {
     const page = await context.newPage();
-    for (const route of ['/docs/integrations/seo-og', '/docs/zh/integrations/seo-og']) {
+    for (const route of ['/', '/zh', '/docs/integrations/seo-og', '/docs/zh/integrations/seo-og']) {
       const response = await page.goto(route);
       expect(response?.status()).toBe(200);
       expect(response?.headers()['content-type']).toContain('text/html');
@@ -18,9 +18,22 @@ test('search crawlers receive HTML and complete SEO tags without JavaScript', as
       await expect(page.locator('meta[property="og:image:height"]')).toHaveAttribute('content', '630');
       await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute('content', /.+/);
       const schemas = await page.locator('script[type="application/ld+json"]').allTextContents();
-      expect(schemas.map((text) => JSON.parse(text)['@type'])).toContain('BreadcrumbList');
-      expect(schemas.map((text) => JSON.parse(text)).find((schema) => schema['@type'] === 'TechArticle').author['@type']).toBe('Organization');
+      const structuredData = schemas.map((text) => JSON.parse(text));
+      if (route.startsWith('/docs')) {
+        expect(structuredData.map((schema) => schema['@type'])).toContain('BreadcrumbList');
+        expect(structuredData.find((schema) => schema['@type'] === 'TechArticle').author['@type']).toBe('Organization');
+      } else {
+        expect(structuredData.map((schema) => schema['@type'])).toEqual(expect.arrayContaining(['WebSite', 'Organization', 'WebPage']));
+        await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /SvelteKit.+Agent Skills/);
+        await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'index,follow,max-image-preview:large');
+        await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
+        await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', `https://svedocs.pwp.sh/brand/og-home-${route === '/' ? 'en' : 'zh'}.png`);
+        await expect(page.locator('link[hreflang="en"]')).toHaveAttribute('href', 'https://svedocs.pwp.sh/');
+        await expect(page.locator('link[hreflang="zh-CN"]')).toHaveAttribute('href', /https:\/\/svedocs.pwp.sh\/zh\/?$/);
+        expect(structuredData.find((schema) => schema['@type'] === 'WebSite').inLanguage).toBe(route === '/' ? 'en' : 'zh-CN');
+      }
       const imageUrl = await page.locator('meta[property="og:image"]').getAttribute('content');
+      await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute('content', imageUrl!);
       const image = await context.request.get(new URL(imageUrl!).pathname);
       expect(image.status()).toBe(200);
       expect(image.headers()['content-type']).toContain('image/png');

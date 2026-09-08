@@ -1,0 +1,15 @@
+请基于当前工作区中的项目，使用 svedocs 实现一个完整、可运行的文档站，并为它完全定制一套契合当前项目设计风格的主题和 landing 页面。
+
+1. 从官方仓库 https://github.com/backrunner/svedocs/tree/main/skills 安装并阅读 Agent Skills：use-svedocs、configure-svedocs、customize-svedocs-theme、build-svedocs-landing；需要多语言时再使用 localize-svedocs。使用当前 agent 的 skill 安装器安装 backrunner/svedocs 中的这些目录，或将完整目录（含 references）复制到当前项目的 .agents/skills，保留已有 skills。开始实现前阅读相关 SKILL.md 及其引用资料。官方文档入口：https://svedocs.pwp.sh/llms.txt。确认所用 API 与实际安装的包版本一致。
+
+2. 先阅读仓库指引、README、包配置、源码、已有文档和 UI，识别目标用户、核心使用流程、真实安装命令、公开 API，以及 logo、配色、字体、间距、图像和交互风格。以这些信息确定文档结构和设计方向；如果项目还没有视觉体系，请根据产品定位建立一套一致的设计，并简要说明理由。能合理推断的事项自行决定并继续，只有缺少无法推断的关键信息时才提问。
+
+3. 遵循现有 workspace 结构和包管理器。适合时集成到现有 SvelteKit 文档应用，否则在合适的空目录中使用官方 docs 模板创建独立文档应用（pnpm 示例：pnpm create svedocs <目录> --template docs）。生成器也会附带 .agents/skills。保留已有路由、内容和无关改动，安装依赖，并将 svedocs 配置统一放在 svedocs.config.ts。
+
+4. 完整定制主题与 landing 页面：将字体、配色、明暗模式、页头、侧栏、文章排版、目录、代码块、搜索和页脚设计成统一的体系。首页需要有贴合产品的 hero、有价值的产品展示或可运行示例、基于真实能力的特性介绍，以及通往首次成功使用流程的清晰入口。使用项目真实品牌和素材。不要只给默认模板换颜色；通过 Svelte 组件、Tailwind CSS v4、主题变量、slots 或组件覆盖实现设计，同时保留 svedocs 的路由、元数据、多语言、搜索和无障碍能力。兼顾移动端与桌面端，支持键盘操作、可见焦点、足够的对比度和减少动画偏好。
+
+5. 根据真实项目编写有用的文档，按需包含项目介绍、快速开始、安装、配置、主要使用流程、API 或 CLI 参考、部署和常见问题。命令与示例必须结合源码核实，不虚构功能、API、性能数据、用户评价或客户 logo。缺少事实时明确标注。替换模板占位内容，保持导航、内部链接和示例一致。
+
+6. 配置有意义的页面标题与描述、基于真实公开域名的 canonical、sitemap、robots，以及带有恰当替代文本的品牌化 1200×630 PNG OG 分享图。保留 Markdown 镜像与 llms.txt。先使用本地搜索，仅在所需运行环境和配置具备时启用托管搜索或 Ask AI。按托管目标选择 edge 或 static 构建。域名未知时，将它列为明确的待配置项，不编造上线地址。
+
+7. 完成实现并验证：运行项目类型检查、pnpm exec svedocs check --strict（或对应包管理器命令）和生产构建，验证选定的部署模式。用浏览器检查首页、文档页、搜索、导航、代码复制、移动端、明暗主题、失效链接，以及社交元数据与图片 URL，修复发现的问题。最后交付可运行代码、简短的设计说明、本地预览命令、验证结果和剩余配置项，不要停留在方案或设计稿。

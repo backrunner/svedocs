@@ -23,6 +23,14 @@ Open the local URL printed by the dev server. The `docs` template is ready to us
 
 For a smaller starting point or Cloudflare bindings, see [Choose a template](/docs/installation#choose-a-template). To integrate an existing app, follow [Installation](/docs/installation#add-svedocs-to-an-existing-app).
 
+## Build with an agent
+
+To have your coding agent build a site around an existing project, [copy the ready-to-use prompt](/#build-with-an-agent) on the homepage. A [plain-text version](https://svedocs.pwp.sh/prompts/build-docs.en.txt) is also available.
+
+Paste it into your agent with the project open. It covers installing the [official skills](https://github.com/backrunner/svedocs/tree/main/skills), reading the codebase, creating a custom theme and landing page, writing accurate docs, configuring SEO, and verifying the result. Add a preferred site directory, language, domain, or hosting target if you already have one.
+
+Generated projects include these skills in `.agents/skills`. The core skills are `use-svedocs`, `configure-svedocs`, `customize-svedocs-theme`, and `build-svedocs-landing`; use `localize-svedocs` when adding languages.
+
 ## Project anatomy
 
 A generated project stays small:

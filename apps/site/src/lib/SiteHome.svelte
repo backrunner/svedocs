@@ -2,6 +2,7 @@
   import { RootLayout } from 'svedocs/theme';
   import { resolveLocalizedHref } from 'svedocs/theme/headless';
   import type { SvedocsCustomLayoutProps } from 'svedocs/theme/types';
+  import AgentPrompt from './AgentPrompt.svelte';
 
   let { page, config, context, pages = [], tree = [], search = [], loadSearch, themeComponents = {} }: SvedocsCustomLayoutProps = $props();
   const zh = $derived(context.localeCode === 'zh');
@@ -26,6 +27,7 @@
         <p class="description">{page.description}</p>
         <div class="links">
           <a class="start" href={href('/docs')}>{context.t('home.primaryAction')} <span aria-hidden="true">→</span></a>
+          <a href={zh ? '#让-agent-来搭建' : '#build-with-an-agent'}>{context.t('agent.action')} <span aria-hidden="true">↓</span></a>
           <a href="https://github.com/backrunner/svedocs">GitHub</a>
         </div>
         <p class="note">{zh ? '开源 · MIT 许可 · 当前处于 beta 阶段' : 'Open source · MIT licensed · Currently in beta'}</p>
@@ -40,6 +42,8 @@ pnpm dev</code></pre>
         <pre class="example"><code>{`---\ntitle: ${zh ? '快速开始' : 'Quick start'}\n---\n\n## ${zh ? '安装' : 'Install'}\n\npnpm add your-package`}</code></pre>
       </aside>
     </section>
+
+    <AgentPrompt {context} />
 
     <section class="reading" aria-label={context.t('home.features')}>
       <h2>{zh ? '接下来做什么' : 'Where to go next'}</h2>

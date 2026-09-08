@@ -23,6 +23,14 @@ pnpm dev
 
 需要更小的模板或 Cloudflare 绑定时，查看[选择模板](/docs/zh/installation#选择模板)。接入已有应用请跟随[安装教程](/docs/zh/installation#接入已有应用)。
 
+## 让 agent 来搭建
+
+如果希望编程 agent 围绕已有项目搭建文档站，可以在首页[复制现成的建站 prompt](/zh#让-agent-来搭建)，也可以打开[纯文本版本](https://svedocs.pwp.sh/prompts/build-docs.zh.txt)。
+
+在 agent 中打开项目并粘贴 prompt。它会引导 agent 安装[官方 skills](https://github.com/backrunner/svedocs/tree/main/skills)、阅读代码、定制主题与 landing 页面、编写准确的文档、配置 SEO 并验证结果。已有偏好时，可以追加站点目录、语言、域名或托管目标。
+
+生成的项目会在 `.agents/skills` 中附带这些技能。核心技能包括 `use-svedocs`、`configure-svedocs`、`customize-svedocs-theme` 和 `build-svedocs-landing`；添加多语言时使用 `localize-svedocs`。
+
 ## 项目结构
 
 生成的项目结构很小：

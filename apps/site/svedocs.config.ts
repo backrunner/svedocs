@@ -4,7 +4,7 @@ export default defineConfig({
   site: {
     name: 'svedocs',
     title: 'svedocs',
-    description: 'Documentation sites built with SvelteKit.',
+    description: 'Build a documentation site that fits your project with SvelteKit, custom themes, Markdown, search, and Agent Skills. Deploy to Cloudflare or static hosting.',
     url: 'https://svedocs.pwp.sh'
   },
   content: {
@@ -81,6 +81,19 @@ export default defineConfig({
     ],
     messages: {
       en: {
+        'agent.action': 'Build with an agent',
+        'agent.kicker': 'Your project + your agent',
+        'agent.title': 'From your repo to your own docs site.',
+        'agent.description': 'Open your project in a coding agent and paste this prompt. It guides your agent through our skills, your codebase, and a custom theme and landing page that feel like your product.',
+        'agent.skills': 'Explore the official skills',
+        'agent.panel': 'Ready to paste into your agent',
+        'agent.scope': 'Read the project → Design the site → Write the docs → Verify',
+        'agent.copy': 'Copy prompt',
+        'agent.copied': 'Copied. Paste it into your agent.',
+        'agent.failed': 'Select and copy the full prompt below.',
+        'agent.view': 'Read the full prompt',
+        'agent.full': 'Complete project prompt',
+        'agent.text': 'Open as plain text',
         'ask.placeholder': 'Ask anything about svedocs',
         'ask.welcome': 'Ask a question about the docs. Answers include links to their sources.',
         'ask.suggestion.1': 'How do I configure the theme?',
@@ -89,6 +102,19 @@ export default defineConfig({
         'footer.text': 'Made by Alkinum with ♥'
       },
       zh: {
+        'agent.action': '让 agent 来搭建',
+        'agent.kicker': '你的项目 + 你的 agent',
+        'agent.title': '从项目仓库，到你的专属文档站。',
+        'agent.description': '在编程 agent 中打开项目，粘贴这段 prompt。它会引导 agent 安装官方 skills、理解代码，并定制契合产品的主题与 landing 页面。',
+        'agent.skills': '查看官方 skills',
+        'agent.panel': '复制后，直接交给你的 agent',
+        'agent.scope': '理解项目 → 定制设计 → 编写文档 → 验证交付',
+        'agent.copy': '复制 prompt',
+        'agent.copied': '已复制，粘贴给你的 agent 即可。',
+        'agent.failed': '请在下方选中并复制完整 prompt。',
+        'agent.view': '查看完整 prompt',
+        'agent.full': '完整建站 prompt',
+        'agent.text': '打开纯文本版本',
         'nav.primary': '主导航',
         'nav.docs': '文档',
         'nav.configuration': '配置',
@@ -239,6 +265,18 @@ export default defineConfig({
   seo: {
     defaultAuthor: 'svedocs team',
     defaultAuthorType: 'Organization',
+    head: {
+      meta: [{ name: 'robots', content: 'index,follow,max-image-preview:large' }],
+      jsonLd: [{
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        '@id': 'https://svedocs.pwp.sh/#organization',
+        name: 'svedocs',
+        url: 'https://svedocs.pwp.sh/',
+        logo: 'https://svedocs.pwp.sh/android-chrome-512x512.png',
+        sameAs: ['https://github.com/backrunner/svedocs']
+      }]
+    },
     rss: {
       title: 'svedocs updates',
       description: 'Documentation and release updates from svedocs.',

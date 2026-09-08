@@ -71,6 +71,8 @@ The `skills/` directory ships focused Agent Skills grounded in the current frame
 
 Each skill includes Codex UI metadata and focused references for progressive loading. Agent Skills-compatible tools can load the individual folders directly from this repository. `create-svedocs` also installs the current set into every generated project's `.agents/skills` directory for automatic repository-level discovery.
 
+To build documentation for an existing project with your coding agent, [copy the complete project prompt](https://svedocs.pwp.sh/#build-with-an-agent) ([中文](https://svedocs.pwp.sh/zh#让-agent-来搭建)). It covers skill installation, project research, a custom theme and landing page, accurate documentation, SEO, and verification. The same prompt is available as plain text in [English](apps/site/static/prompts/build-docs.en.txt) and [中文](apps/site/static/prompts/build-docs.zh.txt).
+
 ## Configuration
 
 Projects are configured with `svedocs.config.ts`:

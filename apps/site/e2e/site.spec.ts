@@ -20,7 +20,7 @@ test('serves the official home and docs entry', async ({ request }) => {
   const zhHome = await request.get('/zh');
   expect(zhHome.ok()).toBe(true);
   await expectResponseToContain(zhHome, [
-    '为 Cloudflare 或静态托管构建 SvelteKit 文档站。',
+    '用 SvelteKit 构建契合项目风格的文档站，支持定制主题、Markdown、搜索与 Agent Skills。部署到 Cloudflare 或静态托管。',
     '阅读文档',
     '文档入口',
     `rel="canonical" href="https://svedocs.pwp.sh${canonicalPath('/zh')}"`,
