@@ -100,7 +100,10 @@ import {
   Textarea,
   Checkbox,
   Button,
-  LocalizedLink
+  LocalizedLink,
+  Integrations,
+  GoogleAd,
+  GoogleAdsConversion
 } from 'svedocs/theme';
 import 'svedocs/theme/styles.css';
 import 'svedocs/theme/base.css';
@@ -130,6 +133,29 @@ import { createConfiguredAskResponse, createAskResponse, createMemoryRateLimiter
 搜索和 Ask AI 支持本地、Algolia、Typesense、Cloudflare 和 OpenAI 兼容服务。本地搜索可以按语言和内容类型过滤结果。
 
 生成的路由应优先使用配置感知的响应函数。只有需要自定义路由或服务选择时，才直接导入 `createAlgoliaSearchProvider`、`createTypesenseSearchProvider`、`createCloudflareAiSearchProvider`、`createWorkersAiProvider` 或 `createOpenAiCompatibleProvider`。
+
+## 服务集成
+
+```ts
+import {
+  createIntegrationAssets,
+  createIndexNowPayloads,
+  submitIndexNow,
+  trackGoogleAdsConversion
+} from 'svedocs/integrations';
+import type { IndexNowPayload, IndexNowResult, SvedocsIntegrationsConfig } from 'svedocs/integrations';
+```
+
+| API | 行为 |
+| --- | --- |
+| `createIntegrationAssets(config)` | 返回 IndexNow 验证文件与 AdSense `ads.txt` 的文件名到内容映射，不读写文件。Vite 插件负责输出，并保留用户已有的 `ads.txt`。 |
+| `createIndexNowPayloads(config, pages)` | 返回 `IndexNowPayload[]`，只包含可发现、同源的 canonical URL，去重后按每批最多 10,000 个拆分。未启用 IndexNow 时抛错，不发起请求。 |
+| `submitIndexNow(config, pages, options?)` | 先验证已部署的 key 文件，再逐批提交，返回包含 `submitted`、`batches` 和 `statuses` 的 `Promise<IndexNowResult>`。提交响应不是 200/202 时抛错。`options.fetch` 可替换请求实现；`verifyKey: false` 可跳过部署检查。应在部署工具完成发布后调用。 |
+| `trackGoogleAdsConversion(integrations, name, development?, transactionId?)` | 发送 `config.integrations.googleAds.conversions` 中的命名转化。传入 `config.integrations` 与 SvelteKit 的 `dev` 标志。遵守服务开关与 Do Not Track，SSR 期间不执行。 |
+
+该入口还导出 `SvedocsAdSlot`、`SvedocsGoogleAdsConversion` 和 `SvedocsResolvedIntegrations` 类型。输入配置与解析后的集成类型也可从 `svedocs/config` 导入。
+
+仅使用配置接入服务与自动页面统计时，参阅[集成指南](/docs/zh/integrations/analytics-ads-indexnow)。`Integrations`、`GoogleAd` 和 `GoogleAdsConversion` 是 `svedocs/theme` 导出的 Svelte 组件，其属性见[主题组件](/docs/zh/reference/theme-components)。
 
 ## OG
 

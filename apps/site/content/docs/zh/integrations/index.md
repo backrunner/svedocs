@@ -64,7 +64,7 @@ svedocs deploy cloudflare
 
 ## 安全和运维
 
-- 服务密钥放在运行时环境变量中，不要写入内容文件或提交到配置。
+- 账户 API 密钥放在运行时环境变量中，不要写入内容文件或提交到配置。统计 ID、AdSense 发布商 ID 和 IndexNow 验证 key 是公开配置。
 - 用 `.dev.vars.example` 记录本地需要哪些变量。
 - 内存限流只适合本地开发。
 - 生产 Ask AI 使用 KV 或其他共享限流。
@@ -72,6 +72,8 @@ svedocs deploy cloudflare
 - 除非本地开发确实需要访问远程资源，否则保持 Cloudflare 远程绑定关闭。
 
 ## 本节内容
+
+[统计、广告与 IndexNow](/docs/zh/integrations/analytics-ads-indexnow "card: 仅用配置接入 Umami、GA4、Google Ads 转化、AdSense 广告位和 IndexNow。")
 
 [搜索和 Ask AI](/docs/zh/integrations/search-ai "card: 服务选择、路由、索引、引用、流式响应和限流。")
 

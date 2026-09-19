@@ -1,4 +1,5 @@
 import { createServerConfigModule, createContentOptions, loadPluginConfig } from './vite/config.js';
+import { integrationAssets, serveIntegrationAssets } from './vite/integrations.js';
 import { normalizeThemeComponentImports, loadPageComponent } from './vite/components.js';
 import { componentVirtualPrefix, pageVirtualPrefix, createPageComponentImports, createNamedLoaderModule, createPageIndex, stripPageMarkdown, createMarkdownMap, createPageLoadersModule, loadPageDataModule, createNamedImportModule } from './vite/modules.js';
 import path from 'node:path';
@@ -46,6 +47,8 @@ const virtualModules = new Set([
 
 export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
   let root = process.cwd();
+  let serverBuild = false;
+  let staticDirectory = '';
   let manifest: SvedocsContentManifest | undefined;
   let resolvedConfig: SvedocsConfig | undefined;
   let resolvedConfigFile: string | undefined;
@@ -132,6 +135,8 @@ export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
     name: 'svedocs',
     async configResolved(config) {
       root = config.root;
+      serverBuild = Boolean(config.build?.ssr);
+      staticDirectory = config.publicDir || path.join(root, 'static');
       configDirty = true;
       await refresh();
     },
@@ -140,6 +145,12 @@ export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
       if (resolvedConfigFile) this.addWatchFile(resolvedConfigFile);
       for (const page of manifest?.pages ?? []) this.addWatchFile(path.resolve(root, page.sourcePath));
       for (const file of session.dependencies()) this.addWatchFile(file);
+    },
+    async generateBundle() {
+      if (serverBuild || !manifest) return;
+      for (const [fileName, source] of Object.entries(await integrationAssets(manifest.config, staticDirectory))) {
+        this.emitFile({ type: 'asset', fileName, source });
+      }
     },
     async transform(code, id) {
       if (!manifest || id.startsWith('\0') || id.includes('/node_modules/') || !/\.svelte(?:\?|$)/.test(id)) return undefined;
@@ -182,6 +193,7 @@ export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
     },
     configureServer(devServer) {
       server = devServer;
+      serveIntegrationAssets(devServer, () => manifest?.config, staticDirectory);
       // SvelteKit narrows fs.allow to the app; workspace-linked Workers live in the package.
       devServer.config.server.fs.allow.push(fileURLToPath(new URL('./search/', import.meta.url)));
       // Vite's legacy hot-update hook only covers changes, so handle additions/removals too.

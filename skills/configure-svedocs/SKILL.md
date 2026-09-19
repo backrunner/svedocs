@@ -1,6 +1,6 @@
 ---
 name: configure-svedocs
-description: Configure and validate svedocs through its typed project configuration. Use when changing svedocs.config.ts, site metadata, content roots, build mode, theme settings, Markdown hooks, search, Ask AI, SEO, OG, RSS, source links, checks, Cloudflare bindings, or i18n settings.
+description: Configure and validate svedocs through its typed project configuration. Use when changing svedocs.config.ts, site metadata, content roots, build mode, theme settings, Markdown hooks, analytics, ads, IndexNow, search, Ask AI, SEO, OG, RSS, source links, checks, Cloudflare bindings, or i18n settings.
 ---
 
 # Configure svedocs
@@ -25,8 +25,9 @@ Read [config-reference.md](references/config-reference.md) for the current publi
 - Keep `content.root`, `content.docs`, `content.pages`, and include/exclude patterns consistent.
 - Choose `edge` for runtime endpoints, `static` for fully prerendered output, and `spa` only for constrained hosts.
 - Enable hosted search or AI only when the matching runtime route and credentials or bindings exist.
+- Configure optional analytics, Google Ads, AdSense, and IndexNow in `integrations`; `DocsApp` and the Vite plugin handle runtime wiring and generated assets. Provider IDs and the IndexNow verification key are public values, not account secrets.
 - Store credentials in environment variables or platform bindings. Commit only examples without secrets.
-- Use `false` to disable `search`, `ai`, `seo.ogImage`, `theme.footer`, or `i18n` where supported.
+- Use `false` to disable `integrations`, individual integration providers, `search`, `ai`, `seo.ogImage`, `theme.footer`, or `i18n` where supported.
 - Configure locales and message catalogs together; do not add messages for an unknown locale.
 
 ## Validate
@@ -40,4 +41,3 @@ pnpm build
 ```
 
 Use the project's package manager. Build every supported mode affected by the change. For Cloudflare configuration, run setup or deploy in dry-run mode unless the user explicitly requests a real deployment. For configuration changes in the svedocs monorepo, also test config schema rejection and resolved defaults.
-

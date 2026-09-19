@@ -6,6 +6,7 @@
   import type { SvedocsPage } from '../core/types.js';
   import { copyCodeToClipboard, fallbackTranslate } from './headless.js';
   import SafeRenderError from './SafeRenderError.svelte';
+  import GoogleAd from './GoogleAd.svelte';
   import type { SvedocsThemeComponentMap, SvedocsThemeContext } from './types.js';
 
   export let page: SvedocsPage;
@@ -21,6 +22,7 @@
   $: kind = page.kind === 'doc' ? t('article.kind.doc') : t('article.kind.page');
   $: eyebrow = breadcrumbs.length > 0 ? breadcrumbs : [{ label: kind, path: page.kind === 'doc' ? findDocsRoot(page, context?.pages) : '/' }];
   $: showDocHeaderSlot = hasDocHeaderSlot ?? Boolean($$slots['doc-header']);
+  $: adPlacements = context?.config.integrations.googleAdsense && context.config.integrations.googleAdsense.placements;
 
   onMount(() => {
     const root = document.querySelector<HTMLElement>('.sd-prose');
@@ -65,6 +67,9 @@
       {/if}
     </header>
   {/if}
+  {#if context && adPlacements && adPlacements.articleTop}
+    <GoogleAd config={context.config} name={adPlacements.articleTop} routeKey={page.routePath} />
+  {/if}
   <div class="sd-prose">
     <svelte:boundary>
       {#if content}
@@ -87,6 +92,9 @@
       {/snippet}
     </svelte:boundary>
   </div>
+  {#if context && adPlacements && adPlacements.articleBottom}
+    <GoogleAd config={context.config} name={adPlacements.articleBottom} routeKey={page.routePath} />
+  {/if}
   <footer class="sd-doc-footer">
     <div class="sd-doc-meta">
       {#if updatedTime}

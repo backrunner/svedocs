@@ -64,7 +64,7 @@ Use dry runs in CI until credentials are available. Setup commands print or writ
 
 ## Security and operations
 
-- Put provider keys in runtime environment variables, not in content files or committed config.
+- Put account API secrets in runtime environment variables, not in content files or committed config. Analytics IDs, AdSense publisher IDs, and IndexNow verification keys are public settings.
 - Keep `.dev.vars.example` as documentation for required local variables.
 - Use memory rate limiting only for local development.
 - Use KV or another shared rate limiter for production Ask AI.
@@ -72,6 +72,8 @@ Use dry runs in CI until credentials are available. Setup commands print or writ
 - Keep Cloudflare remote bindings disabled unless local development needs to modify remote resources.
 
 ## Pages in this section
+
+[Analytics, ads, and IndexNow](/docs/integrations/analytics-ads-indexnow "card: Configure Umami, GA4, Google Ads conversions, AdSense slots, and IndexNow without application code.")
 
 [Search and Ask AI](/docs/integrations/search-ai "card: Providers, routes, indexing, citations, streaming, and rate limits.")
 

@@ -68,6 +68,15 @@ svedocs check --config ./svedocs.config.ts
 
 检查项包括重复路由、重复 canonical URL、缺少页面描述、失效的内部链接和锚点、缺失的本地资源、空搜索输出、SPA 风险、公开文档与独立页面的翻译缺口，以及可选的包导出校验。
 
+## IndexNow
+
+```sh
+svedocs indexnow --dry-run
+svedocs indexnow --config svedocs.config.ts --mode static
+```
+
+部署后，根据 `integrations.indexNow` 提交当前可发现的页面。命令会先验证公开 key 文件，再发起提交；试运行不会发送网络请求。详见[统计、广告与 IndexNow](/docs/zh/integrations/analytics-ads-indexnow)。
+
 ## 索引
 
 ```sh

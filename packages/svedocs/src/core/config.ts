@@ -1,4 +1,5 @@
 import type { SvedocsConfig } from '../config.js';
+import { resolveIntegrations } from '../integrations/config.js';
 import { resolveSvedocsI18nConfig } from './i18n.js';
 import type { SvedocsResolvedConfig } from './types.js';
 
@@ -54,6 +55,7 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
   const agent = resolveAgentConfig(config);
 
   return {
+    integrations: resolveIntegrations(config.integrations),
     site: {
       name: config.site?.name ?? 'svedocs',
       title: config.site?.title ?? config.site?.name ?? 'svedocs',

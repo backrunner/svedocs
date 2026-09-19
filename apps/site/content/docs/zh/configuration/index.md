@@ -1,6 +1,6 @@
 ---
 title: 配置
-description: 配置站点信息、内容目录、构建模式、主题、搜索、AI、SEO、检查、Cloudflare 和多语言。
+description: 配置站点信息、内容目录、构建模式、主题、统计、广告、IndexNow、搜索、AI、SEO 和多语言。
 order: 4
 ---
 
@@ -197,6 +197,35 @@ export default defineConfig({
 ```
 
 可选值包括 `mock`、`cloudflare-ai-search`、`cloudflare-workers-ai` 和 `openai-compatible`。`mock` 不需要凭据，适合一边写内容一边调试界面；等内容和提问流程稳定后，再接入托管服务测试真实回答。
+
+## 可选服务集成
+
+`integrations` 用于通过配置启用服务，无需编写应用代码。所有服务默认关闭，内置 `DocsApp` 会自动接入已配置的浏览器服务。
+
+```ts
+export default defineConfig({
+  site: { url: 'https://docs.example.com' },
+  integrations: {
+    umami: { websiteId: 'your-website-id' },
+    googleAnalytics: { id: 'G-XXXXXXXXXX' },
+    indexNow: { key: 'replace-with-your-indexnow-key' }
+  }
+});
+```
+
+| 字段 | 配置 |
+| --- | --- |
+| `umami` | `websiteId`、可选的自托管 `src`，以及 `domains` 域名白名单。 |
+| `googleAnalytics` | 以 `G-` 开头的 GA4 衡量 `id`。 |
+| `googleAds` | 以 `AW-` 开头的 Google Ads `id`，以及命名的 `conversions`；每项包含 `label`，可选精确 `path`、`value` 和 `currency`。 |
+| `googleAdsense` | 发布商 `client`、命名 `slots`、`placements.articleTop` / `articleBottom`、`autoAds` 和 `adsTxt`。 |
+| `indexNow` | 公开验证 `key` 和可选 HTTPS `endpoint`；要求设置 HTTP(S) `site.url`。 |
+| `development` | 默认 `false`；设为 `true` 才会在开发环境加载浏览器集成。 |
+| `respectDoNotTrack` | 默认 `true`；浏览器启用 Do Not Track 时停止统计和广告。 |
+
+把任意服务或整个 `integrations` 设为 `false` 即可关闭。服务 ID 与 IndexNow 验证 key 都是公开配置；账户 API 密钥应保存在服务端环境变量中。
+
+完整选项、GA4 必需的网页浏览设置、广告位示例，以及部署后提交的流程见[统计、广告与 IndexNow](/docs/zh/integrations/analytics-ads-indexnow)。Vite 插件生成验证文件；只有在部署后显式运行 `svedocs indexnow` 才会提交 URL。
 
 ## SEO 和 OG
 

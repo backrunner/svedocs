@@ -1,4 +1,7 @@
 export { default as DocsApp } from './DocsApp.svelte';
+export { default as Integrations } from './Integrations.svelte';
+export { default as GoogleAd } from './GoogleAd.svelte';
+export { default as GoogleAdsConversion } from './GoogleAdsConversion.svelte';
 export { default as RootLayout } from './RootLayout.svelte';
 export { default as LayoutShell } from './LayoutShell.svelte';
 export { default as DocsLayout } from './DocsLayout.svelte';

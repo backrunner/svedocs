@@ -68,6 +68,15 @@ svedocs check --config ./svedocs.config.ts
 
 Checks include duplicate routes, duplicate canonical URLs, missing descriptions, broken internal links, broken anchors, local assets, empty search output, SPA risk, optional translation gaps across public docs and standalone pages, and optional package export validation.
 
+## IndexNow
+
+```sh
+svedocs indexnow --dry-run
+svedocs indexnow --config svedocs.config.ts --mode static
+```
+
+After deployment, submit the current discoverable pages using `integrations.indexNow`. The command verifies the public key file before submitting. Dry runs never send requests. See [analytics, ads, and IndexNow](/docs/integrations/analytics-ads-indexnow).
+
 ## Index
 
 ```sh

@@ -92,6 +92,14 @@ Custom buttons may open default panels through `svedocs:open-search` and `svedoc
 - Set `theme.code.copyButton: false` when rendering a separate copy control.
 - Replace `Error` for route failures and `RenderError` for local boundary failures.
 
+## Analytics and advertising
+
+`DocsApp` mounts the configured `Integrations` runtime automatically, including for replacement themes. When composing lower-level layouts without `DocsApp`, mount `<Integrations {config} />` once in a SvelteKit layout. Analytics and ads are optional, browser-only, and honor development and Do Not Track settings.
+
+Use `GoogleAd` from `svedocs/theme` with required `config` and `name` (a key in `integrations.googleAdsense.slots`). Pass the current page's route as `routeKey` to recreate the ad after navigation, and a localized `label`. The default `Article` supports the configured `articleTop` and `articleBottom` placements; custom articles can render the component wherever appropriate.
+
+`GoogleAdsConversion` takes `config`, a named conversion, and optional `transactionId`. Mount it after a successful action; it fires once per mount. Omit that conversion's automatic `path` to avoid duplicate events. For event handlers, call `trackGoogleAdsConversion(config.integrations, name, dev, transactionId)` from `svedocs/integrations` with SvelteKit's `dev` flag. These components are public exports, not component-map replacement keys.
+
 ## Form controls
 
 The theme exports `FormField`, `Input`, `Textarea`, `Select`, `Checkbox`, and `Button`. Controls support `density: 'sm' | 'md' | 'lg'`. Buttons support `default`, `primary`, `ghost`, and `danger` variants. Prefer them in custom theme surfaces when the bundled styling remains active.

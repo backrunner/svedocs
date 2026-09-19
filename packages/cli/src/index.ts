@@ -4,6 +4,7 @@ import { runCreateSvedocsCli } from './commands/create.js';
 import { runDeployCommand } from './commands/deploy.js';
 import { runOgCommand } from './commands/og.js';
 import { runIndexCommand } from './commands/search-index.js';
+import { runIndexNowCommand } from './commands/indexnow.js';
 import { runUpgradeCommand } from './commands/upgrade.js';
 import { fail, ok, type CliResult } from './result.js';
 
@@ -24,6 +25,7 @@ export function renderSvedocsHelp(): string {
     '  preview             Preview the built site',
     '  check               Check project configuration and content',
     '  index               Print or write search index records',
+    '  indexnow            Notify search engines of deployed pages',
     '  og                  Generate Open Graph assets',
     '  deploy              Set up and deploy to a provider',
     '',
@@ -56,6 +58,7 @@ export async function runSvedocsCli(args: string[]): Promise<CliResult> {
   if (command === 'ssg') return runBuildCommand(['--mode', 'static', ...commandArgs]);
   if (command === 'check') return runCheckCommand(commandArgs);
   if (command === 'index') return runIndexCommand(commandArgs);
+  if (command === 'indexnow') return runIndexNowCommand(commandArgs);
   if (command === 'og') return runOgCommand(commandArgs);
   if (command === 'deploy') return runDeployCommand(commandArgs);
   return fail(command, args, `Unknown command "${command}".\n\n${renderSvedocsHelp()}`);
@@ -88,5 +91,5 @@ function normalizeGlobalOptions(args: string[]): { command: string; commandArgs:
 }
 
 function shouldApplyGlobalOptions(command: string): boolean {
-  return ['dev', 'preview', 'build', 'ssg', 'check', 'index', 'og', 'deploy'].includes(command);
+  return ['dev', 'preview', 'build', 'ssg', 'check', 'index', 'indexnow', 'og', 'deploy'].includes(command);
 }

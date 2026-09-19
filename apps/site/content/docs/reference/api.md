@@ -100,7 +100,10 @@ import {
   Textarea,
   Checkbox,
   Button,
-  LocalizedLink
+  LocalizedLink,
+  Integrations,
+  GoogleAd,
+  GoogleAdsConversion
 } from 'svedocs/theme';
 import 'svedocs/theme/styles.css';
 import 'svedocs/theme/base.css';
@@ -130,6 +133,29 @@ import { createConfiguredAskResponse, createAskResponse, createMemoryRateLimiter
 Search and Ask AI support local, Algolia, Typesense, Cloudflare, and OpenAI-compatible services. Local search can filter by locale and content kind.
 
 Generated route handlers should use the configured response utilities. Import lower-level providers such as `createAlgoliaSearchProvider`, `createTypesenseSearchProvider`, `createCloudflareAiSearchProvider`, `createWorkersAiProvider`, or `createOpenAiCompatibleProvider` only when you need custom routing or service selection.
+
+## Service integrations
+
+```ts
+import {
+  createIntegrationAssets,
+  createIndexNowPayloads,
+  submitIndexNow,
+  trackGoogleAdsConversion
+} from 'svedocs/integrations';
+import type { IndexNowPayload, IndexNowResult, SvedocsIntegrationsConfig } from 'svedocs/integrations';
+```
+
+| API | Behavior |
+| --- | --- |
+| `createIntegrationAssets(config)` | Returns a filename-to-content record for the IndexNow key file and AdSense `ads.txt`, without reading or writing files. The Vite plugin handles emission and preserves a user-owned `ads.txt`. |
+| `createIndexNowPayloads(config, pages)` | Returns `IndexNowPayload[]` containing discoverable same-origin canonical URLs, deduplicated and split into batches of at most 10,000. Throws if IndexNow is disabled. Does not make requests. |
+| `submitIndexNow(config, pages, options?)` | Verifies the deployed key file, submits each batch, and returns `Promise<IndexNowResult>` with `submitted`, `batches`, and `statuses`. Non-200/202 submission responses throw. `options.fetch` supplies a request implementation; `verifyKey: false` skips the deployment check. Call from deployment tooling after publishing. |
+| `trackGoogleAdsConversion(integrations, name, development?, transactionId?)` | Sends a named conversion from `config.integrations.googleAds.conversions`. Pass `config.integrations` and SvelteKit's `dev` flag. Respects disabled providers and Do Not Track; does nothing during SSR. |
+
+The module also exports `SvedocsAdSlot`, `SvedocsGoogleAdsConversion`, and `SvedocsResolvedIntegrations` types. Input and resolved integration types are available from `svedocs/config` as well.
+
+For configuration-only setup and automatic pageviews, use the [integration guide](/docs/integrations/analytics-ads-indexnow). `Integrations`, `GoogleAd`, and `GoogleAdsConversion` are Svelte components from `svedocs/theme`; their props are documented in [Theme components](/docs/reference/theme-components).
 
 ## OG
 

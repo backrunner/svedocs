@@ -4,6 +4,7 @@ const port = process.env.SVEDOCS_E2E_PORT ?? '4173';
 const host = process.env.SVEDOCS_E2E_HOST ?? '127.0.0.1';
 const baseURL = `http://${host.includes(':') ? `[${host}]` : host}:${port}`;
 const preview = Boolean(process.env.SVEDOCS_E2E_PREVIEW);
+const integrationConfig = process.env.SVEDOCS_E2E_INTEGRATIONS ? ' --config e2e/fixtures/integrations.vite.ts' : '';
 const edge = !['static', 'spa'].includes(process.env.SVEDOCS_BUILD_MODE ?? 'edge');
 
 export default defineConfig({
@@ -18,7 +19,7 @@ export default defineConfig({
   webServer: {
     command: preview && edge
       ? `node ../../scripts/serve-production-ssr.mjs --host ${host} --port ${port}`
-      : `pnpm exec vite ${preview ? 'preview' : 'dev'} --host ${host} --port ${port}`,
+      : `pnpm exec vite ${preview ? 'preview' : 'dev'} --host ${host} --port ${port}${integrationConfig}`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000

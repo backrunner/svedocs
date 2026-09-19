@@ -94,6 +94,56 @@ export interface SvedocsRssOptions {
   locale?: string;
 }
 
+export interface SvedocsAdSlot {
+  slot: string;
+  format?: 'auto' | 'rectangle' | 'horizontal' | 'vertical';
+  responsive?: boolean;
+  /** CSS height reserved while the ad loads. */
+  minHeight?: number;
+}
+
+export interface SvedocsGoogleAdsConversion {
+  label: string;
+  /** Exact route path. Omit to fire only through GoogleAdsConversion. */
+  path?: string;
+  value?: number;
+  currency?: string;
+}
+
+export interface SvedocsIntegrationsConfig {
+  /** Third-party scripts are disabled in development unless explicitly enabled. */
+  development?: boolean;
+  respectDoNotTrack?: boolean;
+  umami?: false | { websiteId: string; src?: string; domains?: string[] };
+  googleAnalytics?: false | { id: string };
+  googleAds?: false | { id: string; conversions?: Record<string, SvedocsGoogleAdsConversion> };
+  googleAdsense?: false | {
+    client: string;
+    autoAds?: boolean;
+    adsTxt?: boolean;
+    slots?: Record<string, SvedocsAdSlot>;
+    placements?: { articleTop?: string; articleBottom?: string };
+  };
+  /** The verification key is public and is emitted as a text asset during builds. */
+  indexNow?: false | { key: string; endpoint?: string };
+}
+
+export interface SvedocsResolvedIntegrations {
+  development: boolean;
+  respectDoNotTrack: boolean;
+  umami: false | { websiteId: string; src: string; domains: string[] };
+  googleAnalytics: false | { id: string };
+  googleAds: false | { id: string; conversions: Record<string, SvedocsGoogleAdsConversion> };
+  googleAdsense: false | {
+    client: string;
+    autoAds: boolean;
+    adsTxt: boolean;
+    slots: Record<string, SvedocsAdSlot>;
+    placements: { articleTop?: string; articleBottom?: string };
+  };
+  indexNow: false | { key: string; endpoint: string };
+}
+
 export interface SvedocsConfig {
   site?: {
     name?: string;
@@ -127,6 +177,7 @@ export interface SvedocsConfig {
   };
   markdown?: SvedocsMarkdownOptions;
   images?: false | SvedocsImagesOptions;
+  integrations?: false | SvedocsIntegrationsConfig;
   search?: false | {
     enabled?: boolean;
     provider?: 'local' | 'algolia' | 'typesense' | 'cloudflare-ai-search' | string;
@@ -205,7 +256,51 @@ export interface SvedocsConfig {
 
 export type { SvedocsResolvedConfig };
 
+const httpUrl = z.string().url().refine((value) => /^https?:\/\//.test(value), 'Use an HTTP(S) URL.');
+const integrationsSchema = z.object({
+  development: z.boolean().optional(),
+  respectDoNotTrack: z.boolean().optional(),
+  umami: z.union([z.literal(false), z.object({
+    websiteId: z.string().trim().min(1),
+    src: httpUrl.optional(),
+    domains: z.array(z.string().trim().min(1)).optional()
+  }).strict()]).optional(),
+  googleAnalytics: z.union([z.literal(false), z.object({
+    id: z.string().regex(/^G-[A-Z0-9]+$/, 'Use a GA4 measurement ID (G-...).')
+  }).strict()]).optional(),
+  googleAds: z.union([z.literal(false), z.object({
+    id: z.string().regex(/^AW-\d+$/, 'Use a Google Ads ID (AW-...).'),
+    conversions: z.record(z.string(), z.object({
+      label: z.string().regex(/^[\w-]+$/),
+      path: z.string().regex(/^\/(?!\/)[^?#]*$/).optional(),
+      value: z.number().nonnegative().optional(),
+      currency: z.string().regex(/^[A-Z]{3}$/).optional()
+    }).strict().refine((value) => value.value === undefined || Boolean(value.currency), 'A conversion value requires a currency.')).optional()
+  }).strict()]).optional(),
+  googleAdsense: z.union([z.literal(false), z.object({
+    client: z.string().regex(/^ca-pub-\d{16}$/, 'Use an AdSense publisher ID (ca-pub-...).'),
+    autoAds: z.boolean().optional(),
+    adsTxt: z.boolean().optional(),
+    slots: z.record(z.string(), z.object({
+      slot: z.string().regex(/^\d+$/),
+      format: z.enum(['auto', 'rectangle', 'horizontal', 'vertical']).optional(),
+      responsive: z.boolean().optional(),
+      minHeight: z.number().int().nonnegative().optional()
+    }).strict()).optional(),
+    placements: z.object({ articleTop: z.string().optional(), articleBottom: z.string().optional() }).strict().optional()
+  }).strict().superRefine((value, context) => {
+    for (const [position, name] of Object.entries(value.placements ?? {})) {
+      if (name && !Object.hasOwn(value.slots ?? {}, name)) context.addIssue({ code: 'custom', path: ['placements', position], message: `Unknown ad slot "${name}".` });
+    }
+  })]).optional(),
+  indexNow: z.union([z.literal(false), z.object({
+    key: z.string().regex(/^[a-zA-Z0-9-]{8,128}$/, 'IndexNow keys need 8-128 letters, numbers, or hyphens.'),
+    endpoint: httpUrl.refine((value) => value.startsWith('https://'), 'Use an HTTPS IndexNow endpoint.').optional()
+  }).strict()]).optional()
+}).strict();
+
 export const svedocsConfigSchema = z.object({
+  integrations: z.union([z.literal(false), integrationsSchema]).optional(),
   site: z
     .object({
       name: z.string().optional(),
@@ -542,6 +637,9 @@ export function loadSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolvedCo
 
 export function validateSvedocsConfig(config: SvedocsConfig): SvedocsConfig {
   const validated = svedocsConfigSchema.parse(config) as SvedocsConfig;
+  if (validated.integrations && validated.integrations.indexNow && (!validated.site?.url || !/^https?:\/\//.test(validated.site.url))) {
+    throw new Error('integrations.indexNow requires an HTTP(S) site.url.');
+  }
   resolveSvedocsConfig(validated);
   return validated;
 }

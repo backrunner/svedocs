@@ -21,6 +21,8 @@ CLI package for `svedocs` and `create-svedocs`.
 - `svedocs check --strict --external-links --no-assets --translations --package`
 - `svedocs check --config ./svedocs.config.ts`
 - `svedocs index --format json|jsonl --out search.json`
+- `svedocs indexnow --dry-run`
+- `svedocs indexnow --mode edge|static|spa`
 - `svedocs index --provider cloudflare-ai-search --dry-run`
 - `svedocs index --provider cloudflare-ai-search --strategy replace --existing stale-id --delete manual-id`
 - `svedocs og --format svg|png --out static/og`

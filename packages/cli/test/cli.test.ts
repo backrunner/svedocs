@@ -862,11 +862,23 @@ describe('svedocs-cli Batch 0 shell', () => {
         expect(created.ok).toBe(true);
         const target = path.join(tmp, template);
         await expectProjectSkills(target);
+        const configPath = path.join(target, 'svedocs.config.ts');
+        const templateConfig = await readFile(configPath, 'utf8');
+        await writeFile(configPath, templateConfig
+          .replace('export default defineConfig({', `export default defineConfig({
+  integrations: {
+    indexNow: { key: 'template-indexnow-key' },
+    googleAnalytics: { id: 'G-TEMPLATETEST' },
+    googleAdsense: { client: 'ca-pub-1234567890123456' }
+  },`)
+          .replace('site: {', "site: { url: 'https://example.com',"));
         const packageJsonPath = path.join(target, 'package.json');
         await rewriteTemplateDependencies(packageJsonPath, svedocsTarball, cliTarball);
         await runCommand('pnpm', ['install', '--ignore-scripts'], target);
         await runCommand('pnpm', ['check'], target);
         await runCommand('pnpm', ['exec', 'svedocs', 'build'], target);
+        expect(await readFile(path.join(target, '.svelte-kit/cloudflare/template-indexnow-key.txt'), 'utf8')).toBe('template-indexnow-key');
+        expect(await readFile(path.join(target, '.svelte-kit/cloudflare/ads.txt'), 'utf8')).toContain('pub-1234567890123456');
         expect((await readdir(path.join(target, '.svelte-kit/cloudflare/og'))).some((file) => file.endsWith('.png'))).toBe(true);
         if (template === 'minimal') {
           await writeFile(path.join(target, 'content/pages/index.md'), '# Title only\n');
@@ -892,12 +904,14 @@ describe('svedocs-cli Batch 0 shell', () => {
           expect(docsFallback).toContain('location.href="/docs"');
           expect(homeFallback).toContain('location.href="/"');
         }
+        expect(await readFile(path.join(target, 'build/template-indexnow-key.txt'), 'utf8')).toBe('template-indexnow-key');
+        expect(await readFile(path.join(target, 'build/ads.txt'), 'utf8')).toContain('pub-1234567890123456');
       }
     } finally {
       process.chdir(previous);
       await rm(tmp, { recursive: true, force: true });
     }
-  }, 240_000);
+  }, 600_000);
 });
 
 const projectSkillNames = [

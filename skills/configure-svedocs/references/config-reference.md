@@ -30,6 +30,7 @@ Do not write resolved defaults back into project config unless the project needs
 | `images` | Local image optimization defaults and output format; `false` disables it |
 | `search` | `false` or enabled/provider/scope |
 | `ai` | `false` or enabled/provider/scope/copy/suggestions/result limit |
+| `integrations` | `false` or optional Umami, GA4, Google Ads conversions, AdSense, and IndexNow settings |
 | `agent` | `false` or enabled/`markdown` twins/`llms`/SSR `negotiation` (agent user agents, `Accept: text/markdown`, Cloudflare Cache API via `cache`) |
 | `seo` | Sitemap, RSS, robots, default author, serializable head additions, OG images |
 | `source` | Edit-link base URL |
@@ -44,6 +45,7 @@ Do not write resolved defaults back into project config unless the project needs
 - Search defaults to enabled local search with `scope: 'current'`.
 - Ask AI defaults to disabled unless a provider is configured; its default provider is `mock`.
 - Sitemap and robots default to enabled. RSS defaults to disabled.
+- Optional service integrations default to disabled. Browser integrations also stay off in development and respect Do Not Track unless explicitly configured otherwise.
 - The agent interface (markdown twins, `/llms.txt`, `/llms-full.txt`, edge-only UA/Accept negotiation) defaults to enabled; negotiation only takes effect in `edge` mode.
 - OG images default to SVG output in `static/og`.
 - Local raster images default to optimization with an `880px` maximum width, quality `82`, WebP output, and `static/_svedocs/images` copies.
@@ -78,6 +80,24 @@ Search providers include `local`, `algolia`, `typesense`, and `cloudflare-ai-sea
 Provider selection alone does not create credentials. Keep secrets in runtime environment variables or Cloudflare bindings. Keep the generated `/api/search` and `/api/ask` routes when hosted providers need server execution. Static and SPA output should retain a usable local fallback.
 
 Use `scope: 'current'` for locale-aware results. Use `all` only for intentional cross-scope or cross-language search.
+
+## Optional service integrations
+
+Set only the providers the site needs; each provider also accepts `false`:
+
+| Field | Options |
+| --- | --- |
+| `umami` | Required `websiteId`; optional `src` (defaults to Umami Cloud) and `domains` hostname allowlist. |
+| `googleAnalytics` | Required GA4 measurement `id` (`G-…`). Disable GA4 Enhanced measurement's browser-history pageviews because svedocs sends its own. |
+| `googleAds` | Required `id` (`AW-…`), named `conversions` with `label`, optional exact `path`, `value`, and three-letter uppercase `currency`. A value requires a currency. Query/hash-only changes do not repeat route conversions. |
+| `googleAdsense` | Required `client` (`ca-pub-` plus 16 digits); `autoAds: false`, `adsTxt: true`, named `slots`, and `placements.articleTop` / `articleBottom` referring to existing slot names. Each slot has a numeric-string `slot`, optional `format`, `responsive`, and `minHeight`. |
+| `indexNow` | Required public `key` (8–128 letters, numbers, or hyphens), optional HTTPS `endpoint`. Requires HTTP(S) `site.url`. |
+
+`integrations.development` defaults to `false`; `integrations.respectDoNotTrack` defaults to `true`. These control browser services, not IndexNow. Production preview loads enabled services. Do Not Track is not a consent platform.
+
+`DocsApp` connects tracking automatically. Custom layouts without it mount `Integrations` once. Theme components `GoogleAd` and `GoogleAdsConversion` consume the resolved config. Do not use both a conversion `path` and an explicit conversion component for the same action.
+
+The Vite plugin emits `/<key>.txt` and `ads.txt` across edge/static/SPA builds. Existing `static/ads.txt` is preserved; conflicting key files fail the build. Deploy before running `svedocs indexnow`; inspect payloads offline with `--dry-run`. Use `--mode` to match a build override. Builds do not submit automatically.
 
 ## SEO and feeds
 

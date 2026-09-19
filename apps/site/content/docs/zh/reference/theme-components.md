@@ -275,6 +275,48 @@ svedocs({
 </article>
 ```
 
+## Integrations
+
+`Integrations` 把 Umami、GA4、Google Ads 路由转化和 AdSense 自动广告接入 SvelteKit 导航。它只有一个必填属性 `config: SvedocsResolvedConfig`，不渲染可见界面。脚本只在浏览器加载，遵守 Do Not Track；开发环境默认不加载，除非设置 `integrations.development: true`。
+
+`DocsApp` 已自动包含它，自定义布局与组件替换也同样适用。如果应用直接组合底层布局而未使用 `DocsApp`，请在 SvelteKit 布局中挂载一次 `<Integrations {config} />`。由 `DocsApp` 渲染的主题无需重复添加。
+
+## GoogleAd
+
+`GoogleAd` 展示配置中的 AdSense 广告位。它是普通导出组件，不是组件映射的替换键。
+
+| 属性 | 说明 |
+| --- | --- |
+| `config` | 必填，类型为 `SvedocsResolvedConfig`。 |
+| `name` | 必填，对应 `config.integrations.googleAdsense.slots` 的键。广告位不存在或服务关闭时不渲染。 |
+| `routeKey` | 可选，默认 `''`。值变化时创建新的广告元素；跨路由复用组件时传入当前页的 `routePath`。 |
+| `label` | 广告区域的无障碍标签，默认 `Advertisement`。多语言主题应传入翻译后的标签。 |
+
+```svelte
+<script lang="ts">
+  import { GoogleAd, useSvedocsTheme } from 'svedocs/theme';
+  const theme = useSvedocsTheme();
+</script>
+
+<GoogleAd config={$theme.config} name="article" routeKey={$theme.page?.routePath ?? ''} label="广告" />
+```
+
+组件挂载且广告元素宽度大于零后才初始化广告。广告位配置控制 `format`、`responsive` 和 `minHeight`（默认 `120px`）。默认 `Article` 会自动使用 `placements.articleTop` 和 `placements.articleBottom`；替换文章组件时可自行渲染 `GoogleAd`。实际广告填充由 Google 决定。
+
+## GoogleAdsConversion
+
+`GoogleAdsConversion` 在挂载时发送一次命名的 Google Ads 转化，不渲染可见界面。
+
+| 属性 | 说明 |
+| --- | --- |
+| `config` | 必填，类型为 `SvedocsResolvedConfig`。 |
+| `name` | 必填，对应 `config.integrations.googleAds.conversions` 的键。 |
+| `transactionId` | 可选，已确认交易的唯一 ID，作为 Google 的 `transaction_id` 发送。 |
+
+只在目标动作成功后挂载它。已挂载实例的属性变化不会发送新事件；处理下一笔已确认交易时可使用 keyed block，或在事件处理函数中调用 `svedocs/integrations` 的 `trackGoogleAdsConversion`。显式发送转化时应省略配置中的 `path`，避免同时触发自动路由转化。
+
+服务配置与开发环境行为见[统计、广告与 IndexNow](/docs/zh/integrations/analytics-ads-indexnow)。
+
 ## Toc
 
 `Toc` 渲染页面目录，并跟踪当前标题。

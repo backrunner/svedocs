@@ -131,11 +131,15 @@ When agent negotiation is enabled, `svedocsPagePrerender()` returns `false` beca
 | `svedocs check --strict` | Validate content and fail on warnings |
 | `svedocs check --translations` | Check locale coverage |
 | `svedocs index` | Export or upload search records |
+| `svedocs indexnow --dry-run` | Inspect discoverable URL payloads without network requests |
+| `svedocs indexnow` | Verify the deployed key file and notify IndexNow after publishing |
 | `svedocs og` | Generate OG assets |
 | `svedocs deploy cloudflare setup` | Preview Cloudflare files |
 | `svedocs upgrade` | Upgrade framework and CLI together |
 
 Commands that read project state load `svedocs.config.*` before applying CLI flags.
+
+Optional Umami, GA4, Google Ads, AdSense, and IndexNow setup lives in `svedocs.config.ts` under `integrations`. `DocsApp` handles browser services; the Vite plugin emits verification files and `ads.txt`. No extra routes or packages are required. Use `svedocs indexnow --mode static` when the deployed build used that override; building does not submit URLs automatically.
 
 ## Verification
 

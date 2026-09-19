@@ -275,6 +275,48 @@ The default article exposes a `doc-header` slot with `page` and `breadcrumbs`. I
 </article>
 ```
 
+## Integrations
+
+`Integrations` connects Umami, GA4, Google Ads route conversions, and AdSense Auto ads to SvelteKit navigation. It has one required prop, `config: SvedocsResolvedConfig`, and renders no visible UI. It loads scripts only in the browser, respects Do Not Track, and stays disabled in development unless `integrations.development` is `true`.
+
+`DocsApp` includes it automatically, including for custom layouts and replacement components. If your app composes lower-level layouts without `DocsApp`, mount `<Integrations {config} />` once in its SvelteKit layout. Do not add it again inside a theme rendered by `DocsApp`.
+
+## GoogleAd
+
+`GoogleAd` displays a configured AdSense slot. It is an ordinary exported component, not a component-map replacement key.
+
+| Prop | Notes |
+| --- | --- |
+| `config` | Required `SvedocsResolvedConfig`. |
+| `name` | Required key in `config.integrations.googleAdsense.slots`. An unknown or disabled slot renders nothing. |
+| `routeKey` | Optional, defaults to `''`. A changed value creates a fresh ad element; pass the current page's `routePath` when reusing the component across routes. |
+| `label` | Accessible region label, defaults to `Advertisement`. Pass a translated label for localized themes. |
+
+```svelte
+<script lang="ts">
+  import { GoogleAd, useSvedocsTheme } from 'svedocs/theme';
+  const theme = useSvedocsTheme();
+</script>
+
+<GoogleAd config={$theme.config} name="article" routeKey={$theme.page?.routePath ?? ''} />
+```
+
+The component initializes an ad after mounting and once it has a nonzero width. Slot settings control `format`, `responsive`, and `minHeight` (default `120px`). The default `Article` uses `placements.articleTop` and `placements.articleBottom` automatically; replacement articles can render `GoogleAd` themselves. Actual ad fill depends on Google.
+
+## GoogleAdsConversion
+
+`GoogleAdsConversion` sends a named Google Ads conversion once when mounted and renders no UI.
+
+| Prop | Notes |
+| --- | --- |
+| `config` | Required `SvedocsResolvedConfig`. |
+| `name` | Required key in `config.integrations.googleAds.conversions`. |
+| `transactionId` | Optional unique confirmed transaction ID, forwarded as Google's `transaction_id`. |
+
+Mount it only after the action succeeds. Updating props on an already mounted instance does not send a new event. Use a keyed block for a new confirmed transaction, or call `trackGoogleAdsConversion` from `svedocs/integrations` in an event handler. Omit the conversion's `path` when sending it explicitly to avoid also triggering an automatic route conversion.
+
+See [Analytics, ads, and IndexNow](/docs/integrations/analytics-ads-indexnow) for provider configuration and development behavior.
+
 ## Toc
 
 `Toc` renders page headings and tracks the active heading.

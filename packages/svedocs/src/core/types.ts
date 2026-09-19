@@ -1,3 +1,5 @@
+import type { SvedocsResolvedIntegrations } from '../config.js';
+
 export interface SvedocsSeoMetaTag {
   name?: string;
   property?: string;
@@ -329,6 +331,7 @@ export type SvedocsOgTemplate = (input: {
 }) => SvedocsOgTemplateNode;
 
 export interface SvedocsResolvedConfig {
+  integrations: SvedocsResolvedIntegrations;
   site: {
     name: string;
     title: string;

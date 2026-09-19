@@ -10,6 +10,7 @@
   import PageLayout from './PageLayout.svelte';
   import RouteRenderError from './RouteRenderError.svelte';
   import ThemeInit from './ThemeInit.svelte';
+  import Integrations from './Integrations.svelte';
   import type { SvedocsCustomLayoutProps, SvedocsThemeComponentMap, SvedocsThemeContext } from './types.js';
 
   export let page: SvedocsPage;
@@ -40,6 +41,8 @@
   provideSvedocsTheme(inheritedContext);
   $: inheritedContext.set(appContext);
 </script>
+
+<Integrations {config} />
 
 {#if customLayout}
   <ThemeInit

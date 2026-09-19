@@ -29,6 +29,7 @@ It is built for teams that want documentation to feel native to SvelteKit instea
 | Unified content model | One manifest powers routes, sidebars, previous/next links, search records, SEO, sitemap and RSS entries, link checks, and OG routes. |
 | Edge-first deployment | Cloudflare edge SSR is the default path, with static and SPA builds available when needed. |
 | Search and Ask AI | Local MiniSearch for development, plus Algolia, Typesense, Cloudflare AI Search, Workers AI, and OpenAI-compatible providers. |
+| Optional service integrations | Configure Umami, GA4, Google Ads conversions, AdSense placements, and IndexNow without application code. |
 | Default theme | Tailwind CSS v4 theme with dark mode, command/search UI, Ask AI, ToC, locales, versions, code tools, and a pixel-style homepage. |
 | Production CLI | Create projects, run dev/build/preview/check, generate search indexes and OG images, and deploy to Cloudflare Pages. |
 
@@ -113,6 +114,12 @@ export default defineConfig({
 });
 ```
 
+## Optional service integrations
+
+Enable only the services you need through `integrations` in `svedocs.config.ts`. `DocsApp` handles browser tracking and navigation automatically; `GoogleAd` and `GoogleAdsConversion` are available to custom themes. Browser services respect Do Not Track and stay disabled in development by default.
+
+The Vite plugin generates IndexNow verification files and AdSense `ads.txt`. After deployment, run `svedocs indexnow --dry-run` to inspect the URLs, then `svedocs indexnow` to submit them. See the configuration guide in [English](apps/site/content/docs/integrations/analytics-ads-indexnow.md) or [中文](apps/site/content/docs/zh/integrations/analytics-ads-indexnow.md) for provider IDs, GA4 settings, and ad placement examples.
+
 ## Content
 
 svedocs reads docs and pages from configured content roots:
@@ -142,6 +149,7 @@ svedocs ssg
 svedocs preview
 svedocs check
 svedocs index
+svedocs indexnow --dry-run
 svedocs og
 svedocs deploy cloudflare
 svedocs deploy cloudflare setup --write
@@ -171,6 +179,7 @@ svedocs/theme/styles.css
 svedocs/cloudflare
 svedocs/search
 svedocs/ai
+svedocs/integrations
 svedocs/og
 svedocs/svelte
 ```

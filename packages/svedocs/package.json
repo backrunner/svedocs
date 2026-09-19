@@ -86,6 +86,10 @@
       "types": "./dist/agent.d.ts",
       "import": "./dist/agent.js"
     },
+    "./integrations": {
+      "types": "./dist/integrations.d.ts",
+      "import": "./dist/integrations.js"
+    },
     "./svelte": {
       "types": "./dist/svelte.d.ts",
       "import": "./dist/svelte.js"

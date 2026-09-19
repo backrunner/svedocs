@@ -15,8 +15,15 @@ Integrated SvelteKit documentation framework package.
 - `svedocs/ai`: Ask AI providers, SSE responses, and rate limiting helpers.
 - `svedocs/og`: SEO metadata, sitemap/robots, opt-in RSS, SVG/PNG/Satori OG generation.
 - `svedocs/cloudflare`: build presets, wrangler config, and binding type helpers.
+- `svedocs/integrations`: IndexNow submissions and assets, Google Ads conversion helpers, and integration types.
 
-All rendering, theme, search, AI, SEO, OG, and Cloudflare capabilities are intentionally kept inside this package.
+All rendering, theme, search, AI, SEO, OG, Cloudflare, and optional service integrations are intentionally kept inside this package.
+
+## Optional service integrations
+
+Configure `integrations.umami`, `googleAnalytics`, `googleAds`, `googleAdsense`, or `indexNow` in `svedocs.config.ts`. All are off by default. `DocsApp` handles analytics and client navigation; the default article supports named AdSense placements. Custom themes can use `Integrations`, `GoogleAd`, and `GoogleAdsConversion` from `svedocs/theme`.
+
+The Vite plugin emits IndexNow verification files and AdSense `ads.txt` assets. After deploying, run `svedocs indexnow --dry-run` to inspect the submission or `svedocs indexnow` to send it. See the [integration guide](https://svedocs.pwp.sh/docs/integrations/analytics-ads-indexnow) for configuration, GA4 pageview settings, and build-mode details.
 
 ## Theme Development
 

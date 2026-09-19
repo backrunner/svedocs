@@ -21,7 +21,7 @@ Read [project-workflow.md](references/project-workflow.md) for the current proje
 - Create a site: use `create-svedocs` with `minimal`, `docs`, or `cloudflare`. Prefer `docs` unless the request clearly calls for the smallest setup or Cloudflare bindings.
 - Add to SvelteKit: install both packages, create one `svedocs.config.ts`, register `svedocs({ config })` before `sveltekit()`, import theme CSS once, and copy the route pattern from the closest bundled template.
 - Add content: place docs in the configured docs root and standalone pages in the pages root. Give public pages unique `title` and useful `description` frontmatter.
-- Change behavior: use public imports such as `svedocs/config`, `svedocs/core`, `svedocs/routes`, `svedocs/theme`, `svedocs/search`, `svedocs/ai`, `svedocs/og`, `svedocs/cloudflare`, and `svedocs/agent`.
+- Change behavior: use public imports such as `svedocs/config`, `svedocs/core`, `svedocs/routes`, `svedocs/theme`, `svedocs/search`, `svedocs/ai`, `svedocs/og`, `svedocs/cloudflare`, `svedocs/agent`, and `svedocs/integrations`.
 - Upgrade: update `svedocs` and `svedocs-cli` together with `svedocs upgrade`.
 
 Use the focused companion skill when the request is mainly configuration, theme replacement, landing design, or localization.

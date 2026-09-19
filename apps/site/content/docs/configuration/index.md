@@ -1,6 +1,6 @@
 ---
 title: Configuration
-description: Configure site metadata, content roots, build modes, theme, search, AI, SEO, checks, Cloudflare, and i18n.
+description: Configure site metadata, content roots, build modes, theme, analytics, ads, IndexNow, search, AI, SEO, and i18n.
 order: 4
 ---
 
@@ -197,6 +197,35 @@ export default defineConfig({
 ```
 
 Choose from `mock`, `cloudflare-ai-search`, `cloudflare-workers-ai`, and `openai-compatible`. The `mock` provider works without credentials and is useful while writing the site. Connect a hosted service once the content and question flow are ready to test with real responses.
+
+## Optional service integrations
+
+The `integrations` field enables services without adding application code. All providers are disabled by default; the built-in `DocsApp` connects the configured browser services automatically.
+
+```ts
+export default defineConfig({
+  site: { url: 'https://docs.example.com' },
+  integrations: {
+    umami: { websiteId: 'your-website-id' },
+    googleAnalytics: { id: 'G-XXXXXXXXXX' },
+    indexNow: { key: 'replace-with-your-indexnow-key' }
+  }
+});
+```
+
+| Field | Configuration |
+| --- | --- |
+| `umami` | `websiteId`, optional self-hosted `src`, and optional `domains` hostname allowlist. |
+| `googleAnalytics` | GA4 measurement `id` starting with `G-`. |
+| `googleAds` | Google Ads `id` starting with `AW-` and named `conversions` with a `label`, optional exact `path`, `value`, and `currency`. |
+| `googleAdsense` | Publisher `client`, named `slots`, `placements.articleTop` / `articleBottom`, `autoAds`, and `adsTxt`. |
+| `indexNow` | Public verification `key` and optional HTTPS `endpoint`; requires an HTTP(S) `site.url`. |
+| `development` | `false` by default; set `true` to load browser integrations in development. |
+| `respectDoNotTrack` | `true` by default; suppresses browser tracking and ads when Do Not Track is enabled. |
+
+Set any provider, or `integrations` itself, to `false` to disable it. Provider IDs and the IndexNow verification key are public settings. Account API secrets belong in server-side environment variables.
+
+See [Analytics, ads, and IndexNow](/docs/integrations/analytics-ads-indexnow) for all options, the required GA4 pageview setting, ad placement examples, and the deployment-then-submission workflow. The Vite plugin generates verification files; `svedocs indexnow` submits URLs only when explicitly invoked after deployment.
 
 ## SEO and OG
 
