@@ -1,5 +1,12 @@
 # create-svedocs
 
+## 0.2.2
+
+### Patch Changes
+
+- Updated dependencies [1e39e9d]
+  - svedocs-cli@0.2.2
+
 ## 0.2.1
 
 ### Patch Changes

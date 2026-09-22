@@ -2,13 +2,20 @@
 title: Changelog
 description: Product updates rendered with the default svedocs single-page template.
 published: 2026-05-18
-updatedTime: 2026-09-07
+updatedTime: 2026-09-22
 type: website
 ---
 
 # Changelog
 
 This page uses the built-in single-page layout. It omits the docs sidebar while keeping the site's metadata, search records, OG route, theme controls, and command palette.
+
+## 0.2.2 — 2026-09-22
+
+- Add a localized search close button on desktop and mobile, and fix dismissal by clicking or tapping outside the dialog.
+- Preserve native modal behavior, restore focus consistently in Safari, and keep underlying dialogs open when dismissing search.
+- Document custom search UI replacement and the mobile search event contract.
+- Add optional Umami, GA4, Google Ads, and AdSense integrations, generated IndexNow verification and ads.txt files, and the `svedocs indexnow` command.
 
 ## 0.2.1 — 2026-09-07
 

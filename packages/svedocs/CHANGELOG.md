@@ -1,5 +1,12 @@
 # svedocs
 
+## 0.2.2
+
+### Patch Changes
+
+- 1e39e9d: Add opt-in, config-driven Umami, GA4, Google Ads conversions, and AdSense integrations with reusable theme components. Generate IndexNow verification and ads.txt assets across build modes, and add a deployment-aware `svedocs indexnow` submission command.
+- f25f300: Add an accessible, localized close button to the search dialog on desktop and mobile. Preserve native modal behavior after portal mounting so clicking or tapping outside dismisses search, and prevent Escape from closing an underlying dialog. Restore focus to search and Ask AI triggers consistently in Safari. Document custom search UI replacement and the mobile search event contract.
+
 ## 0.2.1
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # svedocs-cli
 
+## 0.2.2
+
+### Patch Changes
+
+- 1e39e9d: Add opt-in, config-driven Umami, GA4, Google Ads conversions, and AdSense integrations with reusable theme components. Generate IndexNow verification and ads.txt assets across build modes, and add a deployment-aware `svedocs indexnow` submission command.
+- Updated dependencies [1e39e9d]
+- Updated dependencies [f25f300]
+  - svedocs@0.2.2
+
 ## 0.2.1
 
 ### Patch Changes
