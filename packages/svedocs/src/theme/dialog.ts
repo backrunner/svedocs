@@ -1,3 +1,4 @@
+import { tick } from 'svelte';
 import { lockDocumentScroll } from './portal.js';
 
 export function isComposingKey(event: KeyboardEvent): boolean {
@@ -16,8 +17,11 @@ export function dialogBehavior(node: HTMLDialogElement, initial: DialogOptions) 
   const mobile = window.matchMedia('(max-width: 980px)');
   let currentModal: boolean | undefined;
   let unlock: (() => void) | undefined;
+  let mounted = false;
+  let destroyed = false;
 
   function sync() {
+    if (!mounted || destroyed) return;
     const modal = options.modal === true || mobile.matches;
     if (modal === currentModal) return;
     const focus = document.activeElement;
@@ -47,13 +51,16 @@ export function dialogBehavior(node: HTMLDialogElement, initial: DialogOptions) 
       || event.clientY < bounds.top || event.clientY > bounds.bottom) options.onClose();
   }
 
-  sync();
+  // Moving an open dialog through its parent portal removes it from the native
+  // top layer. Wait for the portal to mount before showing the dialog.
+  void tick().then(() => { mounted = true; sync(); });
   mobile.addEventListener('change', sync);
   node.addEventListener('cancel', cancel);
   node.addEventListener('click', click);
   return {
     update(next: DialogOptions) { options = next; sync(); },
     destroy() {
+      destroyed = true;
       mobile.removeEventListener('change', sync);
       node.removeEventListener('cancel', cancel);
       node.removeEventListener('click', click);

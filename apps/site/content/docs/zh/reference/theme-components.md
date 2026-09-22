@@ -373,7 +373,11 @@ svedocs({
 <button type="button" on:click={search.show}>搜索</button>
 ```
 
-默认搜索还会监听 `window` 事件 `svedocs:open-search`。
+在 `svedocs()` Vite 插件选项中替换 `theme.components.Search`，即可定制搜索入口和弹窗。自定义搜索组件可以复用 `createSearchController`，并自行编写结构和样式。
+
+默认搜索还会监听 `window` 事件 `svedocs:open-search`，移动导航栏的搜索按钮会触发该事件。保留默认导航栏时，自定义搜索组件也应监听该事件。
+
+桌面端和移动端均可通过关闭按钮、点击弹窗外的遮罩空白区域或按 Escape 关闭默认搜索弹窗。关闭后，焦点会回到打开搜索的控件。关闭按钮文案通过 `search.close` 本地化。
 
 ## AskAi
 

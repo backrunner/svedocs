@@ -60,9 +60,47 @@
   transform: translate(-50%, -50%);
 }
 
+.sd-search-header {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--sd-line);
+}
+
 .sd-search-box {
   display: block;
-  border-bottom: 1px solid var(--sd-line);
+  flex: 1;
+  min-width: 0;
+}
+
+.sd-search-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  height: 44px;
+  margin-right: .4rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--sd-muted);
+  cursor: pointer;
+}
+
+.sd-search-close:hover {
+  background: color-mix(in srgb, var(--sd-accent) 12%, transparent);
+  color: var(--sd-ink);
+}
+
+.sd-search-close:focus-visible {
+  outline: 2px solid var(--sd-accent);
+  outline-offset: -2px;
+}
+
+.sd-search-close svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
 }
 
 .sd-search-box input {

@@ -120,6 +120,7 @@ export interface SvedocsMessages {
   'scope.langShort': string;
   'search.trigger': string;
   'search.dialog': string;
+  'search.close': string;
   'search.query': string;
   'search.placeholder': string;
   'search.results': string;

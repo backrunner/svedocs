@@ -18,6 +18,7 @@ export const defaultSvedocsMessages = {
   'scope.langShort': 'Lang',
   'search.trigger': 'Search',
   'search.dialog': 'Search documentation',
+  'search.close': 'Close search',
   'search.query': 'Search query',
   'search.placeholder': 'Search docs',
   'search.results': 'Search results',

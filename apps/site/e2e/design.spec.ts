@@ -88,6 +88,12 @@ test('closes only the top dialog and preserves the underlying mobile panel', asy
   await expect(page.getByRole('combobox')).toHaveCount(0);
   await expect(composer).toBeFocused();
   await expect(page.locator('html')).toHaveCSS('overflow', 'hidden');
+  await page.keyboard.press('Control+k');
+  await expect(page.getByRole('combobox')).toBeFocused();
+  await page.mouse.click(4, 4);
+  await expect(page.getByRole('combobox')).toHaveCount(0);
+  await expect(composer).toBeFocused();
+  await expect(page.locator('html')).toHaveCSS('overflow', 'hidden');
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('html')).not.toHaveCSS('overflow', 'hidden');

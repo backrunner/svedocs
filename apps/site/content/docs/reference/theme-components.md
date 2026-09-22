@@ -373,7 +373,11 @@ Replace `RenderError` when your theme needs different recovery actions, logging,
 <button type="button" on:click={search.show}>Search</button>
 ```
 
-The default search also listens for `window` event `svedocs:open-search`.
+Replace `theme.components.Search` in the `svedocs()` Vite plugin options to customize the search trigger and dialog. A custom search component can reuse `createSearchController` while owning its markup and styles.
+
+The default search also listens for `window` event `svedocs:open-search`, which the mobile navbar search button dispatches. Preserve this listener in a replacement when keeping the default navbar.
+
+On desktop and mobile, the default dialog closes with its close button, a click or tap on the backdrop outside the dialog, or Escape. Focus returns to the control that opened it. The close button label is localized through `search.close`.
 
 ## AskAi
 

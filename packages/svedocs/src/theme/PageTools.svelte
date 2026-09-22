@@ -61,7 +61,7 @@
         aria-label={askLabel}
         title={askLabel}
         data-collapsed={aiCollapsed}
-        on:click={activeController.openAskAi}
+        on:click={(event) => { event.currentTarget.focus(); activeController.openAskAi(); }}
       >
         <svg class="sd-floating-tool-glyph" aria-hidden="true" viewBox="0 0 24 24">
           <path d="M5 5h14v10H9l-4 4V5Z" />

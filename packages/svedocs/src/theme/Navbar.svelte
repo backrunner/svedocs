@@ -56,7 +56,10 @@
       type="button"
       aria-label={context.t('search.dialog')}
       aria-haspopup="dialog"
-      on:click={() => window.dispatchEvent(new Event('svedocs:open-search'))}
+      on:click={(event) => {
+        event.currentTarget.focus();
+        window.dispatchEvent(new Event('svedocs:open-search'));
+      }}
     >
       <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></svg>
     </button>

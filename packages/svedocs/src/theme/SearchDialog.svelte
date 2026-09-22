@@ -57,12 +57,16 @@
       event.preventDefault();
       show();
     }
-    if (event.key === 'Escape' && open) hide();
+    if (event.key === 'Escape' && open) {
+      event.preventDefault();
+      hide();
+    }
   }
 
   function handleDialogKeydown(event: KeyboardEvent) {
     if (isComposingKey(event)) return;
     if (event.key === 'Escape') {
+      event.preventDefault();
       hide();
     }
     if (event.key === 'ArrowDown') {
@@ -119,7 +123,7 @@
 
 </script>
 
-<button bind:this={trigger} class="sd-search-trigger" type="button" aria-label={t('search.dialog')} aria-haspopup="dialog" aria-expanded={open} on:click={show} data-theme-component="search-trigger">
+<button bind:this={trigger} class="sd-search-trigger" type="button" aria-label={t('search.dialog')} aria-haspopup="dialog" aria-expanded={open} on:click={(event) => { event.currentTarget.focus(); show(); }} data-theme-component="search-trigger">
   <span>{t('search.trigger')}</span>
   <kbd>⌘K</kbd>
 </button>
@@ -135,20 +139,25 @@
     on:keydown={handleDialogKeydown}
     data-theme-component="search"
   >
-    <label class="sd-search-box">
-      <span class="sd-visually-hidden">{t('search.query')}</span>
-      <input
-        value={query}
-        placeholder={t('search.placeholder')}
-        role="combobox"
-        aria-autocomplete="list"
-        aria-controls="svedocs-search-results"
-        aria-expanded={open}
-        aria-activedescendant={results[activeIndex] ? `svedocs-search-option-${activeIndex}` : undefined}
-        on:input={handleInput}
-        bind:this={input}
-      />
-    </label>
+    <div class="sd-search-header">
+      <label class="sd-search-box">
+        <span class="sd-visually-hidden">{t('search.query')}</span>
+        <input
+          value={query}
+          placeholder={t('search.placeholder')}
+          role="combobox"
+          aria-autocomplete="list"
+          aria-controls="svedocs-search-results"
+          aria-expanded={open}
+          aria-activedescendant={results[activeIndex] ? `svedocs-search-option-${activeIndex}` : undefined}
+          on:input={handleInput}
+          bind:this={input}
+        />
+      </label>
+      <button class="sd-search-close" type="button" aria-label={t('search.close')} title={t('search.close')} on:click={hide}>
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
+      </button>
+    </div>
     <div id="svedocs-search-results" class="sd-search-results" role="listbox" aria-label={t('search.results')}>
       {#if remoteStatus === 'loading'}
         <p class="sd-empty-state">{t('search.loading')}</p>

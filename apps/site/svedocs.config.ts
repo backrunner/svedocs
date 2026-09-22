@@ -131,6 +131,7 @@ export default defineConfig({
         'scope.langShort': '语言',
         'search.trigger': '搜索',
         'search.dialog': '搜索文档',
+        'search.close': '关闭搜索',
         'search.query': '搜索关键词',
         'search.placeholder': '搜索文档',
         'search.results': '搜索结果',
