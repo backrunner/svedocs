@@ -8,6 +8,7 @@
   import { createBrowserSearchAdapter } from '../search/client.js';
   import { portal } from './portal.js';
   import { dialogBehavior, isComposingKey } from './dialog.js';
+  import { smoothSearchSize } from './search-motion.js';
   import type { SvedocsSearchController, SvedocsThemeContext } from './types.js';
 
   export let records: SvedocsSearchRecord[] = [];
@@ -34,11 +35,27 @@
   let previousFocus: HTMLElement | undefined;
   let boundController: SvedocsSearchController | undefined;
   let unsubscribeController: (() => void) | undefined;
+  let loadingVisible = false;
+  let loadingTimer: ReturnType<typeof setTimeout> | undefined;
 
   $: t = context?.t ?? fallbackTranslate;
   $: activeController = controller ?? internalController;
   $: activeController.setOptions({ records, loadRecords, scope, provider, endpoint, buildMode, t });
   $: bindController(activeController);
+  $: localLoading = recordsStatus === 'loading' && !(buildMode === 'edge' && provider !== 'local' && provider !== 'local-json');
+  $: pending = remoteStatus === 'loading' || localLoading;
+  $: updateLoading(open && results.length === 0 && pending);
+
+  function updateLoading(waiting: boolean): void {
+    if (!waiting) {
+      clearTimeout(loadingTimer);
+      loadingTimer = undefined;
+      loadingVisible = false;
+    } else if (!loadingTimer) {
+      // Fast loads and background index preparation should not flash a status row.
+      loadingTimer = setTimeout(() => { loadingVisible = true; }, 500);
+    }
+  }
 
   function show() {
     if (!open) previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
@@ -116,6 +133,7 @@
   });
 
   onDestroy(() => {
+    clearTimeout(loadingTimer);
     internalController.destroy?.();
     internalController.hide();
     unsubscribeController?.();
@@ -158,12 +176,10 @@
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
       </button>
     </div>
-    <div id="svedocs-search-results" class="sd-search-results" role="listbox" aria-label={t('search.results')}>
-      {#if remoteStatus === 'loading'}
-        <p class="sd-empty-state">{t('search.loading')}</p>
-      {/if}
-      {#if recordsStatus === 'loading' && !(buildMode === 'edge' && provider !== 'local' && provider !== 'local-json')}
-        <p class="sd-empty-state">{t('search.loadingIndex')}</p>
+    <div id="svedocs-search-results" class="sd-search-results" role="listbox" aria-label={t('search.results')} aria-busy={pending && results.length === 0} use:smoothSearchSize>
+      <div class="sd-search-content">
+      {#if loadingVisible}
+        <p class="sd-empty-state" role="status">{t(remoteStatus === 'loading' ? 'search.loading' : 'search.loadingIndex')}</p>
       {/if}
       {#if recordsStatus === 'error' && !(buildMode === 'edge' && provider !== 'local' && provider !== 'local-json')}
         <p class="sd-empty-state">{t('search.indexError')}</p>
@@ -172,6 +188,7 @@
         <p class="sd-empty-state">{t('search.remoteFallback', { error: remoteError })}</p>
       {/if}
       {#if results.length > 0}
+        <div class="sd-search-options">
         {#each results as result, index}
           <a
             id={`svedocs-search-option-${index}`}
@@ -189,9 +206,11 @@
             <p>{result.excerpt}</p>
           </a>
         {/each}
+        </div>
       {:else if remoteStatus !== 'loading' && recordsStatus !== 'loading'}
         <p class="sd-empty-state">{t('search.empty')}</p>
       {/if}
+      </div>
     </div>
   </dialog>
   </div>

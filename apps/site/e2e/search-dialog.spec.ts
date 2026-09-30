@@ -24,6 +24,17 @@ for (const mobile of [false, true]) {
           await expect.poll(async () => (await close.boundingBox())?.width ?? 0).toBeGreaterThanOrEqual(44);
           await expect.poll(async () => (await close.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
 
+          await expect(dialog.getByRole('option').first()).toBeVisible();
+          await expect(dialog.getByRole('status')).toHaveCount(0);
+          const content = dialog.locator('.sd-search-content');
+          await expect(content).toHaveCSS('scrollbar-width', 'thin');
+          await content.evaluate((node) => { node.scrollTop = node.scrollHeight; });
+          await expect(dialog.getByRole('option').last()).toBeInViewport();
+          await content.evaluate((node) => { node.scrollTop = 0; });
+          await testInfo.attach(`recommendations-${method}-${mobile ? 'mobile' : 'desktop'}-${locale}`, {
+            body: await page.screenshot(), contentType: 'image/png'
+          });
+
           // An empty result region is inside the dialog and must not dismiss it.
           await page.getByRole('combobox').fill('qzxqzxqzxqzxqzxqzxqzx');
           const empty = dialog.locator('.sd-empty-state').last();
