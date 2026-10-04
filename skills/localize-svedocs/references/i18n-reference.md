@@ -101,6 +101,10 @@ Hosted search and Ask AI providers require their generated edge endpoints and ru
 
 Set `site.url`. For translations that exist, svedocs emits canonical URLs, reciprocal hreflang, `x-default`, sitemap alternates, Open Graph locales, JSON-LD `inLanguage`, and document `lang`/`dir`.
 
+Generated templates compose `createSvedocsHtmlHandle({ config, pages })` into `src/hooks.server.ts` so document attributes work during SSR/prerendering without JavaScript. Existing projects must add that hook; `ThemeInit` and browser effects alone are insufficient. Preserve it when adding agent negotiation or HTML caching.
+
+Same-origin canonical, hreflang, sitemap and resolved content links share the build mode slash rule: edge omits the trailing slash, static/SPA includes it. Queries survive; canonical fragments are removed. For custom SEO rendering use the Vite `Seo` component override and `SvedocsSeoProps`.
+
 Do not advertise missing translations. A custom root metadata implementation must use the complete page list so alternates can be derived.
 
 ## Validation

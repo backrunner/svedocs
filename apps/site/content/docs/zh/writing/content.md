@@ -2,6 +2,7 @@
 title: 内容
 description: 使用 frontmatter、GFM、KaTeX、代码块、差异对比、链接、资源和小节提取来编写页面。
 order: 2
+updatedTime: 2026-10-05
 ---
 
 # 内容
@@ -57,10 +58,11 @@ order: 2
 | `collapsed` | `boolean` | 让导航分组默认折叠。 |
 | `section` | `boolean` | 标记目录页为分组页。 |
 | `icon` | `string` | 默认主题的图标提示。 |
-| `canonical` | `string` | 覆盖生成的 canonical URL。 |
+| `canonical` | string | 覆盖页面 URL；同源路径遵循构建模式的尾斜杠规则，保留 query、移除 fragment，外部路径保持不变。 |
 | `image` | `string` | Open Graph 图片 URL。 |
 | `keywords` | `string[]` | SEO 和搜索元数据。 |
 | `author` | `string` | 文章作者；未填写时使用 `seo.defaultAuthor`。 |
+| `authorUrl` | string | 作者页面的 HTTP(S) 或站点相对 URL；用于 Open Graph 作者标签和 JSON-LD URL。 |
 | `published`、`date`、`publishedTime` | `date` | 发布时间。 |
 | `updated`、`updatedTime` | `date` | 最近一次有意义的内容更新时间。 |
 | `type`、`ogType` | `string` | Open Graph 内容类型。 |

@@ -1,7 +1,9 @@
 ---
 title: Cloudflare
+seoTitle: Cloudflare 部署与边缘缓存
 description: 把 svedocs 部署到 Cloudflare Pages，并配置边缘 SSR、静态输出、Workers AI 和 AI Search 绑定。
 order: 3
+updatedTime: 2026-10-05
 ---
 
 # Cloudflare
@@ -78,6 +80,7 @@ Markdown 在 Vite 构建时已经编译为 HTML，生产 SSR 不会再次解析�
 ```ts title="src/hooks.server.ts"
 import { building, dev } from '$app/environment';
 import { sequence } from '@sveltejs/kit/hooks';
+import { createSvedocsHtmlHandle } from 'svedocs/routes';
 import { createSvedocsAgentHandle } from 'svedocs/agent';
 import { createSvedocsHtmlCacheHandle } from 'svedocs/cloudflare';
 import config from 'virtual:svedocs/config';
@@ -85,6 +88,7 @@ import pages from 'virtual:svedocs/page-index';
 import markdown from 'virtual:svedocs/markdown';
 
 export const handle = sequence(
+  createSvedocsHtmlHandle({ config, pages }),
   createSvedocsAgentHandle({ config, pages, markdown }),
   createSvedocsHtmlCacheHandle({
     config, pages,

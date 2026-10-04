@@ -2,6 +2,7 @@
 title: 公开 API
 description: 查阅 svedocs 对外提供的稳定导出。
 order: 3
+updatedTime: 2026-10-05
 ---
 
 # 公开 API
@@ -66,12 +67,19 @@ import {
   loadSvedocsContent,
   createPageTree,
   createSearchRecords,
-  checkSvedocsContent
+  checkSvedocsContent,
+  createAbsoluteUrl,
+  createCanonicalUrl,
+  createPageCanonicalUrl
 } from 'svedocs/core';
-import { resolveSvedocsPageRoute, resolveSvedocsHref, loadSvedocsPage } from 'svedocs/routes';
+import { resolveSvedocsPageRoute, resolveSvedocsHref, loadSvedocsPage, createSvedocsHtmlHandle, getSvedocsDocumentAttributes } from 'svedocs/routes';
 ```
 
 核心 API 包含内容加载、导航、链接、检查和搜索记录。浏览器安全的 `svedocs/routes` 入口提供 `resolveSvedocsPageRoute`，用于加载 canonical 路由并处理默认语言重定向；`resolveSvedocsHref` 对链接应用同一套语言规则。
+
+`createAbsoluteUrl(config, value)` 解析 HTTP(S) 资源/接口 URL，不应用页面尾斜杠规则。`createCanonicalUrl(config, value)` 规范化同源页面 URL，保留 query、移除 fragment；外部路径保持不变。`createPageCanonicalUrl(config, page)` 使用页面 canonical 或路由，没有站点 URL 和显式 canonical 时返回 undefined。
+
+`createSvedocsHtmlHandle({ config, pages })` 是 SvelteKit 服务端 Handle，在 SSR 和预渲染时设置 `<html lang dir>`。`getSvedocsDocumentAttributes({ config, pages }, pathname)` 返回 `{ lang, dir }`，可用于自定义 app shell。
 
 ## Theme
 
@@ -79,6 +87,7 @@ import { resolveSvedocsPageRoute, resolveSvedocsHref, loadSvedocsPage } from 'sv
 import {
   DocsApp,
   RootLayout,
+  Seo,
   LayoutShell,
   DocsLayout,
   DocsShell,
@@ -108,7 +117,7 @@ import {
 import 'svedocs/theme/styles.css';
 import 'svedocs/theme/base.css';
 import { createSearchController, createAskAiController } from 'svedocs/theme/headless';
-import type { SvedocsThemeComponentMap, SvedocsNavbarProps } from 'svedocs/theme/types';
+import type { SvedocsThemeComponentMap, SvedocsNavbarProps, SvedocsSeoProps } from 'svedocs/theme/types';
 ```
 
 完整的路由外壳可以直接使用 `DocsApp`，也可以组合更底层的组件构建自定义站点。

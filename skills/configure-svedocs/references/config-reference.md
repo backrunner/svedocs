@@ -104,6 +104,8 @@ The Vite plugin emits `/<key>.txt` and `ads.txt` across edge/static/SPA builds. 
 - Set `site.url` for absolute canonical, Open Graph, sitemap, feed, and hreflang URLs.
 - Set `seo.rss: true` for defaults or use `{ title, description, limit, locale }`.
 - Put serializable global metadata in `seo.head.meta`, `seo.head.links`, and `seo.head.jsonLd`.
+- JSON-LD entities merge by `@id`; use stable IDs for the site, publisher and custom page entities.
+- Register complete SEO rendering replacements as `theme.components.Seo` in the Vite plugin, typed by `SvedocsSeoProps`, rather than putting component paths in config.
 - Set `seo.ogImage: false` to disable automatic OG generation.
 - Use the SVG renderer for portable edge output. Use PNG/Satori only with the required build-time renderer and fonts.
 
@@ -126,3 +128,5 @@ Use:
 - Keep `content.include` compatible with the configured roots.
 - Do not enable a hosted provider without its endpoint and runtime environment.
 - Do not commit environment-specific tokens.
+
+Use `seo.defaultAuthorUrl` and page `authorUrl` for profile URLs. `author` remains a name in JSON-LD; Open Graph author tags omit names without URLs. A page-specific author does not inherit another author's default URL.

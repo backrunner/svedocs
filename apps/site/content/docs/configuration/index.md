@@ -2,6 +2,7 @@
 title: Configuration
 description: Configure site metadata, content roots, build modes, theme, analytics, ads, IndexNow, search, AI, SEO, and i18n.
 order: 4
+updatedTime: 2026-10-05
 ---
 
 # Configuration
@@ -241,12 +242,14 @@ export default defineConfig({
     },
     robots: true,
     defaultAuthor: 'Acme',
+    defaultAuthorType: 'Organization',
+    defaultAuthorUrl: 'https://example.com/team',
     head: {
       meta: [
         { name: 'google-site-verification', content: 'verification-token' }
       ],
       jsonLd: [
-        { '@type': 'Organization', name: 'Acme' }
+        { '@type': 'Organization', '@id': 'https://docs.acme.com/#organization', name: 'Acme', url: 'https://docs.acme.com/' }
       ]
     },
     ogImage: {
@@ -264,6 +267,8 @@ Set `seo.ogImage = false` to disable automatic OG generation. Use SVG for portab
 `seo.head` is for serializable head additions that should appear on every page, such as verification meta tags, feed links, preload links, and organization-level JSON-LD. Page frontmatter can also define `head` for page-specific additions.
 
 Sitemaps are enabled by default. RSS is disabled by default; set `rss: true` to use site metadata and the default 50-entry limit, or provide the object form above. Enabled feeds add their own `<link rel="alternate">` tag. Sitemap, robots, and RSS routes are prerendered when enabled and return cacheable responses with ETag support when served dynamically.
+
+With `site.url`, svedocs generates stable WebSite and page IDs. Global and page JSON-LD merge by `@id`, with page fields taking precedence; WebPage/TechArticle reference the site and publisher. For complete rendering control, set `theme.components.Seo` in the Vite plugin; configuration remains serializable. See [SEO and OG](/docs/integrations/seo-og).
 
 ## Source links
 

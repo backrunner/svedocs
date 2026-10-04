@@ -1,7 +1,9 @@
 ---
 title: CLI
+seoTitle: svedocs CLI 命令参考
 description: 使用 svedocs CLI 创建、构建、检查、索引、生成 OG 资源，并准备 Cloudflare 部署。
 order: 2
+updatedTime: 2026-10-05
 ---
 
 # CLI

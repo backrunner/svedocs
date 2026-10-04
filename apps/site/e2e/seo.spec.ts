@@ -10,8 +10,22 @@ test('search crawlers receive HTML and complete SEO tags without JavaScript', as
       expect(response?.status()).toBe(200);
       expect(response?.headers()['content-type']).toContain('text/html');
       await expect(page.locator('h1')).toHaveCount(1);
-      await expect(page.locator('.sd-doc-meta span')).toHaveCount(0);
-      await expect(page.locator('meta[property="article:modified_time"]')).toHaveCount(0);
+      await expect(page.locator('html')).toHaveAttribute('lang', route.includes('/zh') ? 'zh-CN' : 'en');
+      await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
+      await expect(page.locator('main')).toBeVisible();
+      if (route.startsWith('/docs')) {
+        await expect(page.locator('main')).toContainText(route.includes('/zh') ? '元数据' : 'Metadata');
+        const anchor = page.locator('main a[href^="#"]').first();
+        await expect(anchor).toHaveAttribute('href', /^#.+/);
+      }
+
+      await expect(page.locator('meta[name="color-scheme"]')).toHaveCount(1);
+      if (route.startsWith('/docs')) {
+        await expect(page.locator('meta[property="article:modified_time"]')).toHaveAttribute('content', /^2026-10-05/);
+        await expect(page.locator('.sd-doc-meta')).toContainText('2026');
+      } else {
+        await expect(page.locator('meta[property^="article:"]')).toHaveCount(0);
+      }
       await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', new RegExp(`https://svedocs.pwp.sh${route}/?$`));
       await expect(page.locator('meta[property="og:image:type"]')).toHaveAttribute('content', 'image/png');
       await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute('content', '1200');
@@ -19,6 +33,13 @@ test('search crawlers receive HTML and complete SEO tags without JavaScript', as
       await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute('content', /.+/);
       const schemas = await page.locator('script[type="application/ld+json"]').allTextContents();
       const structuredData = schemas.map((text) => JSON.parse(text));
+      const ids = structuredData.map((schema) => schema['@id']).filter(Boolean);
+      expect(new Set(ids).size).toBe(ids.length);
+      const website = structuredData.find((schema) => schema['@type'] === 'WebSite');
+      const organization = structuredData.find((schema) => schema['@type'] === 'Organization');
+      const article = structuredData.find((schema) => ['TechArticle', 'WebPage'].includes(schema['@type']));
+      expect(article.isPartOf).toEqual({ '@id': website['@id'] });
+      expect(article.publisher).toEqual({ '@id': organization['@id'] });
       if (route.startsWith('/docs')) {
         expect(structuredData.map((schema) => schema['@type'])).toContain('BreadcrumbList');
         expect(structuredData.find((schema) => schema['@type'] === 'TechArticle').author['@type']).toBe('Organization');
@@ -51,4 +72,30 @@ test('localized homepage titles explain the product and missing routes remain 40
   await expect(page).toHaveTitle('svedocs — 基于 SvelteKit 的文档框架');
   const response = await page.goto('/docs/seo-missing-page');
   expect(response?.status()).toBe(404);
+});
+
+test('document attributes follow client navigation', async ({ page }) => {
+  await page.goto('/docs/integrations/seo-og');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.locator('html')).toHaveAttribute('data-svedocs-route', '/docs/integrations/seo-og');
+  await page.locator('.sd-scope-trigger').click();
+  await page.locator('a[href="/docs/zh/integrations/seo-og"]').first().click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
+});
+
+test('standalone pages and custom layouts retain content without JavaScript', async ({ browser, baseURL }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false, baseURL, viewport: { width: 390, height: 844 } });
+  try {
+    const page = await context.newPage();
+    for (const [route, text] of [['/changelog', 'This page uses the built-in single-page layout.'], ['/layout-demo', 'This page uses a custom layout component']]) {
+      const response = await page.goto(route!);
+      expect(response?.status()).toBe(200);
+      await expect(page.locator('main')).toContainText(text!);
+      await expect(page.locator('h1')).toHaveCount(1);
+      await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
+      await expect(page.locator('meta[name="color-scheme"]')).toHaveCount(1);
+      await expect(page.locator('meta[property^="article:"]')).toHaveCount(0);
+    }
+  } finally { await context.close(); }
 });

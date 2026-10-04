@@ -2,6 +2,7 @@
 title: Public API
 description: Stable public imports exposed by the integrated svedocs framework package.
 order: 3
+updatedTime: 2026-10-05
 ---
 
 # Public API
@@ -66,12 +67,19 @@ import {
   loadSvedocsContent,
   createPageTree,
   createSearchRecords,
-  checkSvedocsContent
+  checkSvedocsContent,
+  createAbsoluteUrl,
+  createCanonicalUrl,
+  createPageCanonicalUrl
 } from 'svedocs/core';
-import { resolveSvedocsPageRoute, resolveSvedocsHref, loadSvedocsPage } from 'svedocs/routes';
+import { resolveSvedocsPageRoute, resolveSvedocsHref, loadSvedocsPage, createSvedocsHtmlHandle, getSvedocsDocumentAttributes } from 'svedocs/routes';
 ```
 
 Core APIs cover content loading, navigation, links, checks, and search records. The browser-safe `svedocs/routes` entry exposes `resolveSvedocsPageRoute` for canonical route loading and default-locale redirects, plus `resolveSvedocsHref` for applying the same locale rules to links.
+
+`createAbsoluteUrl(config, value)` resolves HTTP(S) asset/endpoint URLs without page slash rules. `createCanonicalUrl(config, value)` normalizes same-origin page URLs, retaining queries and removing fragments while preserving external paths. `createPageCanonicalUrl(config, page)` uses the explicit canonical or route, returning undefined without a site URL or explicit canonical.
+
+`createSvedocsHtmlHandle({ config, pages })` is a SvelteKit server Handle that sets `<html lang dir>` during SSR and prerendering. `getSvedocsDocumentAttributes({ config, pages }, pathname)` returns `{ lang, dir }` for custom app shells.
 
 ## Theme
 
@@ -79,6 +87,7 @@ Core APIs cover content loading, navigation, links, checks, and search records. 
 import {
   DocsApp,
   RootLayout,
+  Seo,
   LayoutShell,
   DocsLayout,
   DocsShell,
@@ -108,7 +117,7 @@ import {
 import 'svedocs/theme/styles.css';
 import 'svedocs/theme/base.css';
 import { createSearchController, createAskAiController } from 'svedocs/theme/headless';
-import type { SvedocsThemeComponentMap, SvedocsNavbarProps } from 'svedocs/theme/types';
+import type { SvedocsThemeComponentMap, SvedocsNavbarProps, SvedocsSeoProps } from 'svedocs/theme/types';
 ```
 
 Use `DocsApp` for the complete route shell or compose lower-level components for custom apps.

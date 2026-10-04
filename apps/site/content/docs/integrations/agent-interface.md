@@ -2,6 +2,7 @@
 title: Agent interface
 description: Serve markdown twins, llms.txt, and llms-full.txt, and route AI agent requests to markdown automatically on SSR deployments.
 order: 5
+updatedTime: 2026-10-05
 ---
 
 # Agent interface
@@ -61,13 +62,18 @@ Pages marked `hidden: true` or `robots: noindex` are excluded from twins, `llms.
 On edge deployments, add a server hook to route agent traffic to markdown at the canonical URL:
 
 ```ts title="src/hooks.server.ts"
+import { sequence } from '@sveltejs/kit/hooks';
+import { createSvedocsHtmlHandle } from 'svedocs/routes';
 import { createSvedocsAgentHandle } from 'svedocs/agent';
 import config from 'virtual:svedocs/config';
 import markdown from 'virtual:svedocs/markdown';
 import pages from 'virtual:svedocs/page-index';
 import type { Handle } from '@sveltejs/kit';
 
-export const handle: Handle = createSvedocsAgentHandle({ config, pages, markdown });
+export const handle: Handle = sequence(
+  createSvedocsHtmlHandle({ config, pages }),
+  createSvedocsAgentHandle({ config, pages, markdown })
+);
 ```
 
 A request is treated as an agent request when its `User-Agent` contains one of the configured agent tokens (ClaudeBot, GPTBot, PerplexityBot, and similar by default), or when its `Accept` header prefers `text/markdown` over `text/html`. Matching requests receive the markdown twin with `Vary: accept, user-agent`; everything else resolves normally. Pass-through HTML responses on negotiable paths carry the same `Vary` headers, so shared caches never serve one variant to the other audience.

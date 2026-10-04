@@ -2,6 +2,7 @@
 title: 安装
 description: 在新项目里安装 svedocs，接入已有 SvelteKit 应用，并保持框架依赖更新。
 order: 2
+updatedTime: 2026-10-05
 ---
 
 # 安装
@@ -41,6 +42,8 @@ pnpm dev
 ```
 
 使用 `--install` 后，CLI 会调用你选择的包管理器安装这些依赖，不会把框架源码复制到项目里。
+
+三个模板将 Wrangler 固定为仓库验证过的版本，以避免 Cloudflare adapter 的 peer dependency 自动选择不配套的运行时。升级 Wrangler 时，应一起验证 Miniflare/workerd、edge 构建和预渲染。
 
 ## 选择模板
 
@@ -136,6 +139,27 @@ export default {
   kit: { adapter: adapter() }
 };
 ```
+
+### 服务端文档属性和路由选项
+
+在服务端设置文档语言和方向，确保预渲染 HTML 和禁用 JavaScript 时也正确。已有 server hooks 使用 `sequence` 组合，不要覆盖原来的鉴权、agent 或缓存逻辑。
+
+```ts title="src/hooks.server.ts"
+import { createSvedocsHtmlHandle } from 'svedocs/routes';
+import config from 'virtual:svedocs/config';
+import pages from 'virtual:svedocs/page-index';
+
+export const handle = createSvedocsHtmlHandle({ config, pages });
+```
+
+```ts title="src/routes/+layout.ts"
+import { svedocsSsr, svedocsTrailingSlash } from 'svedocs/cloudflare';
+
+export const ssr = svedocsSsr();
+export const trailingSlash = svedocsTrailingSlash();
+```
+
+生成模板已包含这些接线。Edge URL 不带尾斜杠，static 和 SPA 页面 URL 带尾斜杠；根路径始终为 `/`。已知页面保留 SSR/预渲染正文，无需 JavaScript 即可读取。
 
 ### 加载当前文档
 

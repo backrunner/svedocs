@@ -47,10 +47,13 @@ svedocs({
 
 The map supports:
 
+- SEO head: `Seo`;
 - shells: `Root`, `Layout`, `Docs`, `DocsShell`, `Page`, `PageShell`, `Home`, `Error`;
 - navigation: `Header`, `Navbar`, `Brand`, `TopNav`, `MobileNav`, `SocialNav`, `Sidebar`;
 - content/tools: `Article`, `Toc`, `Search`, `AskAi`, `PageTools`, `RenderError`;
 - footer/mode: `Footer`, `FooterLinks`, `ThemeToggle`.
+
+`Seo` replaces only the SEO head, receives `SvedocsSeoProps`, and runs during SSR, prerendering and client navigation. Error pages have undefined metadata. Compose the default `Seo` for additive changes. Preserve `createSvedocsHtmlHandle` in server hooks for JavaScript-independent document language.
 
 Import stable prop types from `svedocs/theme/types`. Import default components from `svedocs/theme` when composing only part of the built-in UI.
 
@@ -65,7 +68,7 @@ Large replacements must preserve:
 - `themeComponents` for nested overrides;
 - compiled `content` with `page.html` fallback when the design retains authored body content.
 
-`DocsApp` initializes page-level replacements. Do not render another `ThemeInit` directly inside a registered `Docs`, `Page`, `Home`, or `Error` replacement. A replacement that composes `RootLayout` may currently receive both framework-owned initializers; the generated script is idempotent, so do not add another. An application shell outside both `DocsApp` and `RootLayout` must render one initializer. Keep `createThemeContext` connected to the same data. Prefer lazy `loadSearch` for large sites.
+`DocsApp` initializes page-level replacements. Do not render another `ThemeInit` directly inside a registered `Docs`, `Page`, `Home`, or `Error` replacement. Nested default shells reuse the outer framework initializer, so composing `RootLayout` retains exactly one bootstrap script and color-scheme tag. An application shell outside both `DocsApp` and `RootLayout` must render one initializer. Keep `createThemeContext` connected to the same data. Prefer lazy `loadSearch` for large sites.
 
 ## Headless behavior
 
@@ -103,3 +106,11 @@ Use `GoogleAd` from `svedocs/theme` with required `config` and `name` (a key in 
 ## Form controls
 
 The theme exports `FormField`, `Input`, `Textarea`, `Select`, `Checkbox`, and `Button`. Controls support `density: 'sm' | 'md' | 'lg'`. Buttons support `default`, `primary`, `ghost`, and `danger` variants. Prefer them in custom theme surfaces when the bundled styling remains active.
+
+## Frame ownership
+
+- Full-theme component defaults use CSS `components`; base.css uses `base`. Application CSS and Tailwind utilities can override defaults.
+- When a custom wrapper supplies a border, compose Article, PageShell or CodeBlock with `framed={false}`. This suppresses only that component's outer border/shadow/corner marks, including PageShell error panels; independent children and focus indicators remain.
+- Put fully custom widgets inside `not-prose` to exclude them from generic prose selectors. Explicit `sd-*` classes still opt into component styling.
+- An outer `sd-code` owns the frame of nested pre elements. Raw pre/table elements can opt out with `data-sd-frame="none"`.
+- Verify composed wrappers in light/dark and desktop/mobile, including keyboard focus and SSR without JavaScript. Do not reset every descendant border to zero.

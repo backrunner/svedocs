@@ -2,13 +2,24 @@
 title: Changelog
 description: Product updates rendered with the default svedocs single-page template.
 published: 2026-05-18
-updatedTime: 2026-09-22
+updatedTime: 2026-10-05
 type: website
 ---
 
 # Changelog
 
 This page uses the built-in single-page layout. It omits the docs sidebar while keeping the site's metadata, search records, OG route, theme controls, and command palette.
+
+## Unreleased
+
+- Add frame ownership props, not-prose isolation and Tailwind overrides to prevent duplicate frames in custom themes.
+- Correct article sharing tags and author profile URLs; avoid duplicate theme initialization in custom layouts.
+- Share stable WebSite/Organization IDs, merge custom JSON-LD and unify page/discovery URL rules.
+- Set document language and direction during SSR/prerendering and add an independent `Seo` rendering extension.
+- Update English/Chinese setup, configuration, localization and API docs; audit site-wide content and SEO without JavaScript.
+- Pin generated templates to the repository-validated Wrangler version.
+
+**Integration notes:** Existing projects should compose `createSvedocsHtmlHandle` into server hooks. Register complete SEO replacements through the Vite plugin’s `theme.components.Seo`. Generated templates already include this wiring.
 
 ## 0.2.2 — 2026-09-22
 

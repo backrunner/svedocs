@@ -2,6 +2,7 @@
 title: 配置
 description: 配置站点信息、内容目录、构建模式、主题、统计、广告、IndexNow、搜索、AI、SEO 和多语言。
 order: 4
+updatedTime: 2026-10-05
 ---
 
 # 配置
@@ -241,12 +242,14 @@ export default defineConfig({
     },
     robots: true,
     defaultAuthor: 'Acme',
+    defaultAuthorType: 'Organization',
+    defaultAuthorUrl: 'https://example.com/team',
     head: {
       meta: [
         { name: 'google-site-verification', content: 'verification-token' }
       ],
       jsonLd: [
-        { '@type': 'Organization', name: 'Acme' }
+        { '@type': 'Organization', '@id': 'https://docs.acme.com/#organization', name: 'Acme', url: 'https://docs.acme.com/' }
       ]
     },
     ogImage: {
@@ -264,6 +267,8 @@ export default defineConfig({
 `seo.head` 用来添加每个页面都需要的可序列化 `<head>` 内容，例如站点验证标签、Feed 链接、预加载链接和组织级 JSON-LD。页面 frontmatter 也可以定义 `head`，补充只属于当前页面的内容。
 
 sitemap 默认开启，RSS 默认关闭。设置 `rss: true` 会使用站点元数据和默认的 50 条上限，也可以使用上面的对象形式。启用后框架会自动添加 `<link rel="alternate">`。sitemap、robots 和 RSS 在开启时会被预渲染；动态响应同时支持缓存头和 ETag。
+
+设置 `site.url` 后，框架为 WebSite 和页面生成固定 `@id`。全局和页面 JSON-LD 按 `@id` 合并，页面字段优先；WebPage/TechArticle 通过引用连接站点和发布组织。完全自定义渲染请在 Vite 插件中设置 `theme.components.Seo`，配置文件只保存可序列化数据。详见 [SEO 和 OG](/docs/zh/integrations/seo-og)。
 
 ## 源码链接
 

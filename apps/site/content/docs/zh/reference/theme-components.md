@@ -2,6 +2,7 @@
 title: 主题组件
 description: 查阅 svedocs 可替换主题组件的属性、职责和无样式控制器。
 order: 4
+updatedTime: 2026-10-05
 ---
 
 # 主题组件
@@ -73,6 +74,7 @@ svedocs({
 
 | 键 | 默认组件 | 属性类型 |
 | --- | --- | --- |
+| `Seo` | `Seo` | `SvedocsSeoProps` |
 | `Root` | `RootLayout` | `SvedocsRootProps` |
 | `Layout` | `LayoutShell` | `SvedocsLayoutShellProps` |
 | `Docs` | `DocsLayout` | `SvedocsDocsLayoutProps` |
@@ -97,6 +99,16 @@ svedocs({
 | `ThemeToggle` | `ThemeToggle` | `SvedocsThemeToggleProps` |
 | `PageTools` | `PageTools` | `SvedocsPageToolsProps` |
 | `RenderError` | `RenderError` | `SvedocsRenderErrorProps` |
+
+## SEO 渲染组件
+
+`Seo` 接收 `context`、可选 `metadata`、`alternates`、`title`、`description`、`robots`，使用 `SvedocsSeoProps`。它在 SSR、预渲染和客户端导航中执行，并完全替换默认 SEO head；错误页 `metadata` 为 undefined。只增加标签时，可在自定义组件中组合默认 `Seo`。不要把 `Seo` 路径放进 `svedocs.config.ts`。
+
+完整示例见 [SEO and OG](/docs/zh/integrations/seo-og)。
+
+## 外框属性
+
+`Article`、`PageShell` 和直接导出的 `CodeBlock` 接受 `framed?: boolean`，默认为 `true`。外层已有边框时传入 `false`，只移除当前组件的外框、阴影和文章角标；`PageShell` 的错误面板也遵循该属性。子控件和正文代码块的边框仍独立保留。自定义正文可以用 `not-prose` 隔离默认排版。示例见[主题](/docs/zh/configuration/theme)。
 
 ## 共享上下文
 

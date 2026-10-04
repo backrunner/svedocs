@@ -2,13 +2,24 @@
 title: 更新日志
 description: 使用 svedocs 默认单页模板渲染的产品更新。
 published: 2026-05-18
-updatedTime: 2026-09-22
+updatedTime: 2026-10-05
 type: website
 ---
 
 # 更新日志
 
 这个页面使用内建的单页布局。它不会显示文档侧栏，但仍会使用站点的元数据、搜索记录、OG 路由、主题控制和命令面板。
+
+## 未发布
+
+- 支持局部关闭默认组件外框、`not-prose` 样式隔离和 Tailwind 覆盖，避免主题定制后叠加边框。
+- 修正 article 分享标签和作者 URL，并避免自定义布局重复初始化主题。
+- 共享固定 ID 的 WebSite/Organization 实体，合并自定义 JSON-LD，并统一页面 URL 与发现入口。
+- 在 SSR/预渲染中设置文档语言和方向，新增独立 `Seo` 渲染扩展点。
+- 同步英文/中文安装、配置、国际化及 API 文档，检查全站无 JS 内容和 SEO 输出。
+- 生成模板固定使用仓库验证过的 Wrangler 版本。
+
+**接入说明：** 已有项目需要在 server hooks 中组合 `createSvedocsHtmlHandle`；完全自定义 SEO 使用 Vite 插件的 `theme.components.Seo`。生成模板已接好这些能力。
 
 ## 0.2.2 — 2026-09-22
 

@@ -19,6 +19,7 @@ Generated projects keep these responsibilities separate:
 | `src/app.d.ts` | Type declarations for generated virtual modules |
 | `src/routes/+layout.svelte` | Import global theme CSS once |
 | `src/routes/+layout.ts` | SSR and trailing-slash helpers |
+| `src/hooks.server.ts` | `createSvedocsHtmlHandle` for SSR/prerendered document language and direction; compose agent and cache hooks with `sequence` |
 | `src/routes/+page.ts` | Load the standalone home page |
 | `src/routes/+page.svelte` | Render home through `DocsApp` |
 | `src/routes/[...path]/+page.ts` | Resolve pages, redirects, route entries, and lazy content |
@@ -56,7 +57,7 @@ pnpm add svedocs
 pnpm add -D svedocs-cli
 ```
 
-Use `defineConfig` from `svedocs/config`, register `svedocs({ config })` before `sveltekit()`, and import `svedocs/theme/styles.css` once. Keep Tailwind CSS v4 through `@tailwindcss/vite` when using the bundled theme.
+Keep `createSvedocsHtmlHandle({ config, pages })` in server hooks and `svedocsSsr()` / `svedocsTrailingSlash()` in the route layout. Then use `defineConfig` from `svedocs/config`, register `svedocs({ config })` before `sveltekit()`, and import `svedocs/theme/styles.css` once. Keep Tailwind CSS v4 through `@tailwindcss/vite` when using the bundled theme.
 
 Merge these Svelte settings with existing extensions and preprocessors:
 

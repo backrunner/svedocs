@@ -1,7 +1,9 @@
 ---
 title: CLI
+seoTitle: svedocs CLI command reference
 description: Create, build, check, index, generate OG assets, and deploy to Cloudflare with the svedocs CLI.
 order: 2
+updatedTime: 2026-10-05
 ---
 
 # CLI

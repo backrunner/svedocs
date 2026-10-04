@@ -260,6 +260,9 @@ export default defineConfig({
       }
     }
   },
+  checks: {
+    translations: true
+  },
   source: {
     editBaseUrl: 'https://github.com/backrunner/svedocs/edit/main/apps/site'
   },

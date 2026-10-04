@@ -2,6 +2,7 @@
 title: Agent 接口
 description: 输出 Markdown 孪生页面、llms.txt 和 llms-full.txt,并在 SSR 部署时把 agent 请求主动路由到 Markdown。
 order: 5
+updatedTime: 2026-10-05
 ---
 
 # Agent 接口
@@ -61,13 +62,18 @@ export const GET: RequestHandler = ({ request }) => createLlmsTxtResponse(config
 在 edge 部署下,添加一个 server hook,把 agent 流量在原始 URL 上直接路由到 Markdown:
 
 ```ts title="src/hooks.server.ts"
+import { sequence } from '@sveltejs/kit/hooks';
+import { createSvedocsHtmlHandle } from 'svedocs/routes';
 import { createSvedocsAgentHandle } from 'svedocs/agent';
 import config from 'virtual:svedocs/config';
 import markdown from 'virtual:svedocs/markdown';
 import pages from 'virtual:svedocs/page-index';
 import type { Handle } from '@sveltejs/kit';
 
-export const handle: Handle = createSvedocsAgentHandle({ config, pages, markdown });
+export const handle: Handle = sequence(
+  createSvedocsHtmlHandle({ config, pages }),
+  createSvedocsAgentHandle({ config, pages, markdown })
+);
 ```
 
 当请求的 `User-Agent` 包含配置中的 agent 标识(默认包含 ClaudeBot、GPTBot、PerplexityBot 等),或 `Accept` 头中 `text/markdown` 的优先级不低于 `text/html` 时,请求会被视为 agent 请求。命中的请求会收到带 `Vary: accept, user-agent` 的 Markdown 孪生响应,其余请求正常走页面渲染。

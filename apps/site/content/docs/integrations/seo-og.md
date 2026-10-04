@@ -2,6 +2,7 @@
 title: SEO and OG
 description: Generate metadata, canonical URLs, JSON-LD, sitemap, RSS, robots, and Open Graph images.
 order: 4
+updatedTime: 2026-10-05
 ---
 
 # SEO and OG
@@ -47,9 +48,72 @@ The default root layout renders:
 - Open Graph and Twitter card tags.
 - JSON-LD for docs pages and single pages.
 - `keywords`, `robots`, and serializable `head` additions.
-- Article author, publish time, and update time when frontmatter provides them.
+- Article profile URL, publish time, and update time when provided on article pages.
 
 When building a custom layout, use `createPageMetadata(config, page, pages)` from `svedocs/og`. Pass the complete page list so Open Graph locale alternates include only translations that exist.
+
+## Shared structured data
+
+With `site.url`, each page gets a stable `@id` (`<canonical>#article` for docs or `<canonical>#webpage` for standalone pages). `isPartOf` references the shared `<site.url>/#website` entity. When the configured default author is an organization, or `seo.head.jsonLd` supplies the site's Organization, `publisher` references that entity too. Author names continue to describe the page author independently.
+
+Custom JSON-LD with the same `@id` merges into generated entities; page entries override global entries. Custom WebSite and Organization entries matching `site.url` reuse their explicit IDs. A custom page entity matching the canonical URL also merges into the generated page. Anonymous `@graph` containers are expanded while retaining their context; named graphs remain intact. Identical anonymous entries are removed, while distinct entities of the same type are preserved. Use explicit `@id` values for reliable identity.
+
+## Replace SEO rendering
+
+Register a `Seo` component independently of the page layout:
+
+```ts title="vite.config.ts"
+svedocs({
+  config: svedocsConfig,
+  theme: { components: { Seo: '$lib/theme/Seo.svelte' } }
+});
+```
+
+```svelte title="src/lib/theme/Seo.svelte"
+<script lang="ts">
+  import type { SvedocsSeoProps } from 'svedocs/theme/types';
+  let { context, metadata, alternates, title, description, robots }: SvedocsSeoProps = $props();
+</script>
+
+<svelte:head>
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  {#if robots}<meta name="robots" content={robots} />{/if}
+  {#if metadata?.canonical}<link rel="canonical" href={metadata.canonical} />{/if}
+  {#each alternates ?? [] as alternate}
+    <link rel="alternate" hreflang={alternate.lang} href={alternate.href} />
+  {/each}
+  <meta name="author" content={context.config.seo.defaultAuthor} />
+</svelte:head>
+```
+
+The replacement owns the complete SEO head, including Open Graph, Twitter and JSON-LD. Render the exported default `Seo` component inside your replacement if you only want to add tags. This hook runs during SSR, prerendering and client navigation; it does not require a client-side effect. `metadata` is undefined for error pages. Replacements of `Root` must include their own SEO renderer.
+
+## Document language and URL rules
+
+Generated templates set `<html lang dir>` on the server with `createSvedocsHtmlHandle`. Existing projects should add it to `src/hooks.server.ts`; compose it with agent negotiation and other hooks using SvelteKit's `sequence`:
+
+```ts title="src/hooks.server.ts"
+import { sequence } from '@sveltejs/kit/hooks';
+import { createSvedocsHtmlHandle } from 'svedocs/routes';
+import { createSvedocsAgentHandle } from 'svedocs/agent';
+import config from 'virtual:svedocs/config';
+import pages from 'virtual:svedocs/page-index';
+import markdown from 'virtual:svedocs/markdown';
+
+export const handle = sequence(
+  createSvedocsHtmlHandle({ config, pages }),
+  createSvedocsAgentHandle({ config, pages, markdown })
+);
+```
+
+The document language uses the locale's `hreflang`, falling back to its code. Direction uses the configured `dir` (`ltr` by default; set `dir: 'rtl'` for right-to-left locales). Localized 404s use their requested locale. The default layout also carries these attributes and updates the document after client navigation.
+
+Local page URLs use no trailing slash in `edge`, and a trailing slash in `static` and `spa` (except `/`). Generated and same-origin custom canonicals, hreflang, Open Graph URLs, sitemap, RSS, breadcrumbs, IndexNow and resolved content links share this rule. Canonical fragments are removed; queries are retained. External canonical paths and asset/endpoint URLs keep their own slash conventions.
+
+## Crawling without JavaScript
+
+Keep `svedocsSsr()`, `svedocsPagePrerender()` and the generated route `entries()` connected. Edge pages contain server-rendered text and SEO tags; static builds and known SPA routes contain prerendered HTML. Crawlers and readers can access headings, prose and links without executing JavaScript. Interactive search, Ask AI and theme controls still require JavaScript. A SPA fallback cannot provide unknown routes' content without JavaScript; use edge SSR or full static output when those routes must be crawlable.
 
 ## Sitemap, robots, and RSS
 
@@ -156,6 +220,7 @@ seoTitle: Theme component reference
 updatedTime: 2026-09-07
 author: Documentation team
 authorType: Organization
+authorUrl: https://example.com/team
 image: /images/components.png
 imageAlt: Component relationships
 imageWidth: 1200
@@ -164,11 +229,11 @@ imageType: image/png
 ---
 ```
 
-`updatedTime` supplies sitemap `lastmod`, JSON-LD `dateModified`, article modification tags, and the default theme’s visible update date. Filesystem `lastUpdated` remains available on the page model, but is not used for SEO dates because a checkout can change it. Omit `updatedTime` when no reliable editorial date is available. RSS uses explicit updated/published dates and omits a date when neither exists.
+`updatedTime` supplies sitemap `lastmod`, JSON-LD `dateModified`, article modification tags on document pages, and the default theme’s visible update date. Filesystem `lastUpdated` remains available on the page model, but is not used for SEO dates because a checkout can change it. Omit `updatedTime` when no reliable editorial date is available. RSS uses explicit updated/published dates and omits a date when neither exists.
 
 Page `robots` and global/page `head.meta` tags named `robots` combine conservatively: a global `noindex` cannot be overridden by a page's `index`. The same rule filters sitemap, hreflang, RSS, and agent discovery. Hidden pages remain excluded from discovery. Bot-specific tags such as `googlebot` retain their targeted meaning.
 
-The default theme generates `BreadcrumbList` from real localized ancestors and preserves a custom breadcrumb graph supplied through `head.jsonLd`. Configure `seo.defaultAuthorType: 'Organization'` for a team, or use page `authorType`; the backward-compatible default is `Person`.
+The default theme generates `BreadcrumbList` from real localized ancestors and preserves a custom breadcrumb graph supplied through `head.jsonLd`. Configure `seo.defaultAuthorType: 'Organization'` for a team, or use page `authorType`; the backward-compatible default is `Person`. `author` is the JSON-LD name; `authorUrl` is an HTTP(S) profile URL (site-relative URLs are supported), with `seo.defaultAuthorUrl` as the global default. Open Graph `article:author` only emits a URL and is omitted without one. Overriding the author name does not inherit a different default author’s URL. Article tags only appear on `og:type=article` pages.
 
 Set an explicit `ogLocale` on an i18n locale when its `hreflang` contains no region, for example `{ code: 'en', hreflang: 'en', ogLocale: 'en_GB' }`. Language-only hreflang stays unchanged; a territory is never guessed for Open Graph.
 

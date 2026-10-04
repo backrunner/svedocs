@@ -2,6 +2,7 @@
 title: Theme components
 description: Look up props, responsibilities, and headless controllers for replaceable svedocs theme components.
 order: 4
+updatedTime: 2026-10-05
 ---
 
 # Theme components
@@ -73,6 +74,7 @@ The map type is:
 
 | Key | Default component | Props type |
 | --- | --- | --- |
+| `Seo` | `Seo` | `SvedocsSeoProps` |
 | `Root` | `RootLayout` | `SvedocsRootProps` |
 | `Layout` | `LayoutShell` | `SvedocsLayoutShellProps` |
 | `Docs` | `DocsLayout` | `SvedocsDocsLayoutProps` |
@@ -97,6 +99,16 @@ The map type is:
 | `ThemeToggle` | `ThemeToggle` | `SvedocsThemeToggleProps` |
 | `PageTools` | `PageTools` | `SvedocsPageToolsProps` |
 | `RenderError` | `RenderError` | `SvedocsRenderErrorProps` |
+
+## SEO renderer
+
+`Seo` receives `context`, optional `metadata`, `alternates`, `title`, `description` and `robots`, typed by `SvedocsSeoProps`. It runs during SSR, prerendering and client navigation, replacing the entire default SEO head; error pages have undefined metadata. Compose the default `Seo` inside your component to add tags. Keep its import path in the Vite plugin, not `svedocs.config.ts`.
+
+See [SEO and OG](/docs/integrations/seo-og).
+
+## Frame props
+
+`Article`, `PageShell` and the directly exported `CodeBlock` accept `framed?: boolean`, defaulting to `true`. Pass `false` when the wrapper owns the frame; it removes only that component’s border, shadow and article corner marks. The prop also applies to PageShell error panels. Child controls and content code blocks retain independent frames. Use `not-prose` to isolate custom content from default typography; see [Theme](/docs/configuration/theme).
 
 ## Shared context
 

@@ -2,6 +2,7 @@
 title: Theme
 description: Customize the Tailwind CSS v4 default theme, color tokens, dark mode, navigation, and homepage layout.
 order: 2
+updatedTime: 2026-10-05
 ---
 
 # Theme
@@ -171,7 +172,7 @@ export default defineConfig({
 
 `home.visual` can stay as the built-in pixel module or point at a project image with `{ type: 'image', src: '/hero.png', alt: 'Preview' }`.
 
-The default root layout runs a synchronous theme initializer before theme CSS is applied, using the saved `svedocs-theme` preference or the system color scheme. Full custom layouts and full theme component replacements receive the same initializer from `DocsApp`. When rendering a custom application shell without `DocsApp` or `RootLayout`, render `ThemeInit` from `svedocs/theme` once in that shell.
+The default root layout runs a synchronous theme initializer before theme CSS is applied, using the saved `svedocs-theme` preference or the system color scheme. Full custom layouts and full theme component replacements receive the same initializer from `DocsApp`. Nested default components reuse their outer initializer, preventing duplicate scripts and `color-scheme` tags. When rendering a custom application shell without `DocsApp` or `RootLayout`, render `ThemeInit` from `svedocs/theme` once in that shell.
 
 Set `theme.defaultMode` to `light` or `dark` to lock the site to one color mode. Fixed modes apply only the selected design tokens, omit the theme toggle, skip the theme bootstrap script, and compile code blocks with the selected code theme. The default `system` mode keeps the toggle, saved preference, and system color scheme synchronization.
 
@@ -345,7 +346,7 @@ Generated route files import `virtual:svedocs/theme-components` and pass it into
 />
 ```
 
-Replacement components receive typed props from `svedocs/theme/types`. The component map supports `Root`, `Layout`, `Docs`, `DocsShell`, `Page`, `PageShell`, `Home`, `Error`, `Header`, `Navbar`, `Brand`, `TopNav`, `MobileNav`, `SocialNav`, `Sidebar`, `Article`, `Toc`, `Search`, `AskAi`, `Footer`, `FooterLinks`, `ThemeToggle`, `PageTools`, and `RenderError`. See [Components](/docs/reference/theme-components) for the full per-component props.
+Replacement components receive typed props from `svedocs/theme/types`. The component map supports `Seo`, `Root`, `Layout`, `Docs`, `DocsShell`, `Page`, `PageShell`, `Home`, `Error`, `Header`, `Navbar`, `Brand`, `TopNav`, `MobileNav`, `SocialNav`, `Sidebar`, `Article`, `Toc`, `Search`, `AskAi`, `Footer`, `FooterLinks`, `ThemeToggle`, `PageTools`, and `RenderError`. `Seo` replaces the SEO head using `SvedocsSeoProps`; see [SEO and OG](/docs/integrations/seo-og). See [Components](/docs/reference/theme-components) for the full per-component props.
 
 ```svelte title="src/lib/theme/Navbar.svelte"
 <script lang="ts">
@@ -388,6 +389,38 @@ Markdown output still includes stable `sd-*` structure classes for prose, headin
 Generated templates include `src/routes/+error.svelte`. Register `theme.components.Error` to replace full-route error pages, and register `theme.components.RenderError` to replace local error-boundary UI inside article content, layout regions, navigation, and tools. The generated error route catches failures in a custom `Error` component and falls back to the bundled `ErrorPage`.
 
 Theme packages can be ordinary Svelte libraries. Export Svelte components from the package, document the expected `svedocs` peer version, and have users register the package component paths in `svedocs({ theme: { components } })`.
+
+## Frame ownership and custom content
+
+Draw each panel's outside frame in one layer. When a custom `Article` or `PageShell` wrapper already supplies a border, compose the default component with `framed={false}`. `CodeBlock` supports the same prop; all three default to `true`. This removes that component's border, shadow and article corner marks while retaining layout, content and independent child control borders and focus indicators.
+
+```svelte title="src/lib/theme/Article.svelte"
+<script lang="ts">
+  import { Article } from 'svedocs/theme';
+  import type { SvedocsArticleProps } from 'svedocs/theme/types';
+  let props: SvedocsArticleProps = $props();
+</script>
+
+<section class="article-frame">
+  <Article {...props} framed={false} />
+</section>
+
+<style>
+  .article-frame { border: 1px solid var(--sd-line); border-radius: 12px; }
+</style>
+```
+
+The full theme's component styles live in the CSS `components` layer. The minimal `svedocs/theme/base.css` stylesheet uses the `base` layer. Application CSS and Tailwind utilities such as `border-0 shadow-none` can override them. Use `framed={false}` when removing article corner marks as well.
+
+Wrap fully custom widgets embedded in Markdown/SVX with `class="not-prose"` to exclude their headings, tables, pre elements and inline code from default prose styling. Explicit `sd-*` classes still opt into component styles; for example, `sd-button` retains its border and keyboard focus indicator.
+
+```svelte
+<div class="not-prose">
+  <CustomDashboard />
+</div>
+```
+
+A custom code renderer can put its toolbar and frame on an outer `.sd-code`; its inner pre does not draw another frame. Add `data-sd-frame="none"` directly to a raw table or pre to remove just that element's frame. The marker does not disable child control borders. Ordinary Markdown code blocks, tables and heading separators retain their defaults.
 
 ## Interaction
 

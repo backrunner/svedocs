@@ -1,7 +1,7 @@
 /* The official site's quieter reading surface; package theme defaults stay configurable. */
 .sd-root[data-surface='home'] { background: var(--sd-bg); }
-.sd-page h1,
-.sd-doc h1 {
+.sd-page h1:where(:not(.not-prose, .not-prose *)),
+.sd-doc h1:where(:not(.not-prose, .not-prose *)) {
   max-width: none;
   font-size: clamp(2rem, 3.5vw, 2.75rem);
   font-weight: 600;

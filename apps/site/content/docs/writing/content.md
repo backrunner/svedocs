@@ -2,6 +2,7 @@
 title: Content
 description: Author pages with frontmatter, GFM, KaTeX, code blocks, diffs, links, assets, and section extraction.
 order: 2
+updatedTime: 2026-10-05
 ---
 
 # Content
@@ -57,10 +58,11 @@ Common fields:
 | `collapsed` | boolean | Collapse a navigation group by default. |
 | `section` | boolean | Mark a directory page as a section page. |
 | `icon` | string | Icon hint for the default theme. |
-| `canonical` | string | Override the generated canonical URL. |
+| `canonical` | string | Override the page URL; same-origin paths use build-mode slash rules, retain queries and remove fragments. External paths stay unchanged. |
 | `image` | string | Open Graph image URL. |
 | `keywords` | string[] | SEO and search metadata. |
 | `author` | string | Article author; falls back to `seo.defaultAuthor`. |
+| `authorUrl` | string | HTTP(S) or site-relative profile URL for Open Graph author tags and the JSON-LD author URL. |
 | `published`, `date`, `publishedTime` | date | Publication time. |
 | `updated`, `updatedTime` | date | Last meaningful content update. |
 | `type`, `ogType` | string | Open Graph content type. |

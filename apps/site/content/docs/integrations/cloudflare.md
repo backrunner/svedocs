@@ -1,7 +1,9 @@
 ---
 title: Cloudflare
+seoTitle: Cloudflare deployment and edge caching
 description: Deploy svedocs to Cloudflare Pages with edge SSR, static output, Workers AI, and AI Search bindings.
 order: 3
+updatedTime: 2026-10-05
 ---
 
 # Cloudflare
@@ -78,6 +80,7 @@ Markdown is compiled to HTML during the Vite build, so production SSR does not p
 ```ts title="src/hooks.server.ts"
 import { building, dev } from '$app/environment';
 import { sequence } from '@sveltejs/kit/hooks';
+import { createSvedocsHtmlHandle } from 'svedocs/routes';
 import { createSvedocsAgentHandle } from 'svedocs/agent';
 import { createSvedocsHtmlCacheHandle } from 'svedocs/cloudflare';
 import config from 'virtual:svedocs/config';
@@ -85,6 +88,7 @@ import pages from 'virtual:svedocs/page-index';
 import markdown from 'virtual:svedocs/markdown';
 
 export const handle = sequence(
+  createSvedocsHtmlHandle({ config, pages }),
   createSvedocsAgentHandle({ config, pages, markdown }),
   createSvedocsHtmlCacheHandle({
     config, pages,

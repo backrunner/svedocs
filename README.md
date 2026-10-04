@@ -241,6 +241,21 @@ Generated templates have a heavier install/build smoke test:
 pnpm test:templates
 ```
 
+Audit every official-site page with JavaScript disabled after building the corresponding mode:
+
+```sh
+pnpm --filter svedocs build
+SVEDOCS_BUILD_MODE=static pnpm --filter @svedocs/site build
+node scripts/audit-seo.mjs
+node scripts/verify-rendering.mjs --static
+SVEDOCS_BUILD_MODE=edge pnpm --filter @svedocs/site build
+node scripts/audit-seo.mjs --edge
+SVEDOCS_BUILD_MODE=spa pnpm --filter @svedocs/site build
+node scripts/audit-seo.mjs --spa
+```
+
+The audits check document attributes, metadata, canonical/hreflang consistency, JSON-LD references, internal links, discovery documents, sharing images and rendered content. The edge audit also checks localized 404s and slash redirects using the production SvelteKit server; it does not emulate Cloudflare bindings. Reports are written to `artifacts/seo*-audit.json`. For a read-only audit of the deployed site, run `python3 scripts/capture-seo-live.py` after the static audit, then `node scripts/audit-seo.mjs --live`. The live audit records outstanding issues before exiting with a failed assertion.
+
 ## Release Status
 
 svedocs is currently useful for local development, framework validation, demos, and early integration work. Treat npm publishing and compatibility work as release preparation until the official stable line is announced.

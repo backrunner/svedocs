@@ -2,6 +2,7 @@
 title: 主题
 description: 自定义 Tailwind CSS v4 默认主题、颜色变量、明暗模式、导航和首页布局。
 order: 2
+updatedTime: 2026-10-05
 ---
 
 # 主题
@@ -171,7 +172,7 @@ export default defineConfig({
 
 `home.visual` 可以继续使用内置的像素效果，也可以指向项目中的图片：`{ type: 'image', src: '/hero.png', alt: 'Preview' }`。
 
-默认根布局会在主题 CSS 生效前同步执行主题初始化器，优先读取已保存的 `svedocs-theme`，否则跟随系统配色。完整自定义布局和整页主题组件替换也会由 `DocsApp` 注入同一逻辑。如果应用外壳完全不使用 `DocsApp` 或 `RootLayout`，请在外壳中渲染一次 `svedocs/theme` 导出的 `ThemeInit`。
+默认根布局会在主题 CSS 生效前同步执行主题初始化器，优先读取已保存的 `svedocs-theme`，否则跟随系统配色。完整自定义布局和整页主题组件替换也会由 `DocsApp` 注入同一逻辑；嵌套默认组件复用外层初始化器，避免重复脚本和 `color-scheme` 标签。如果应用外壳完全不使用 `DocsApp` 或 `RootLayout`，请在外壳中渲染一次 `svedocs/theme` 导出的 `ThemeInit`。
 
 将 `theme.defaultMode` 设置为 `light` 或 `dark` 可以锁定站点的配色模式。固定模式只应用所选的 design token，不渲染主题切换按钮，不注入主题初始化脚本，并使用所选的代码主题生成代码块。默认的 `system` 模式会保留切换按钮、已保存偏好和系统配色同步。
 
@@ -345,7 +346,7 @@ svedocs({
 />
 ```
 
-替换组件可以从 `svedocs/theme/types` 获取属性类型。可替换组件包括 `Root`、`Layout`、`Docs`、`DocsShell`、`Page`、`PageShell`、`Home`、`Error`、`Header`、`Navbar`、`Brand`、`TopNav`、`MobileNav`、`SocialNav`、`Sidebar`、`Article`、`Toc`、`Search`、`AskAi`、`Footer`、`FooterLinks`、`ThemeToggle`、`PageTools` 和 `RenderError`。各组件的完整属性见[组件](/docs/zh/reference/theme-components)。
+替换组件可以从 `svedocs/theme/types` 获取属性类型。可替换组件包括 `Seo`、`Root`、`Layout`、`Docs`、`DocsShell`、`Page`、`PageShell`、`Home`、`Error`、`Header`、`Navbar`、`Brand`、`TopNav`、`MobileNav`、`SocialNav`、`Sidebar`、`Article`、`Toc`、`Search`、`AskAi`、`Footer`、`FooterLinks`、`ThemeToggle`、`PageTools` 和 `RenderError`。`Seo` 单独接管 SEO head，使用 `SvedocsSeoProps`，详见 [SEO 和 OG](/docs/zh/integrations/seo-og)。各组件的完整属性见[组件](/docs/zh/reference/theme-components)。
 
 ```svelte title="src/lib/theme/Navbar.svelte"
 <script lang="ts">
@@ -388,6 +389,38 @@ Markdown 输出会保留稳定的 `sd-*` 结构类名，默认主题和自定义
 生成模板已经包含 `src/routes/+error.svelte`。注册 `theme.components.Error` 可以替换完整路由的错误页；注册 `theme.components.RenderError` 可以替换文章内容、布局区域、导航和工具中的局部错误提示。生成的错误路由会捕获自定义 `Error` 组件自身的异常，并改用内置 `ErrorPage`。
 
 主题包可以是普通的 Svelte 库。从包中导出组件，声明兼容的 `svedocs` peer dependency 版本，再让使用者在 `svedocs({ theme: { components } })` 中注册对应的组件路径即可。
+
+## 边框归属与自定义正文
+
+同一个面板只由一层绘制外框。自定义 `Article` 或 `PageShell` 外壳已经有边框时，组合默认组件并传入 `framed={false}`。`CodeBlock` 也支持该属性，默认均为 `true`。关闭外框会移除该组件的 border、shadow 和文章角标，保留布局、正文以及子组件的边框和焦点提示。
+
+```svelte title="src/lib/theme/Article.svelte"
+<script lang="ts">
+  import { Article } from 'svedocs/theme';
+  import type { SvedocsArticleProps } from 'svedocs/theme/types';
+  let props: SvedocsArticleProps = $props();
+</script>
+
+<section class="article-frame">
+  <Article {...props} framed={false} />
+</section>
+
+<style>
+  .article-frame { border: 1px solid var(--sd-line); border-radius: 12px; }
+</style>
+```
+
+默认完整主题的组件样式位于 CSS `components` layer；精简样式表 `svedocs/theme/base.css` 使用 `base` layer。应用普通 CSS 和 Tailwind utilities（例如 `border-0 shadow-none`）可覆盖相应默认样式。覆盖边框后如果还需要去掉文章角标，使用 `framed={false}`。
+
+在 Markdown/SVX 中嵌入完全自定义的组件时，可以在组件外包一层 `class="not-prose"`，让默认正文样式不再作用于其中的标题、表格、pre 和行内 code。组件主动使用的 `sd-*` 样式仍是显式选择，例如 `sd-button` 保留按钮边框和键盘焦点。
+
+```svelte
+<div class="not-prose">
+  <CustomDashboard />
+</div>
+```
+
+自定义代码渲染器可以让 `.sd-code` 外层承载工具栏和边框，内部 `pre` 不会再次绘制外框。原生表格或 pre 也可以直接加 `data-sd-frame="none"`；该标记只关闭当前元素的外框，不影响它的子控件。普通 Markdown 代码块、表格和章节分隔线仍保留默认样式。
 
 ## 交互能力
 

@@ -2,6 +2,7 @@
 title: Installation
 description: Install svedocs in a new project, wire it into an existing SvelteKit app, and keep the framework dependencies current.
 order: 2
+updatedTime: 2026-10-05
 ---
 
 # Installation
@@ -41,6 +42,8 @@ Template dependencies are normal registry dependencies:
 ```
 
 With `--install`, your chosen package manager installs these packages from its configured registry. No framework source is copied into the project.
+
+All three templates pin Wrangler to the repository-validated version so the Cloudflare adapter peer dependency does not select an incompatible runtime. When upgrading Wrangler, verify Miniflare/workerd, edge builds and prerendering together.
 
 ## Choose a template
 
@@ -136,6 +139,27 @@ export default {
   kit: { adapter: adapter() }
 };
 ```
+
+### Server document attributes and route options
+
+Set document language and direction on the server so prerendered HTML and JavaScript-disabled requests have the same semantics. Compose existing server hooks with `sequence`; preserve authentication, agent negotiation and cache behavior.
+
+```ts title="src/hooks.server.ts"
+import { createSvedocsHtmlHandle } from 'svedocs/routes';
+import config from 'virtual:svedocs/config';
+import pages from 'virtual:svedocs/page-index';
+
+export const handle = createSvedocsHtmlHandle({ config, pages });
+```
+
+```ts title="src/routes/+layout.ts"
+import { svedocsSsr, svedocsTrailingSlash } from 'svedocs/cloudflare';
+
+export const ssr = svedocsSsr();
+export const trailingSlash = svedocsTrailingSlash();
+```
+
+Generated templates include this wiring. Edge page URLs omit the trailing slash; static and SPA page URLs include it, with `/` unchanged. Known pages retain SSR/prerendered content for readers and crawlers without JavaScript.
 
 ### Load the current document
 

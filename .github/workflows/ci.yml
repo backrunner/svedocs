@@ -48,6 +48,10 @@ jobs:
       - run: SVEDOCS_BUILD_MODE=spa pnpm --filter @svedocs/site build
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm --filter @svedocs/site test:e2e
+      - name: Build composed theme and SEO fixtures
+        run: SVEDOCS_E2E_BORDERS=1 SVEDOCS_E2E_SEO=1 pnpm --filter @svedocs/site build
+      - name: Verify theme frames and custom SEO in production
+        run: SVEDOCS_E2E_BORDERS=1 SVEDOCS_E2E_SEO=1 SVEDOCS_E2E_PREVIEW=1 pnpm --filter @svedocs/site test:e2e e2e/borders.spec.ts e2e/seo-renderer.spec.ts
 
   template-e2e:
     runs-on: ubuntu-latest
