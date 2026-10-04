@@ -1,3 +1,6 @@
+@import "./styles/frames.css" layer(base);
+
+@layer base {
 :root {
   color-scheme: light;
   --sd-bg: #fff;
@@ -72,16 +75,16 @@ button, input, textarea, select {
   z-index: 1000;
 }
 
-.sd-prose {
+.sd-prose:where(:not(.not-prose, .not-prose *)) {
   line-height: 1.7;
 }
 
-.sd-prose :where(pre, code, kbd, samp) {
+.sd-prose :where(pre, code, kbd, samp):where(:not(.not-prose, .not-prose *)) {
   font-family: var(--font-mono);
 }
 
 .sd-code,
-.sd-prose pre {
+.sd-prose pre:where(:not(.not-prose, .not-prose *)) {
   overflow: auto;
 }
 
@@ -238,4 +241,6 @@ button, input, textarea, select {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+}
+
 }

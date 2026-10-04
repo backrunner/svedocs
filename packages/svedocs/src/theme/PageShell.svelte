@@ -6,6 +6,7 @@
   import type { SvedocsThemeComponentMap, SvedocsThemeContext } from './types.js';
 
   export let page: SvedocsPage | undefined = undefined;
+  export let framed = true;
   export let variant: SvedocsPageShellVariant = 'page';
   export let title = '';
   export let description = '';
@@ -27,7 +28,7 @@
 
 {#if variant === 'error'}
   <main id="content" class="sd-error-page" data-theme-component="page-shell" data-variant="error">
-    <section class="sd-error-panel">
+    <section class="sd-error-panel" data-sd-frame={framed ? undefined : 'none'}>
       {#if status}
         <p class="sd-kicker">
           <span class="sd-kicker-mark" aria-hidden="true"></span>
@@ -62,7 +63,7 @@
     </section>
   </main>
 {:else}
-  <main id="content" class="sd-page" data-theme-component="page-shell" data-variant="page">
+  <main id="content" class="sd-page" data-sd-frame={framed ? undefined : 'none'} data-theme-component="page-shell" data-variant="page">
     <section class="sd-page-hero">
       {#if resolvedKicker}
         <p class="sd-kicker">{resolvedKicker}</p>

@@ -54,7 +54,7 @@ describe('theme styles', () => {
 
 async function readStyles(url: URL): Promise<string> {
   const source = await readFile(url, 'utf8');
-  const imports = [...source.matchAll(/@import ["'](\.\/[^"']+)["'];/g)];
+  const imports = [...source.matchAll(/@import ["'](\.\/[^"']+)["'](?:\s+layer\([^)]*\))?;/g)];
   const children = await Promise.all(imports.map((match) => readStyles(new URL(match[1]!, url))));
   return [source, ...children].join('\n');
 }

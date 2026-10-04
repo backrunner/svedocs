@@ -1,4 +1,4 @@
-.sd-prose table {
+.sd-prose table:where(:not(.not-prose, .not-prose *)) {
   display: block;
   width: 100%;
   max-width: 100%;
@@ -14,8 +14,8 @@
   font-size: .875rem;
 }
 
-.sd-prose th,
-.sd-prose td {
+.sd-prose th:where(:not(.not-prose, .not-prose *)),
+.sd-prose td:where(:not(.not-prose, .not-prose *)) {
   min-width: 8rem;
   border-bottom: 1px solid color-mix(in srgb, var(--sd-line) 70%, transparent);
   padding: .7rem .9rem;
@@ -24,7 +24,7 @@
   text-align: left;
 }
 
-.sd-prose thead th {
+.sd-prose thead th:where(:not(.not-prose, .not-prose *)) {
   position: sticky;
   top: 0;
   z-index: 1;
@@ -38,28 +38,28 @@
   white-space: nowrap;
 }
 
-.sd-prose td {
+.sd-prose td:where(:not(.not-prose, .not-prose *)) {
   background: var(--sd-panel);
   color: color-mix(in srgb, var(--sd-ink) 92%, var(--sd-muted));
 }
 
-.sd-prose tbody tr:hover td {
+.sd-prose tbody tr:hover td:where(:not(.not-prose, .not-prose *)) {
   background: color-mix(in srgb, var(--sd-accent) 4%, var(--sd-panel));
 }
 
-.sd-prose tbody tr:nth-child(even) td {
+.sd-prose tbody tr:nth-child(even) td:where(:not(.not-prose, .not-prose *)) {
   background: color-mix(in srgb, var(--sd-panel) 92%, var(--sd-bg) 8%);
 }
 
-.sd-prose tbody tr:nth-child(even):hover td {
+.sd-prose tbody tr:nth-child(even):hover td:where(:not(.not-prose, .not-prose *)) {
   background: color-mix(in srgb, var(--sd-accent) 4%, color-mix(in srgb, var(--sd-panel) 92%, var(--sd-bg) 8%));
 }
 
-.sd-prose tbody tr:last-child td {
+.sd-prose tbody tr:last-child td:where(:not(.not-prose, .not-prose *)) {
   border-bottom: 0;
 }
 
-.sd-prose :is(th, td) code {
+.sd-prose :is(th, td) code:where(:not(.not-prose, .not-prose *)) {
   padding: .08rem .35rem;
   font-size: .82em;
   border-radius: 4px;

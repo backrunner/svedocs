@@ -148,8 +148,8 @@
   background-repeat: no-repeat;
 }
 
-.sd-page h1,
-.sd-home h1 {
+.sd-page h1:where(:not(.not-prose, .not-prose *)),
+.sd-home h1:where(:not(.not-prose, .not-prose *)) {
   margin: .35rem 0 0;
   font-size: clamp(2.2rem, 7vw, 5.9rem);
   line-height: .92;
@@ -158,7 +158,7 @@
   font-weight: 650;
 }
 
-.sd-doc h1 {
+.sd-doc h1:where(:not(.not-prose, .not-prose *)) {
   margin: .45rem 0 0;
   max-width: 14ch;
   font-family: var(--font-sans);

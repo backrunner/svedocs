@@ -71,9 +71,9 @@ body {
   .sd-search-results,
   .sd-search-content,
   .sd-chat-messages,
-  .sd-prose table,
+  .sd-prose table:where(:not(.not-prose, .not-prose *)),
   .sd-code code,
-  .sd-prose pre code,
+  .sd-prose pre code:where(:not(.not-prose, .not-prose *)),
   .sd-diff-scroll
 ) {
   scrollbar-width: thin;
@@ -89,9 +89,9 @@ body.sd-is-window-scrolling,
   .sd-search-results,
   .sd-search-content,
   .sd-chat-messages,
-  .sd-prose table,
+  .sd-prose table:where(:not(.not-prose, .not-prose *)),
   .sd-code code,
-  .sd-prose pre code,
+  .sd-prose pre code:where(:not(.not-prose, .not-prose *)),
   .sd-diff-scroll
 ):is(:hover, :focus, :focus-within, .sd-is-scrolling) {
   scrollbar-color: var(--sd-scrollbar-thumb) var(--sd-scrollbar-track);
@@ -106,9 +106,9 @@ body.sd-is-window-scrolling,
   .sd-search-results,
   .sd-search-content,
   .sd-chat-messages,
-  .sd-prose table,
+  .sd-prose table:where(:not(.not-prose, .not-prose *)),
   .sd-code code,
-  .sd-prose pre code,
+  .sd-prose pre code:where(:not(.not-prose, .not-prose *)),
   .sd-diff-scroll
 )::-webkit-scrollbar {
   width: var(--sd-scrollbar-size);
@@ -124,9 +124,9 @@ body.sd-is-window-scrolling,
   .sd-search-results,
   .sd-search-content,
   .sd-chat-messages,
-  .sd-prose table,
+  .sd-prose table:where(:not(.not-prose, .not-prose *)),
   .sd-code code,
-  .sd-prose pre code,
+  .sd-prose pre code:where(:not(.not-prose, .not-prose *)),
   .sd-diff-scroll
 )::-webkit-scrollbar-track {
   background: var(--sd-scrollbar-track);
@@ -141,9 +141,9 @@ body.sd-is-window-scrolling,
   .sd-search-results,
   .sd-search-content,
   .sd-chat-messages,
-  .sd-prose table,
+  .sd-prose table:where(:not(.not-prose, .not-prose *)),
   .sd-code code,
-  .sd-prose pre code,
+  .sd-prose pre code:where(:not(.not-prose, .not-prose *)),
   .sd-diff-scroll
 )::-webkit-scrollbar-thumb {
   border: 3px solid transparent;
@@ -161,9 +161,9 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
   .sd-search-results,
   .sd-search-content,
   .sd-chat-messages,
-  .sd-prose table,
+  .sd-prose table:where(:not(.not-prose, .not-prose *)),
   .sd-code code,
-  .sd-prose pre code,
+  .sd-prose pre code:where(:not(.not-prose, .not-prose *)),
   .sd-diff-scroll
 ):is(:hover, :focus, :focus-within, .sd-is-scrolling)::-webkit-scrollbar-thumb {
   background-color: var(--sd-scrollbar-thumb);
@@ -178,9 +178,9 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
   .sd-search-results,
   .sd-search-content,
   .sd-chat-messages,
-  .sd-prose table,
+  .sd-prose table:where(:not(.not-prose, .not-prose *)),
   .sd-code code,
-  .sd-prose pre code,
+  .sd-prose pre code:where(:not(.not-prose, .not-prose *)),
   .sd-diff-scroll
 )::-webkit-scrollbar-thumb:hover {
   background-color: var(--sd-scrollbar-thumb-hover);
@@ -197,13 +197,13 @@ body.sd-is-window-scrolling::-webkit-scrollbar-thumb,
   .sd-search-results,
   .sd-search-content,
   .sd-chat-messages,
-  .sd-prose table,
+  .sd-prose table:where(:not(.not-prose, .not-prose *)),
   .sd-diff-scroll {
     overflow: overlay;
   }
 
   .sd-code code,
-  .sd-prose pre code {
+  .sd-prose pre code:where(:not(.not-prose, .not-prose *)) {
     overflow-x: overlay;
     overflow-y: hidden;
   }

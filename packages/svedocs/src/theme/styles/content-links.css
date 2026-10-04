@@ -38,12 +38,12 @@
   display: none;
 }
 
-.sd-prose a {
+.sd-prose a:where(:not(.not-prose, .not-prose *)) {
   color: var(--sd-accent);
   text-underline-offset: .18em;
 }
 
-.sd-prose a:hover {
+.sd-prose a:hover:where(:not(.not-prose, .not-prose *)) {
   color: color-mix(in srgb, var(--sd-accent) 70%, var(--sd-accent-2));
 }
 

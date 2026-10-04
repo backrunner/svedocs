@@ -1,0 +1,17 @@
+/* Only the marked element relinquishes its frame; child controls keep theirs. */
+:is(.sd-doc, .sd-page, .sd-error-panel, .sd-code, .sd-prose pre, .sd-prose table)[data-sd-frame="none"] {
+  border: 0;
+  box-shadow: none;
+}
+
+.sd-doc[data-sd-frame="none"] > .sd-doc-corner {
+  display: none;
+}
+
+/* Custom code renderers may wrap a pre in the frame that owns its toolbar. */
+.sd-code pre {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}

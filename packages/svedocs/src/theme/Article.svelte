@@ -10,6 +10,7 @@
   import type { SvedocsThemeComponentMap, SvedocsThemeContext } from './types.js';
 
   export let page: SvedocsPage;
+  export let framed = true;
   export let content: Component | undefined = undefined;
   export let context: SvedocsThemeContext | undefined = undefined;
   export let hasDocHeaderSlot: boolean | undefined = undefined;
@@ -47,7 +48,7 @@
 
 </script>
 
-<article class="sd-doc" data-theme-component="article" data-site={context?.config.site.name}>
+<article class="sd-doc" data-sd-frame={framed ? undefined : 'none'} data-theme-component="article" data-site={context?.config.site.name}>
   <span class="sd-doc-corner" data-corner="tl" aria-hidden="true"></span>
   <span class="sd-doc-corner" data-corner="tr" aria-hidden="true"></span>
   {#if showDocHeaderSlot}

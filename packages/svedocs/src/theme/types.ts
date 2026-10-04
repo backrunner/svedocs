@@ -161,6 +161,7 @@ export interface SvedocsDocsShellProps {
 
 export interface SvedocsPageShellProps {
   page?: SvedocsPage | undefined;
+  framed?: boolean;
   variant?: SvedocsPageShellVariant;
   title?: string;
   description?: string;
@@ -214,6 +215,7 @@ export interface SvedocsSidebarProps {
 
 export interface SvedocsArticleProps {
   page: SvedocsPage;
+  framed?: boolean;
   content?: SvedocsContentComponent;
   context?: SvedocsThemeContext | undefined;
   hasDocHeaderSlot?: boolean;
