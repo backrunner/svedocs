@@ -10,8 +10,9 @@ type: website
 
 This page uses the built-in single-page layout. It omits the docs sidebar while keeping the site's metadata, search records, OG route, theme controls, and command palette.
 
-## Unreleased
+## 0.2.3 — 2026-10-05
 
+- Delay search-loading feedback by 500ms and smoothly resize the result region while preserving keyboard focus and reduced motion.
 - Add frame ownership props, not-prose isolation and Tailwind overrides to prevent duplicate frames in custom themes.
 - Correct article sharing tags and author profile URLs; avoid duplicate theme initialization in custom layouts.
 - Share stable WebSite/Organization IDs, merge custom JSON-LD and unify page/discovery URL rules.
