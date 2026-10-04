@@ -1,6 +1,7 @@
 export type * from './controllers/types.js';
 import type { SvedocsSearchController, SvedocsAskAiController, SvedocsTocController, SvedocsPageToolsController } from './controllers/types.js';
 import type { Component } from 'svelte';
+import type { SvedocsPageAlternate, SvedocsPageMetadata } from '../og/types.js';
 import type {
   SvedocsLocale,
   SvedocsMessages,
@@ -279,7 +280,18 @@ export interface SvedocsPageToolsProps {
   context?: SvedocsThemeContext | undefined;
 }
 
+export interface SvedocsSeoProps {
+  context: SvedocsThemeContext;
+  metadata?: SvedocsPageMetadata | undefined;
+  alternates?: SvedocsPageAlternate[];
+  title: string;
+  description: string;
+  robots?: string | undefined;
+}
+
 export interface SvedocsThemeComponentMap {
+  /** Optional so existing complete theme maps remain compatible. */
+  Seo?: Component<SvedocsSeoProps>;
   Root: Component<SvedocsRootProps>;
   Layout: Component<SvedocsLayoutShellProps>;
   Docs: Component<SvedocsDocsLayoutProps>;

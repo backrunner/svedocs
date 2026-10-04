@@ -213,6 +213,7 @@ export interface SvedocsConfig {
     rss?: boolean | SvedocsRssOptions;
     robots?: boolean;
     defaultAuthor?: string;
+    defaultAuthorUrl?: string;
     defaultAuthorType?: 'Person' | 'Organization';
     head?: SvedocsSeoHead;
     ogImage?: false | {
@@ -528,6 +529,7 @@ export const svedocsConfigSchema = z.object({
         .optional(),
       robots: z.boolean().optional(),
       defaultAuthor: z.string().optional(),
+      defaultAuthorUrl: z.string().optional(),
       defaultAuthorType: z.enum(['Person', 'Organization']).optional(),
       head: z
         .object({

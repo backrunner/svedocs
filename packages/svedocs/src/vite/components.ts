@@ -11,6 +11,7 @@ import type { SvedocsThemeComponentName, SvedocsThemeComponentImports } from '..
 import { componentVirtualPrefix } from './modules.js';
 const themeComponentNames = [
   'Root',
+  'Seo',
   'Layout',
   'Docs',
   'DocsShell',

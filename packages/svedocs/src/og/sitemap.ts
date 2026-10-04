@@ -1,6 +1,6 @@
 import type { SvedocsPage, SvedocsResolvedConfig } from '../core.js';
 import { isDiscoverablePage as isPageDiscoverable, seoUpdatedTime } from '../core/seo.js';
-import { formatRoutePathForBuildMode } from '../core/utils.js';
+import { createAbsoluteUrl, createPageCanonicalUrl } from '../core/urls.js';
 import { createPageAlternates } from './metadata.js';
 import { createDisabledDiscoveryResponse, createDiscoveryResponse, escapeXml } from './response.js';
 import type { SvedocsPageAlternate } from './types.js';
@@ -83,20 +83,12 @@ function createAlternateKey(page: SvedocsPage): string {
 }
 
 function createSitemapLocation(config: SvedocsResolvedConfig, page: SvedocsPage): string | undefined {
-  const routePath = formatRoutePathForBuildMode(page.routePath, config.build.mode);
-  const location = page.seo.canonical
-    ? createAbsoluteUrl(config, page.seo.canonical) ?? page.seo.canonical
-    : createAbsoluteUrl(config, routePath) ?? routePath;
+  const location = createPageCanonicalUrl(config, page);
+  if (!location) return undefined;
   if (!config.site.url || !/^https?:\/\//.test(location)) return undefined;
   try {
     return new URL(location).origin === new URL(config.site.url).origin ? location : undefined;
   } catch {
     return undefined;
   }
-}
-
-function createAbsoluteUrl(config: SvedocsResolvedConfig, value: string): string | undefined {
-  if (/^https?:\/\//.test(value)) return value;
-  if (!config.site.url) return undefined;
-  return new URL(value, config.site.url).href;
 }

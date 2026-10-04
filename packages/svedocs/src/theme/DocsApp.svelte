@@ -10,8 +10,11 @@
   import PageLayout from './PageLayout.svelte';
   import RouteRenderError from './RouteRenderError.svelte';
   import ThemeInit from './ThemeInit.svelte';
+  import { claimThemeInitializer } from './theme-initializer.js';
   import Integrations from './Integrations.svelte';
   import type { SvedocsCustomLayoutProps, SvedocsThemeComponentMap, SvedocsThemeContext } from './types.js';
+
+  const ownsThemeInitializer = claimThemeInitializer();
 
   export let page: SvedocsPage;
   export let pages: SvedocsPage[] = [];
@@ -44,12 +47,15 @@
 
 <Integrations {config} />
 
-{#if customLayout}
+{#if ownsThemeInitializer}
   <ThemeInit
     defaultMode={config.theme.defaultMode}
     languageTag={appContext.languageTag}
     dir={appContext.locale?.dir ?? 'ltr'}
   />
+{/if}
+
+{#if customLayout}
   <svelte:boundary>
     <svelte:component
       this={customLayout}
@@ -82,13 +88,6 @@
     {/snippet}
   </svelte:boundary>
   {:else if page.scopePath === '/' || page.frontmatter.layout === 'home'}
-    {#if Boolean(themeComponents.Home)}
-      <ThemeInit
-        defaultMode={config.theme.defaultMode}
-        languageTag={appContext.languageTag}
-        dir={appContext.locale?.dir ?? 'ltr'}
-      />
-    {/if}
     <svelte:boundary>
       <svelte:component
         this={Home} context={appContext}
@@ -137,13 +136,6 @@
       {/snippet}
     </svelte:boundary>
   {:else if page.kind === 'page' || page.frontmatter.layout === 'page'}
-    {#if Boolean(themeComponents.Page)}
-      <ThemeInit
-        defaultMode={config.theme.defaultMode}
-        languageTag={appContext.languageTag}
-        dir={appContext.locale?.dir ?? 'ltr'}
-      />
-    {/if}
     <svelte:boundary>
       <svelte:component this={Page} context={appContext} {page} {pages} {tree} {search} {config} {loadSearch} content={pageContent} {hasBackgroundSlot} {themeComponents}>
         <svelte:fragment slot="background">
@@ -169,13 +161,6 @@
       {/snippet}
     </svelte:boundary>
   {:else}
-    {#if Boolean(themeComponents.Docs)}
-      <ThemeInit
-        defaultMode={config.theme.defaultMode}
-        languageTag={appContext.languageTag}
-        dir={appContext.locale?.dir ?? 'ltr'}
-      />
-    {/if}
     <svelte:boundary>
       <svelte:component this={Docs} context={appContext} {page} {pages} {tree} {search} {config} {loadSearch} content={pageContent} {hasBackgroundSlot} {hasDocHeaderSlot} {themeComponents}>
         <svelte:fragment slot="background">

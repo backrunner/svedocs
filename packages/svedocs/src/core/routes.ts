@@ -1,5 +1,5 @@
 import type { SvedocsResolvedConfig } from './types.js';
-import { normalizePath, stripContentExtension } from './utils.js';
+import { normalizePath, normalizeRoutePath, formatRoutePathForBuildMode, stripContentExtension } from './utils.js';
 
 export interface SvedocsRouteTarget {
   routePath: string;
@@ -45,7 +45,7 @@ export function resolveSvedocsPageRoute<T extends SvedocsRouteTarget>(
   return {
     status: 'redirect',
     page: fallback,
-    location: fallback.routePath,
+    location: formatRoutePathForBuildMode(fallback.routePath, config.build.mode),
     requestedLocale: requested.locale,
     resolvedLocale: defaultLocale
   };
@@ -93,7 +93,7 @@ export function resolveSvedocsHref<T extends SvedocsRouteTarget>(input: {
     ? input.pages.find((page) => normalizeRoutePath(page.routePath) === exactPath)
     : undefined;
   if (exact && exact.scopePath !== exactPath) {
-    return { href: `${exact.routePath}${suffix}`, page: exact, fallback: false };
+    return { href: `${formatRoutePathForBuildMode(exact.routePath, input.config.build.mode)}${suffix}`, page: exact, fallback: false };
   }
 
   const scopePath = pathname.startsWith('/')
@@ -110,7 +110,7 @@ export function resolveSvedocsHref<T extends SvedocsRouteTarget>(input: {
     && page.kind === kind
     && page.locale === localeCode
   ));
-  if (localized) return { href: `${localized.routePath}${suffix}`, page: localized, fallback: false };
+  if (localized) return { href: `${formatRoutePathForBuildMode(localized.routePath, input.config.build.mode)}${suffix}`, page: localized, fallback: false };
 
   const defaultLocale = input.config.i18n.defaultLocale;
   const fallback = input.pages.find((page) => (
@@ -118,7 +118,7 @@ export function resolveSvedocsHref<T extends SvedocsRouteTarget>(input: {
     && page.kind === kind
     && page.locale === defaultLocale
   ));
-  if (fallback) return { href: `${fallback.routePath}${suffix}`, page: fallback, fallback: true };
+  if (fallback) return { href: `${formatRoutePathForBuildMode(fallback.routePath, input.config.build.mode)}${suffix}`, page: fallback, fallback: true };
   return { href: input.href, fallback: false };
 }
 
@@ -165,20 +165,6 @@ function normalizeContentPath(value: string): string {
 function inferTargetKind(scopePath: string, currentKind: 'doc' | 'page' | undefined): 'doc' | 'page' {
   if (scopePath === '/docs' || scopePath.startsWith('/docs/')) return 'doc';
   return currentKind === 'doc' ? 'doc' : 'page';
-}
-
-function normalizeRoutePath(value: string): string {
-  const [pathname = ''] = normalizePath(value).split(/[?#]/, 1);
-  const segments: string[] = [];
-  for (const segment of pathname.split('/')) {
-    if (!segment || segment === '.') continue;
-    if (segment === '..') {
-      segments.pop();
-      continue;
-    }
-    segments.push(segment);
-  }
-  return segments.length > 0 ? `/${segments.join('/')}` : '/';
 }
 
 function dirnameRoutePath(value: string): string {

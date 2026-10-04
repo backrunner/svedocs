@@ -180,6 +180,9 @@ describe('svedocs-cli Batch 0 shell', () => {
       expect(minimalPackage).toContain('"packageManager": "pnpm@11.1.2"');
       expect(minimalPackage).toContain('"build:ssg": "svedocs ssg"');
       expect(minimalPackage).toContain(`"svedocs-cli": "${await readCliPackageVersion()}"`);
+      const repositoryManifest = JSON.parse(await readFile(path.join(repoRoot(), 'package.json'), 'utf8'));
+      expect(JSON.parse(minimalPackage).dependencies.wrangler).toBe(repositoryManifest.devDependencies.wrangler);
+      expect(JSON.parse(await readFile(path.join(tmp, 'edge-app', 'package.json'), 'utf8')).dependencies.wrangler).toBe(repositoryManifest.devDependencies.wrangler);
       expect(minimalSvelteConfig).toContain(
         "const remoteBindings = process.env.SVEDOCS_REMOTE_BINDINGS === 'true'"
       );
@@ -872,6 +875,12 @@ describe('svedocs-cli Batch 0 shell', () => {
     googleAdsense: { client: 'ca-pub-1234567890123456' }
   },`)
           .replace('site: {', "site: { url: 'https://example.com',"));
+        const localizedConfig = await readFile(configPath, 'utf8');
+        await writeFile(configPath, template === 'minimal'
+          ? localizedConfig.replace('export default defineConfig({', "export default defineConfig({ i18n: { defaultLocale: 'en', locales: ['en', { code: 'ar', dir: 'rtl' }] },")
+          : localizedConfig.replace("{ code: 'zh', label: '中文', hreflang: 'zh-CN' }", "{ code: 'zh', label: '中文', hreflang: 'zh-CN' }, { code: 'ar', dir: 'rtl' }"));
+        await mkdir(path.join(target, 'content/docs/ar'), { recursive: true });
+        await writeFile(path.join(target, 'content/docs/ar/index.md'), '---\ntitle: العربية\n---\n\n## محتوى\n\nنص بدون جافاسكريبت.\n');
         const packageJsonPath = path.join(target, 'package.json');
         await rewriteTemplateDependencies(packageJsonPath, svedocsTarball, cliTarball);
         await runCommand('pnpm', ['install', '--ignore-scripts'], target);
@@ -901,9 +910,13 @@ describe('svedocs-cli Batch 0 shell', () => {
           await runCommand('pnpm', ['exec', 'svedocs', 'build', '--mode', 'static', '--no-og'], target);
           const docsFallback = await readFile(path.join(target, 'build/docs/zh/index.html'), 'utf8');
           const homeFallback = await readFile(path.join(target, 'build/zh/index.html'), 'utf8');
-          expect(docsFallback).toContain('location.href="/docs"');
+          expect(docsFallback).toContain('location.href="/docs/"');
           expect(homeFallback).toContain('location.href="/"');
         }
+        const arabicHtml = await readFile(path.join(target, 'build/docs/ar/index.html'), 'utf8');
+        expect(arabicHtml).toMatch(/<html[^>]*lang="ar"[^>]*dir="rtl"/);
+        expect(arabicHtml).toContain('نص بدون جافاسكريبت.');
+        expect(arabicHtml).toContain('https://example.com/docs/ar/');
         expect(await readFile(path.join(target, 'build/template-indexnow-key.txt'), 'utf8')).toBe('template-indexnow-key');
         expect(await readFile(path.join(target, 'build/ads.txt'), 'utf8')).toContain('pub-1234567890123456');
       }

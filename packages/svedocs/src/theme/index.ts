@@ -42,3 +42,4 @@ export { defaultThemeComponents, resolveThemeComponents } from './defaults.js';
 export * from './headless.js';
 export type { SvedocsButtonVariant, SvedocsControlDensity } from './forms.js';
 export type * from './types.js';
+export { default as Seo } from './Seo.svelte';

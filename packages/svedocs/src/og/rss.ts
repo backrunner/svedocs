@@ -1,5 +1,5 @@
 import type { SvedocsPage, SvedocsResolvedConfig } from '../core.js';
-import { formatRoutePathForBuildMode } from '../core/utils.js';
+import { createAbsoluteUrl, createPageCanonicalUrl } from '../core/urls.js';
 import { createDisabledDiscoveryResponse, createDiscoveryResponse, escapeXml } from './response.js';
 import { isDiscoverablePage } from '../core/seo.js';
 
@@ -68,10 +68,8 @@ export function createRssResponse(
 }
 
 function createPageUrl(config: SvedocsResolvedConfig, page: SvedocsPage): string | undefined {
-  const routePath = formatRoutePathForBuildMode(page.routePath, config.build.mode);
-  const link = page.seo.canonical
-    ? createAbsoluteUrl(config, page.seo.canonical) ?? page.seo.canonical
-    : createAbsoluteUrl(config, routePath) ?? routePath;
+  const link = createPageCanonicalUrl(config, page);
+  if (!link) return undefined;
   if (!config.site.url || !/^https?:\/\//.test(link)) return link;
   try {
     return new URL(link).origin === new URL(config.site.url).origin ? link : undefined;
@@ -90,11 +88,6 @@ function isPageInLocale(
   return pageLocale ? pageLocale === locale : config.i18n.locales.length === 0;
 }
 
-function createAbsoluteUrl(config: SvedocsResolvedConfig, value: string): string | undefined {
-  if (/^https?:\/\//.test(value)) return value;
-  if (!config.site.url) return undefined;
-  return new URL(value, config.site.url).href;
-}
 
 function resolveFeedLanguage(config: SvedocsResolvedConfig, locale: string | undefined): string {
   if (!locale) return 'en';

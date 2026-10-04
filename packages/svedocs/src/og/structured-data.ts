@@ -1,7 +1,7 @@
 import type { SvedocsPage, SvedocsResolvedConfig } from '../core/types.js';
 import { pageBreadcrumbs } from '../core/breadcrumbs.js';
 import { isDiscoverablePage } from '../core/seo.js';
-import { formatRoutePathForBuildMode } from '../core/utils.js';
+import { createCanonicalUrl, createPageCanonicalUrl } from '../core/urls.js';
 
 export function breadcrumbJsonLd(config: SvedocsResolvedConfig, page: SvedocsPage, pages: SvedocsPage[]): Record<string, unknown> | undefined {
   if (!config.site.url || !isDiscoverablePage(page, config)) return undefined;
@@ -15,7 +15,7 @@ export function breadcrumbJsonLd(config: SvedocsResolvedConfig, page: SvedocsPag
     itemListElement: items.map((item, index) => {
       const target = item.path === page.routePath ? page : pages.find((candidate) => candidate.routePath === item.path);
       return { '@type': 'ListItem', position: index + 1, name: item.label,
-        item: new URL(target?.seo.canonical ?? formatRoutePathForBuildMode(item.path, config.build.mode), config.site.url).href };
+        item: target ? createPageCanonicalUrl(config, target) : createCanonicalUrl(config, item.path) };
     })
   };
 }

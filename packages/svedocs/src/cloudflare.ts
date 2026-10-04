@@ -1,4 +1,5 @@
 import type { SvedocsResolvedConfig } from './core.js';
+import { routeTrailingSlash } from './core/utils.js';
 export { createSvedocsHtmlCacheHandle, type SvedocsHtmlCacheOptions } from './cloudflare/html-cache.js';
 
 export type SvedocsBuildMode = 'edge' | 'static' | 'spa';
@@ -64,7 +65,7 @@ export function svedocsPagePrerender(mode = readSvedocsBuildMode(), config?: Sve
 }
 
 export function svedocsTrailingSlash(mode = readSvedocsBuildMode()): SvedocsTrailingSlashOption {
-  return mode === 'static' || mode === 'spa' ? 'always' : 'never';
+  return routeTrailingSlash(mode);
 }
 
 function readSvedocsBuildModeEnv(): string | undefined {

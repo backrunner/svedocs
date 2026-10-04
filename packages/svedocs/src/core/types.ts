@@ -48,6 +48,7 @@ export interface SvedocsSeo {
   keywords?: string[];
   type?: string;
   author?: string;
+  authorUrl?: string;
   authorType?: 'Person' | 'Organization';
   publishedTime?: string;
   updatedTime?: string;
@@ -467,6 +468,7 @@ export interface SvedocsResolvedConfig {
     };
     robots: boolean;
     defaultAuthor?: string;
+    defaultAuthorUrl?: string;
     defaultAuthorType?: 'Person' | 'Organization';
     head: SvedocsResolvedSeoHead;
     ogImage: false | {

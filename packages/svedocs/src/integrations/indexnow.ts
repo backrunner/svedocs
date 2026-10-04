@@ -1,6 +1,6 @@
 import type { SvedocsPage, SvedocsResolvedConfig } from '../core/types.js';
 import { isDiscoverablePage } from '../core/seo.js';
-import { formatRoutePathForBuildMode } from '../core/utils.js';
+import { createPageCanonicalUrl } from '../core/urls.js';
 
 export interface IndexNowPayload {
   host: string;
@@ -24,7 +24,9 @@ export function createIndexNowPayloads(config: SvedocsResolvedConfig, pages: Sve
   const urls = new Set<string>();
   for (const page of pages) {
     if (!isDiscoverablePage(page, config)) continue;
-    const url = new URL(page.seo.canonical || formatRoutePathForBuildMode(page.routePath, config.build.mode), site);
+    const canonical = createPageCanonicalUrl(config, page);
+    if (!canonical) continue;
+    const url = new URL(canonical, site);
     if (url.origin !== site.origin) continue;
     url.hash = '';
     urls.add(url.href);

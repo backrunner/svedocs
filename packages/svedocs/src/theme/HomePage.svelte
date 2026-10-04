@@ -6,7 +6,10 @@
   import SafeRenderError from './SafeRenderError.svelte';
   import RootLayout from './RootLayout.svelte';
   import ThemeInit from './ThemeInit.svelte';
+  import { claimThemeInitializer } from './theme-initializer.js';
   import type { SvedocsThemeComponentMap, SvedocsThemeContext } from './types.js';
+
+  const ownsThemeInitializer = claimThemeInitializer();
 
   export let page: SvedocsPage;
   export let pages: SvedocsPage[] = [];
@@ -170,7 +173,7 @@
   }
 </script>
 
-{#if Boolean(themeComponents.Root)}
+{#if ownsThemeInitializer}
   <ThemeInit
     defaultMode={config.theme.defaultMode}
     languageTag={resolvedContext.languageTag}

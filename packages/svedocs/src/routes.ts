@@ -32,3 +32,5 @@ export async function loadSvedocsPage(
   }
   return { page: data?.default ?? page, content: content?.default, layout: layout?.default };
 }
+
+export { createSvedocsHtmlHandle, getSvedocsDocumentAttributes, type SvedocsHtmlHandleOptions } from './routes/html.js';

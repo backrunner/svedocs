@@ -1,3 +1,4 @@
+import { createCanonicalUrl } from '../core/urls.js';
 import type { SvedocsPage, SvedocsResolvedConfig } from '../core/types.js';
 import { isDiscoverablePage } from '../core/seo.js';
 import { createDisabledDiscoveryResponse, createDiscoveryResponse } from '../og/response.js';
@@ -49,7 +50,7 @@ export function createLlmsFullTxt(
       `# ${sanitizeInline(page.title)}`,
       '',
       ...(page.description ? [`> ${sanitizeInline(page.description)}`, ''] : []),
-      `Source: ${createAbsoluteUrl(config, page.routePath)} · Markdown: ${createAbsoluteUrl(config, createPageMarkdownPath(page))}`,
+      `Source: ${createCanonicalUrl(config, page.routePath) ?? page.routePath} · Markdown: ${createAbsoluteUrl(config, createPageMarkdownPath(page))}`,
       '',
       body,
       ''

@@ -1,3 +1,4 @@
+import { createCanonicalUrl } from '../core/urls.js';
 import { resolveSvedocsPageRoute } from '../core/routes.js';
 import type { SvedocsPage, SvedocsResolvedConfig } from '../core/types.js';
 import { isDiscoverablePage } from '../core/seo.js';
@@ -40,7 +41,7 @@ export function createPageMarkdown(
   }
   lines.push(`# ${sanitizeInline(page.title)}`, '');
   if (body) lines.push(body, '');
-  lines.push(`Source: ${createAbsoluteUrl(config, page.routePath)}`);
+  lines.push(`Source: ${createCanonicalUrl(config, page.routePath) ?? page.routePath}`);
   return lines.join('\n') + '\n';
 }
 

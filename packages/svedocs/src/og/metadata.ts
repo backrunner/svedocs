@@ -1,7 +1,9 @@
 import type { SvedocsPage, SvedocsResolvedConfig, SvedocsResolvedSeoHead, SvedocsSeoHead } from '../core.js';
-import { formatRoutePathForBuildMode } from '../core/utils.js';
+import { createAbsoluteUrl, createPageCanonicalUrl } from '../core/urls.js';
 import { createConfiguredOgImageFormat, createPageOgImagePath } from './image.js';
 import { effectiveRobots, isRobotsMeta, isDiscoverablePage, seoUpdatedTime } from '../core/seo.js';
+import { createStructuredData } from './jsonld.js';
+import { resolveAuthorUrl } from './author.js';
 import { breadcrumbJsonLd, hasBreadcrumbJsonLd } from './structured-data.js';
 import type { SvedocsPageAlternate, SvedocsPageMetadata } from './types.js';
 
@@ -12,9 +14,7 @@ export function createPageMetadata(
 ): SvedocsPageMetadata {
   const title = (page.routePath === '/' || (page.kind === 'page' && page.scopePath === '/') || page.seo.title === config.site.name) ? page.seo.title : `${page.seo.title} | ${config.site.name}`;
   const description = page.seo.description ?? config.site.description;
-  const canonical = page.seo.canonical
-    ? createAbsoluteUrl(config, page.seo.canonical) ?? page.seo.canonical
-    : createAbsoluteRouteUrl(config, page.routePath);
+  const canonical = createPageCanonicalUrl(config, page);
   const keywords = page.seo.keywords ?? [];
   const robots = effectiveRobots(page, config);
   const head = withRssAlternate(config, mergeSeoHead(config.seo.head, page.seo.head));
@@ -26,7 +26,7 @@ export function createPageMetadata(
     : createAbsoluteUrl(config, createPageOgImagePath(page, createConfiguredOgImageFormat(config)));
   const image = page.seo.image ? createAbsoluteUrl(config, page.seo.image) : generatedImage;
   const type = page.seo.type ?? (page.kind === 'doc' ? 'article' : 'website');
-  const author = page.seo.author ?? config.seo.defaultAuthor;
+  const author = resolveAuthorUrl(config, page);
   const updatedTime = seoUpdatedTime(page);
   const pageLanguage = getPageLanguage(config, page);
   const ogLocale = pageOpenGraphLocale(config, page.locale, pageLanguage);
@@ -40,6 +40,8 @@ export function createPageMetadata(
     .filter((alternate) => alternate.lang !== 'x-default' && alternate.locale !== page.locale)
     .map((alternate) => pageOpenGraphLocale(config, alternate.locale, alternate.lang))
     .filter((locale): locale is string => Boolean(locale));
+  const structured = createStructuredData(config, page, { title, description, ...(canonical ? { canonical } : {}), ...(image ? { image } : {}) }, head.jsonLd, pageLanguage);
+  head.jsonLd = structured.entities;
   return {
     title,
     description,
@@ -67,12 +69,7 @@ export function createPageMetadata(
       description,
       ...(image ? { image, imageAlt } : {})
     },
-    jsonLd: createPageJsonLd(config, page, {
-      title,
-      description,
-      ...(canonical ? { canonical } : {}),
-      ...(image ? { image } : {})
-    })
+    jsonLd: structured.page
   };
 }
 
@@ -89,9 +86,7 @@ export function createPageAlternates(
   const alternates: SvedocsPageAlternate[] = [];
   for (const candidate of candidates) {
     if (!candidate.locale) continue;
-    const href = candidate.seo.canonical
-      ? createAbsoluteUrl(config, candidate.seo.canonical) ?? candidate.seo.canonical
-      : createAbsoluteRouteUrl(config, candidate.routePath);
+    const href = createPageCanonicalUrl(config, candidate);
     if (!href) continue;
     const locale = config.i18n.locales.find((item) => item.code === candidate.locale);
     alternates.push({
@@ -104,11 +99,7 @@ export function createPageAlternates(
   const defaultPage = defaultLocale
     ? candidates.find((candidate) => candidate.locale === defaultLocale)
     : undefined;
-  const defaultHref = defaultPage?.seo.canonical
-    ? createAbsoluteUrl(config, defaultPage.seo.canonical) ?? defaultPage.seo.canonical
-    : defaultPage
-      ? createAbsoluteRouteUrl(config, defaultPage.routePath)
-      : undefined;
+  const defaultHref = defaultPage ? createPageCanonicalUrl(config, defaultPage) : undefined;
   const defaultAlternate: SvedocsPageAlternate[] = defaultHref
     ? [
         {
@@ -155,42 +146,6 @@ function uniqueAlternates(alternates: SvedocsPageAlternate[]): SvedocsPageAltern
   });
 }
 
-function createPageJsonLd(
-  config: SvedocsResolvedConfig,
-  page: SvedocsPage,
-  metadata: Pick<SvedocsPageMetadata, 'title' | 'description' | 'canonical' | 'image'>
-): Record<string, unknown> {
-  const graph: Record<string, unknown> = {
-    '@context': 'https://schema.org',
-    '@type': page.kind === 'doc' ? 'TechArticle' : 'WebPage',
-    headline: metadata.title,
-    description: metadata.description,
-    inLanguage: getPageLanguage(config, page),
-    isPartOf: {
-      '@type': 'WebSite',
-      name: config.site.name,
-      ...(config.site.url ? { url: config.site.url } : {})
-    }
-  };
-  if (metadata.canonical) graph.url = metadata.canonical;
-  if (metadata.image) graph.image = metadata.image;
-  const author = page.seo.author ?? config.seo.defaultAuthor;
-  const updatedTime = seoUpdatedTime(page);
-  if (author) {
-    graph.author = {
-      '@type': page.seo.authorType ?? config.seo.defaultAuthorType ?? 'Person',
-      name: author
-    };
-  }
-  if (page.seo.publishedTime) graph.datePublished = page.seo.publishedTime;
-  if (updatedTime) graph.dateModified = updatedTime;
-  if (page.kind === 'doc') {
-    graph.position = page.order;
-    graph.about = page.headings.map((heading) => heading.text);
-  }
-  return graph;
-}
-
 function getPageLanguage(config: SvedocsResolvedConfig, page: SvedocsPage): string {
   const code = page.locale ?? config.i18n.defaultLocale ?? 'en';
   const locale = config.i18n.locales.find((candidate) => candidate.code === code);
@@ -203,16 +158,6 @@ function pageOpenGraphLocale(config: SvedocsResolvedConfig, code: string | undef
   // Do not guess a territory for a language-only hreflang.
   const match = /^([a-z]{2,3})(?:-[a-z]{4})?-([a-z]{2})$/i.exec(language);
   return match ? `${match[1]!.toLowerCase()}_${match[2]!.toUpperCase()}` : undefined;
-}
-
-function createAbsoluteUrl(config: SvedocsResolvedConfig, value: string): string | undefined {
-  if (/^https?:\/\//.test(value)) return value;
-  if (!config.site.url) return undefined;
-  return new URL(value, config.site.url).href;
-}
-
-function createAbsoluteRouteUrl(config: SvedocsResolvedConfig, routePath: string): string | undefined {
-  return createAbsoluteUrl(config, formatRoutePathForBuildMode(routePath, config.build.mode));
 }
 
 export function serializeJsonLd(value: unknown): string {

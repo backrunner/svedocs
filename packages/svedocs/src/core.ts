@@ -6,3 +6,4 @@ export * from './core/routes.js';
 export { createSearchRecords, createPageSearchRecords, createPageSearchRecord } from './core/search.js';
 export * from './core/links.js';
 export * from './core/checks.js';
+export * from './core/urls.js';

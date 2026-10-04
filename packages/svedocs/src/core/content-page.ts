@@ -1,3 +1,4 @@
+import { createCanonicalUrl } from './urls.js';
 import { stat } from 'node:fs/promises';
 import path from 'node:path';
 import matter from 'gray-matter';
@@ -10,7 +11,7 @@ import { defaultSvedocsMessages } from './config.js';
 import { resolveSvedocsHref, type SvedocsRouteTarget } from './routes.js';
 import { createPageSearchRecord, createSectionRecords } from './search.js';
 import type { SvedocsPage, SvedocsResolvedConfig } from './types.js';
-import { booleanFrontmatter, formatRoutePathForBuildMode, normalizePath, numberFrontmatter, stringArrayFrontmatter, stringFrontmatter, titleFromSegment } from './utils.js';
+import { booleanFrontmatter, normalizePath, numberFrontmatter, stringArrayFrontmatter, stringFrontmatter, titleFromSegment } from './utils.js';
 
 export async function loadContentFile(
   projectRoot: string,
@@ -66,6 +67,7 @@ export async function loadContentFile(
   const keywords = stringArrayFrontmatter(frontmatter.keywords);
   const type = stringFrontmatter(frontmatter.type) ?? stringFrontmatter(frontmatter.ogType) ?? stringFrontmatter(frontmatter.og_type);
   const author = stringFrontmatter(frontmatter.author) ?? config.seo.defaultAuthor;
+  const authorUrl = stringFrontmatter(frontmatter.authorUrl);
   const robots = stringFrontmatter(frontmatter.robots);
   const head = normalizeSeoHead(frontmatter.head);
   const publishedTime = dateFrontmatter(frontmatter.publishedTime)
@@ -75,7 +77,8 @@ export async function loadContentFile(
   const updatedTime = dateFrontmatter(frontmatter.updatedTime)
     ?? dateFrontmatter(frontmatter.updated_time)
     ?? dateFrontmatter(frontmatter.updated);
-  const canonical = stringFrontmatter(frontmatter.canonical) ?? createPageCanonicalUrl(config, routePath);
+  const canonical = stringFrontmatter(frontmatter.canonical) || config.site.url
+    ? createCanonicalUrl(config, stringFrontmatter(frontmatter.canonical) ?? routePath) : undefined;
   const image = stringFrontmatter(frontmatter.image);
   const imageAlt = stringFrontmatter(frontmatter.imageAlt);
   const imageWidth = numberFrontmatter(frontmatter.imageWidth);
@@ -106,6 +109,7 @@ export async function loadContentFile(
     frontmatter,
     seo: {
       title: stringFrontmatter(frontmatter.seoTitle) ?? title,
+      ...(authorUrl ? { authorUrl } : {}),
       ...(frontmatter.authorType === 'Person' || frontmatter.authorType === 'Organization' ? { authorType: frontmatter.authorType } : {}),
       ...(imageAlt ? { imageAlt } : {}),
       ...(imageWidth ? { imageWidth } : {}),
@@ -177,11 +181,6 @@ function createMarkdownMessages(config: SvedocsResolvedConfig, locale: string | 
 
 function createEditUrl(baseUrl: string, sourcePath: string): string {
   return `${baseUrl.replace(/\/$/, '')}/${normalizePath(sourcePath)}`;
-}
-
-function createPageCanonicalUrl(config: SvedocsResolvedConfig, routePath: string): string | undefined {
-  if (!config.site.url) return undefined;
-  return new URL(formatRoutePathForBuildMode(routePath, config.build.mode), config.site.url).href;
 }
 
 function dateFrontmatter(value: unknown): string | undefined {

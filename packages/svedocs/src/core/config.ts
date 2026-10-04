@@ -150,6 +150,7 @@ export function resolveSvedocsConfig(config: SvedocsConfig = {}): SvedocsResolve
       rss,
       robots: config.seo?.robots ?? true,
       ...(config.seo?.defaultAuthor ? { defaultAuthor: config.seo.defaultAuthor } : {}),
+      ...(config.seo?.defaultAuthorUrl ? { defaultAuthorUrl: config.seo.defaultAuthorUrl } : {}),
       ...(config.seo?.defaultAuthorType ? { defaultAuthorType: config.seo.defaultAuthorType } : {}),
       head: {
         meta: config.seo?.head?.meta ?? [],

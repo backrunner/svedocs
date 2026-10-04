@@ -6,8 +6,11 @@
   import RootLayout from './RootLayout.svelte';
   import SafeRenderError from './SafeRenderError.svelte';
   import ThemeInit from './ThemeInit.svelte';
+  import { claimThemeInitializer } from './theme-initializer.js';
   import type { SvedocsPageShellAction } from './types.js';
   import type { SvedocsThemeComponentMap } from './types.js';
+
+  const ownsThemeInitializer = claimThemeInitializer();
 
   export let status: number | undefined = undefined;
   export let message = '';
@@ -42,7 +45,7 @@
   ] as SvedocsPageShellAction[];
 </script>
 
-{#if Root !== RootLayout}
+{#if ownsThemeInitializer}
   <ThemeInit
     defaultMode={config.theme.defaultMode}
     languageTag={context.languageTag}

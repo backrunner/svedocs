@@ -49,6 +49,31 @@ describe('consistent indexing', () => {
 });
 
 describe('metadata correctness', () => {
+  it('keeps author names in JSON-LD and only uses profile URLs for Open Graph', async () => {
+    const defaults = resolveSvedocsConfig({ site: { url: 'https://example.test' }, seo: {
+      defaultAuthor: 'Docs team', defaultAuthorUrl: '/team'
+    } });
+    const metadata = createPageMetadata(defaults, en);
+    expect(metadata.openGraph.author).toBe('https://example.test/team');
+    expect(metadata.jsonLd.author).toEqual({ '@type': 'Person', name: 'Docs team', url: 'https://example.test/team' });
+    const team = createPageMetadata(resolveSvedocsConfig({ ...defaults, seo: { ...defaults.seo, defaultAuthorType: 'Organization' } }), en);
+    expect(team.jsonLd.author).toEqual(team.jsonLd.publisher);
+    expect(team.head.jsonLd.find((entry) => entry['@type'] === 'Organization')).toMatchObject({ url: 'https://example.test/team' });
+    const other = { ...en, seo: { ...en.seo, author: 'Another author' } };
+    expect(createPageMetadata(defaults, other).openGraph.author).toBeUndefined();
+    expect(createPageMetadata(defaults, { ...other, seo: { ...other.seo, authorUrl: 'https://author.test/profile/' } }).openGraph.author).toBe('https://author.test/profile/');
+    expect(createPageMetadata(defaults, { ...other, seo: { ...other.seo, authorUrl: 'javascript:alert(1)' } }).openGraph.author).toBeUndefined();
+    expect(createPageMetadata(resolveSvedocsConfig({ seo: { defaultAuthor: 'Team' } }), en).openGraph.author).toBeUndefined();
+    const root = await mkdtemp(path.join(tmpdir(), 'svedocs-author-url-'));
+    try {
+      await mkdir(path.join(root, 'content/docs'), { recursive: true });
+      await writeFile(path.join(root, 'content/docs/index.md'), '---\ntitle: Guide\nauthor: Writer\nauthorUrl: https://writer.test/\n---\n\n# Guide');
+      const manifest = await loadSvedocsContent({ projectRoot: root, config: { seo: { defaultAuthorUrl: 'https://other.test/' } } });
+      expect(manifest.pages[0]?.seo.authorUrl).toBe('https://writer.test/');
+      expect(createPageMetadata(manifest.config, manifest.pages[0]!).jsonLd.author).toMatchObject({ name: 'Writer', url: 'https://writer.test/' });
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
+
   it('keeps localized homepage titles clean and emits explicit author and locale semantics', () => {
     const home = createFixturePage({ kind: 'page', routePath: '/zh', scopePath: '/', locale: 'zh', seo: { title: 'Docs' } });
     expect(createPageMetadata(config, home).title).toBe('Docs');
@@ -69,7 +94,7 @@ describe('metadata correctness', () => {
       { '@type': 'ListItem', position: 2, name: '指南', item: 'https://example.test/docs/zh/missing/guide/' }
     ]);
     const custom = { '@graph': [{ '@type': 'BreadcrumbList', itemListElement: [] }] };
-    expect(createPageMetadata(config, { ...page, seo: { ...page.seo, head: { jsonLd: [custom] } } }, [zh, page]).head.jsonLd).toEqual([custom]);
+    expect(createPageMetadata(config, { ...page, seo: { ...page.seo, head: { jsonLd: [custom] } } }, [zh, page]).head.jsonLd.filter((node) => node['@type'] === 'BreadcrumbList')).toEqual([{ '@context': 'https://schema.org', ...custom['@graph'][0] }]);
   });
 
   it('describes generated images without inventing dimensions for custom images', () => {

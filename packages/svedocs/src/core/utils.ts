@@ -2,13 +2,27 @@ export function normalizePath(value: string): string {
   return value.replace(/\\/g, '/');
 }
 
-export function formatRoutePathForBuildMode(routePath: string, mode: 'edge' | 'static' | 'spa'): string {
-  const clean = routePath.replace(/^\/+|\/+$/g, '');
-  const normalized = clean ? `/${clean}` : '/';
-  if (mode === 'static' || mode === 'spa') {
-    return normalized === '/' ? '/' : `${normalized}/`;
+/** Route identity ignores query/hash and resolves dot segments consistently. */
+export function normalizeRoutePath(value: string): string {
+  const [pathname = ''] = normalizePath(value).split(/[?#]/, 1);
+  const segments: string[] = [];
+  for (const segment of pathname.split('/')) {
+    if (!segment || segment === '.') continue;
+    if (segment === '..') segments.pop();
+    else segments.push(segment);
   }
-  return normalized;
+  return segments.length ? `/${segments.join('/')}` : '/';
+}
+
+export function routeTrailingSlash(mode: 'edge' | 'static' | 'spa'): 'always' | 'never' {
+  return mode === 'edge' ? 'never' : 'always';
+}
+
+export function formatRoutePathForBuildMode(routePath: string, mode: 'edge' | 'static' | 'spa'): string {
+  const suffixIndex = routePath.search(/[?#]/);
+  const suffix = suffixIndex < 0 ? '' : routePath.slice(suffixIndex);
+  const normalized = normalizeRoutePath(routePath);
+  return `${normalized}${normalized !== '/' && routeTrailingSlash(mode) === 'always' ? '/' : ''}${suffix}`;
 }
 
 export function stripContentExtension(value: string): string {

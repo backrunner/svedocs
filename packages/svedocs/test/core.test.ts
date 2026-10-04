@@ -1881,7 +1881,8 @@ describe('svedocs Batch 0 skeleton', () => {
 
       expect(metadata.title).toBe('Guide | Fixture');
       expect(metadata.openGraph.type).toBe('article');
-      expect(metadata.openGraph.author).toBe('Docs Team');
+      expect(metadata.openGraph.author).toBeUndefined();
+      expect(metadata.jsonLd.author).toEqual({ '@type': 'Person', name: 'Docs Team' });
     expect(metadata.openGraph.publishedTime).toBe('2026-05-17T00:00:00.000Z');
     expect(metadata.openGraph.locale).toBeUndefined();
     expect(metadata.jsonLd.dateModified).toBeUndefined();
@@ -1898,8 +1899,9 @@ describe('svedocs Batch 0 skeleton', () => {
         { rel: 'preload', href: '/fonts/docs.woff2', as: 'font', type: 'font/woff2', crossorigin: 'anonymous' }
       ]);
       expect(metadata.head.jsonLd).toEqual([
-        { '@type': 'Organization', name: 'Fixture Org' },
-        { '@type': 'BreadcrumbList', name: 'Guide breadcrumb' }
+        expect.objectContaining({ '@type': 'WebSite', '@id': 'https://fixture.test/#website' }),
+        { '@context': 'https://schema.org', '@type': 'Organization', name: 'Fixture Org' },
+        { '@context': 'https://schema.org', '@type': 'BreadcrumbList', name: 'Guide breadcrumb' }
       ]);
     expect(createPageOgImagePath(page)).toMatch(/^\/og\/docs-guide-[a-f0-9]{16}\.svg$/);
     expect((await createPageOgImageResponse(config, page)).headers.get('content-type')).toContain('image/png');

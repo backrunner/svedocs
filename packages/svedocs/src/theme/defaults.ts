@@ -15,6 +15,7 @@ import PageShell from './PageShell.svelte';
 import PageTools from './PageTools.svelte';
 import RenderError from './RenderError.svelte';
 import RootLayout from './RootLayout.svelte';
+import Seo from './Seo.svelte';
 import SearchDialog from './SearchDialog.svelte';
 import SidebarTree from './SidebarTree.svelte';
 import SocialNav from './SocialNav.svelte';
@@ -25,6 +26,7 @@ import type { SvedocsThemeComponentMap } from './types.js';
 
 export const defaultThemeComponents: SvedocsThemeComponentMap = {
   Root: RootLayout,
+  Seo,
   Layout: LayoutShell,
   Docs: DocsLayout,
   DocsShell,
