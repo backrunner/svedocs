@@ -1,5 +1,11 @@
 # svedocs
 
+## 0.2.4
+
+### Patch Changes
+
+- Keep the active sidebar page visible after previous/next navigation and when opening mobile navigation, without scrolling the document.
+
 ## 0.2.3
 
 ### Patch Changes
