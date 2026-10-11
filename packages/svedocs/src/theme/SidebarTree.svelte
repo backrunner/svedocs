@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { revealSidebarPage } from './sidebar-scroll.js';
   import type { SvedocsTreeItem } from '../core/types.js';
 
   export let items: SvedocsTreeItem[] = [];
@@ -55,7 +56,7 @@
 </script>
 
 {#if depth === 0 && sections}
-  <div class="sd-sidebar-root">
+  <div class="sd-sidebar-root" use:revealSidebarPage={currentPath}>
     {#each sections as section, sectionIndex}
       {#if section.heading}
         {@const sectionActive = isActive(section.heading)}
