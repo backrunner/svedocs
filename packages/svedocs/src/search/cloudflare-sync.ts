@@ -124,9 +124,12 @@ function createCloudflareDeletePlan(options: CloudflareAiSearchSyncOptions, uplo
   ]);
 }
 
-function createCloudflareItemFilename(document: CloudflareAiSearchSyncDocument): string {
+async function createCloudflareItemFilename(document: CloudflareAiSearchSyncDocument): Promise<string> {
   const safe = document.id.replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-|-$/g, '') || 'svedocs-page';
-  return `${safe.slice(0, 124)}.md`;
+  // Sanitizing Unicode headings or truncating long IDs must not merge different records.
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(document.id)));
+  const suffix = Array.from(digest.subarray(0, 16), (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return `${safe.slice(0, 91)}-${suffix}.md`;
 }
 
 async function deleteCloudflareAiSearchItem(
@@ -156,7 +159,7 @@ async function uploadCloudflareAiSearchDocument(
   form.append(
     'file',
     new Blob([document.content], { type: 'text/markdown' }),
-    createCloudflareItemFilename(document)
+    await createCloudflareItemFilename(document)
   );
   form.append('metadata', JSON.stringify(document.metadata));
   if (typeof options.waitForCompletion === 'boolean') {

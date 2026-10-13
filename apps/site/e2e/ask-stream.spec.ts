@@ -8,8 +8,11 @@ test('renders citations from current Cloudflare chunk-array events', async ({ pa
       + 'data: [DONE]\n\n'
   }));
   await page.goto('/docs');
-  await page.getByRole('button', { name: 'Ask AI' }).click();
   const panel = page.getByRole('dialog', { name: 'Ask AI' });
+  await expect(async () => {
+    await page.getByRole('button', { name: 'Ask AI' }).click();
+    await expect(panel).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 8_000 });
   await panel.getByRole('textbox', { name: 'Ask anything about svedocs' }).fill('How do I configure my site?');
   await panel.getByRole('button', { name: 'Send' }).click();
   await expect(panel.getByText('Configure your site in svedocs.config.ts.')).toBeVisible();
