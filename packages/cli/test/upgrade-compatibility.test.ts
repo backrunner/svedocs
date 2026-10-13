@@ -11,7 +11,7 @@ describe('SvelteKit 3 upgrade guidance', () => {
   });
 
   it('does not warn for upgrades staying on either side of the migration', () => {
-    for (const [currentSpec, targetSpec] of [['0.2.3', '0.2.4'], ['0.3.0', '0.3.1']]) {
+    for (const [currentSpec, targetSpec] of [['0.2.3', '0.2.4'], ['0.3.0', '0.3.1']] as const) {
       expect(checkUpgradeCompatibility({ currentSpec, targetSpec, currentSpecSource: 'installed package' }).notices).toEqual([]);
     }
   });
