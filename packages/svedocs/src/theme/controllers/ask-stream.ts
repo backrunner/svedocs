@@ -64,7 +64,7 @@ export function readAskEvent(block: string, t: SvedocsTranslate, handlers: Strea
           ?? ''
       );
     }
-    if (event === 'chunks') handlers.citations(normalizeChunkCitations(payload.chunks ?? [], t));
+    if (event === 'chunks') handlers.citations(normalizeChunkCitations(Array.isArray(payload) ? payload : payload.chunks ?? [], t));
     if (event === 'citations') handlers.citations(payload.citations ?? []);
     if (event === 'error') handlers.error(payload.error ?? t('ask.failed'));
   } catch {
