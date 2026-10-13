@@ -11,7 +11,7 @@ You can generate a new project or add svedocs to an existing SvelteKit app. For 
 
 ## Requirements
 
-- Node.js 20.19 or newer.
+- Node.js 22.17 or newer.
 - A SvelteKit project using ESM.
 - pnpm, npm, yarn, or bun. The templates default to pnpm because the repository itself uses pnpm.
 
@@ -101,14 +101,25 @@ export default defineConfig({
 Register the Vite plugin:
 
 ```ts title="vite.config.ts"
+import adapter from '@sveltejs/adapter-auto';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 import { svedocs } from 'svedocs/vite';
-import svedocsConfig from './svedocs.config';
+import { svedocsPreprocess, svedocsSvelteExtensions } from 'svedocs/svelte';
+import svedocsConfig from './svedocs.config.ts';
 
 export default defineConfig({
-  plugins: [svedocs({ config: svedocsConfig }), tailwindcss(), sveltekit()]
+  plugins: [
+    svedocs({ config: svedocsConfig }),
+    tailwindcss(),
+    sveltekit({
+      adapter: adapter(),
+      extensions: svedocsSvelteExtensions,
+      preprocess: [vitePreprocess(), svedocsPreprocess()]
+    })
+  ]
 });
 ```
 
@@ -126,18 +137,17 @@ Import the default theme CSS once in the root layout:
 
 Keep your existing SvelteKit plugins and layout content when merging these changes. This minimal setup enables local search and disables Ask AI until you add its runtime route.
 
-Enable the Svelte content extensions and preprocessors in `svelte.config.js`. This example uses `adapter-auto`; keep your existing adapter and other `kit` settings if the application already has a deployment target. Install `@sveltejs/adapter-auto` as a dev dependency if you use this example.
+SvelteKit 3 keeps adapter, extension and preprocessor settings in `sveltekit({ ... })` inside `vite.config.ts`. Keep your existing adapter when merging this example, or install `@sveltejs/adapter-auto` as a dev dependency. It requires Node.js 22.17+, Svelte 5.57+, Vite 8 and TypeScript 6.x. Remove the old application `svelte.config.js`, change `$lib` imports to `#lib`, use `$app/env` and `$app/state`, and extend `$app/tsconfig` in `tsconfig.json`.
 
-```js title="svelte.config.js"
-import adapter from '@sveltejs/adapter-auto';
-import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
-import { svedocsPreprocess, svedocsSvelteExtensions } from 'svedocs/svelte';
+Add native subpath imports to `package.json`; TypeScript/JavaScript imports need a file extension (for example `#lib/server/env.js`). Set `"extends": "$app/tsconfig"` and `"include": ["src/**/*.ts", "src/**/*.svelte", ".svelte-kit/**/*.d.ts"]` in `tsconfig.json`.
 
-export default {
-  extensions: svedocsSvelteExtensions,
-  preprocess: [vitePreprocess(), svedocsPreprocess()],
-  kit: { adapter: adapter() }
-};
+```json title="package.json"
+{
+  "imports": {
+    "#lib": "./src/lib/index.js",
+    "#lib/*": "./src/lib/*"
+  }
+}
 ```
 
 ### Server document attributes and route options
@@ -277,3 +287,10 @@ Before changing dependencies, the upgrade command checks whether the requested v
 | Routes do not update while editing content. | Confirm `svedocs({ config })` is registered in `vite.config.ts`. |
 | Search route works locally but not in production. | Confirm provider credentials or Cloudflare bindings exist in the runtime environment. |
 | Build fails in `spa` mode. | Prefer `edge` or `static`; use `spa` only for constrained hosts that need a fallback. |
+
+
+## Upgrading from 0.2
+
+Version 0.3 requires SvelteKit 3 and Node.js 22.17+. Follow the [SvelteKit 3 migration guide](https://svelte.dev/docs/kit/migrating-to-sveltekit-3), then merge the configuration and route patterns shown above. For Cloudflare, also migrate runtime bindings to `cloudflare:workers` and preserve the static/SPA fallback alias from the generated template.
+
+`svedocs upgrade` updates the framework and CLI packages together; it does not rewrite SvelteKit configuration or upgrade the rest of your dependencies. Keep TypeScript on 6.x, update the SvelteKit adapters, and run type checks, a production build, and browser navigation checks before deploying.

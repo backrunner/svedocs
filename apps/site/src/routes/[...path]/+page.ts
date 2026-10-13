@@ -1,4 +1,4 @@
-import { loadSvedocsRoute } from '$lib/loadPage';
+import { loadSvedocsRoute } from '#lib/loadPage.js';
 import config from 'virtual:svedocs/config';
 import pages from 'virtual:svedocs/page-index';
 import { svedocsPagePrerender } from 'svedocs/cloudflare';

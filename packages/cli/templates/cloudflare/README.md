@@ -32,11 +32,11 @@ svedocs({
   config: svedocsConfig,
   theme: {
     components: {
-      Navbar: '$lib/theme/Navbar.svelte',
-      Article: '$lib/theme/Article.svelte',
-      Search: '$lib/theme/Search.svelte',
-      AskAi: '$lib/theme/AskAi.svelte',
-      Error: '$lib/theme/Error.svelte'
+      Navbar: '#lib/theme/Navbar.svelte',
+      Article: '#lib/theme/Article.svelte',
+      Search: '#lib/theme/Search.svelte',
+      AskAi: '#lib/theme/AskAi.svelte',
+      Error: '#lib/theme/Error.svelte'
     }
   }
 });
@@ -52,8 +52,8 @@ Keep page metadata and searchable text in `content/pages/playground.md`, then re
 ```ts
 svedocs({
   config: svedocsConfig,
-  pageComponents: { '/playground': '$lib/Playground.svelte' },
-  layouts: { feature: '$lib/FeatureLayout.svelte' }
+  pageComponents: { '/playground': '#lib/Playground.svelte' },
+  layouts: { feature: '#lib/FeatureLayout.svelte' }
 });
 ```
 

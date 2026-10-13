@@ -10,7 +10,7 @@ Treat svedocs as an integrated SvelteKit framework. Preserve its generated conte
 ## Inspect before editing
 
 1. Read `package.json` and detect the installed `svedocs` and `svedocs-cli` versions.
-2. Read `svedocs.config.*`, `vite.config.*`, `svelte.config.*`, `src/app.d.ts`, the root layout, root page route, catch-all page route, and relevant content files.
+2. Read `svedocs.config.*`, `vite.config.*`, `src/app.d.ts`, the root layout, root page route, catch-all page route, and relevant content files.
 3. Detect whether the target is a generated consumer project or the svedocs monorepo. In the monorepo, follow its `AGENTS.md` and keep framework behavior inside `packages/svedocs`.
 4. Preserve existing user customizations and the selected package manager.
 

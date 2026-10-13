@@ -1,5 +1,5 @@
 {
-  "extends": "./.svelte-kit/tsconfig.json",
+  "extends": "$app/tsconfig",
   "compilerOptions": {
     "strict": true,
     "moduleResolution": "bundler",
@@ -10,7 +10,6 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.svelte",
-    ".svelte-kit/ambient.d.ts",
-    ".svelte-kit/types/**/*.ts"
+    ".svelte-kit/**/*.d.ts"
   ]
 }

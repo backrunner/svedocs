@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -1152,16 +1153,16 @@ describe('svedocs Batch 0 skeleton', () => {
       },
       theme: {
         components: {
-          Layout: '$lib/theme/Layout.svelte',
-          DocsShell: '$lib/theme/DocsShell.svelte',
-          PageShell: '$lib/theme/PageShell.svelte',
-          Error: '$lib/theme/Error.svelte',
-          Brand: '$lib/theme/Brand.svelte',
-          Navbar: '$lib/theme/Navbar.svelte',
-          Article: '$lib/theme/Article.svelte',
-          Search: '$lib/theme/Search.svelte',
-          AskAi: '$lib/theme/AskAi.svelte',
-          RenderError: '$lib/theme/RenderError.svelte'
+          Layout: '#lib/theme/Layout.svelte',
+          DocsShell: '#lib/theme/DocsShell.svelte',
+          PageShell: '#lib/theme/PageShell.svelte',
+          Error: '#lib/theme/Error.svelte',
+          Brand: '#lib/theme/Brand.svelte',
+          Navbar: '#lib/theme/Navbar.svelte',
+          Article: '#lib/theme/Article.svelte',
+          Search: '#lib/theme/Search.svelte',
+          AskAi: '#lib/theme/AskAi.svelte',
+          RenderError: '#lib/theme/RenderError.svelte'
         }
       }
     }) as unknown as {
@@ -1176,7 +1177,7 @@ describe('svedocs Batch 0 skeleton', () => {
     const loaded = await plugin.load?.('\0virtual:svedocs/theme-components') as string;
 
     expect(resolvedId).toBe('\0virtual:svedocs/theme-components');
-    expect(loaded).toContain('import C0 from "$lib/theme/Layout.svelte";');
+    expect(loaded).toContain('import C0 from "#lib/theme/Layout.svelte";');
     expect(loaded).toContain('"Layout": C0');
     expect(loaded).toContain('"Error": C3');
     expect(loaded).toContain('"Navbar": C5');
@@ -1218,7 +1219,7 @@ describe('svedocs Batch 0 skeleton', () => {
       },
       theme: {
         components: {
-          NavBar: '$lib/theme/Navbar.svelte'
+          NavBar: '#lib/theme/Navbar.svelte'
         } as never
       }
     })).toThrow(/Unknown svedocs theme component key: "NavBar".*Navbar/);
@@ -1932,7 +1933,7 @@ describe('svedocs Batch 0 skeleton', () => {
       26,
       10
     ]);
-    const font = await readFile(new URL('../../../node_modules/.pnpm/katex@0.16.47/node_modules/katex/dist/fonts/KaTeX_Main-Regular.ttf', import.meta.url));
+    const font = await readFile(path.join(path.dirname(createRequire(import.meta.url).resolve('katex')), 'fonts/KaTeX_Main-Regular.ttf'));
     const satoriSvg = await createSatoriOgSvg(
       { title: 'Guide', description: 'Read the guide.' },
       { fonts: [{ name: 'Inter', data: font, weight: 400, style: 'normal' }] }

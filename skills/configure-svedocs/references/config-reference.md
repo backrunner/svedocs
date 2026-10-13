@@ -117,7 +117,7 @@ Use:
 - `static` for complete prerendering;
 - `spa` only when a host requires a fallback page.
 
-`SVEDOCS_BUILD_MODE` and `svedocs build --mode` may override config. Keep `svelte.config.*` and generated Wrangler settings aligned. Current Cloudflare AI Search fields are `binding`, `instanceName`, optional `namespace`, and `remote`.
+`SVEDOCS_BUILD_MODE` and `svedocs build --mode` may override config. Keep `vite.config.*` and generated Wrangler settings aligned. Current Cloudflare AI Search fields are `binding`, `instanceName`, optional `namespace`, and `remote`.
 
 ## Cross-field checks
 

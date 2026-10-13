@@ -44,7 +44,7 @@ function createWeakEtag(value: string): string {
   return `W/"${value.length.toString(16)}-${(hash >>> 0).toString(16)}"`;
 }
 
-function matchesEtag(header: string | null, etag: string): boolean {
+export function matchesEtag(header: string | null, etag: string): boolean {
   if (!header) return false;
   const expected = stripWeakPrefix(etag);
   return header.split(',').some((candidate) => {

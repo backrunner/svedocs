@@ -109,7 +109,7 @@ svedocs({
   config: svedocsConfig,
   theme: {
     components: {
-      Home: '$lib/theme/Home.svelte'
+      Home: '#lib/theme/Home.svelte'
     }
   }
 });

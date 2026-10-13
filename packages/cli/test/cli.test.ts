@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { spawn } from 'node:child_process';
@@ -75,7 +76,7 @@ describe('svedocs-cli Batch 0 shell', () => {
 
       expect(result.ok).toBe(true);
       expect(result.message).toContain('Updated');
-      expect(result.message).toContain('No breaking upgrade rules are registered yet');
+      expect(result.message).not.toContain('sveltekit-3-migration');
       expect(packageJson.dependencies?.svedocs).toBe('^0.2.0');
       expect(packageJson.devDependencies?.['svedocs-cli']).toBe('^0.2.0');
     } finally {
@@ -151,14 +152,14 @@ describe('svedocs-cli Batch 0 shell', () => {
       const cloudflare = await runCreateSvedocsCli(['edge-app', '--template', 'cloudflare'], runtime);
       const minimalConfig = await readFile(path.join(tmp, 'minimal-app', 'svedocs.config.ts'), 'utf8');
       const minimalPackage = await readFile(path.join(tmp, 'minimal-app', 'package.json'), 'utf8');
-      const minimalSvelteConfig = await readFile(path.join(tmp, 'minimal-app', 'svelte.config.js'), 'utf8');
+      const minimalViteConfig = await readFile(path.join(tmp, 'minimal-app', 'vite.config.ts'), 'utf8');
       const minimalPageRoute = await readFile(path.join(tmp, 'minimal-app', 'src/routes/+page.ts'), 'utf8');
       const minimalCatchAllRoute = await readFile(path.join(tmp, 'minimal-app', 'src/routes/[...path]/+page.ts'), 'utf8');
       const minimalErrorRoute = await readFile(path.join(tmp, 'minimal-app', 'src/routes/+error.svelte'), 'utf8');
       const minimalSitemapRoute = await readFile(path.join(tmp, 'minimal-app', 'src/routes/sitemap.xml/+server.ts'), 'utf8');
       const minimalFeedRoute = await readFile(path.join(tmp, 'minimal-app', 'src/routes/feed.xml/+server.ts'), 'utf8');
       const cloudflareWrangler = await readFile(path.join(tmp, 'edge-app', 'wrangler.toml'), 'utf8');
-      const cloudflareSvelteConfig = await readFile(path.join(tmp, 'edge-app', 'svelte.config.js'), 'utf8');
+      const cloudflareViteConfig = await readFile(path.join(tmp, 'edge-app', 'vite.config.ts'), 'utf8');
       const cloudflarePageRoute = await readFile(path.join(tmp, 'edge-app', 'src/routes/+page.ts'), 'utf8');
       const cloudflareCatchAllRoute = await readFile(path.join(tmp, 'edge-app', 'src/routes/[...path]/+page.ts'), 'utf8');
       const cloudflareErrorRoute = await readFile(path.join(tmp, 'edge-app', 'src/routes/+error.svelte'), 'utf8');
@@ -183,13 +184,13 @@ describe('svedocs-cli Batch 0 shell', () => {
       const repositoryManifest = JSON.parse(await readFile(path.join(repoRoot(), 'package.json'), 'utf8'));
       expect(JSON.parse(minimalPackage).dependencies.wrangler).toBe(repositoryManifest.devDependencies.wrangler);
       expect(JSON.parse(await readFile(path.join(tmp, 'edge-app', 'package.json'), 'utf8')).dependencies.wrangler).toBe(repositoryManifest.devDependencies.wrangler);
-      expect(minimalSvelteConfig).toContain(
+      expect(minimalViteConfig).toContain(
         "const remoteBindings = process.env.SVEDOCS_REMOTE_BINDINGS === 'true'"
       );
-      expect(minimalSvelteConfig).toContain(
+      expect(minimalViteConfig).toContain(
         'platformProxy: { remoteBindings, persist: false }'
       );
-      expect(minimalSvelteConfig).toContain("fallback: '200.html'");
+      expect(minimalViteConfig).toContain("fallback: '200.html'");
       expect(minimalPageRoute).toContain('svedocsPagePrerender');
       expect(minimalCatchAllRoute).toContain('createSvedocsRouteEntries');
       expect(minimalCatchAllRoute).toContain('resolveSvedocsPageRoute');
@@ -203,13 +204,13 @@ describe('svedocs-cli Batch 0 shell', () => {
       expect(await readFile(path.join(tmp, 'minimal-app', 'src/routes/+layout.ts'), 'utf8')).toContain('svedocsTrailingSlash');
       expect(cloudflareWrangler).toContain('pages_build_output_dir');
       expect(cloudflareWrangler).toContain('[[ai_search]]');
-      expect(cloudflareSvelteConfig).toContain(
+      expect(cloudflareViteConfig).toContain(
         "const remoteBindings = process.env.SVEDOCS_REMOTE_BINDINGS === 'true'"
       );
-      expect(cloudflareSvelteConfig).toContain(
+      expect(cloudflareViteConfig).toContain(
         'platformProxy: { remoteBindings, persist: false }'
       );
-      expect(cloudflareSvelteConfig).toContain("fallback: '200.html'");
+      expect(cloudflareViteConfig).toContain("fallback: '200.html'");
       expect(cloudflarePageRoute).toContain('svedocsPagePrerender');
       expect(cloudflareCatchAllRoute).toContain('createSvedocsRouteEntries');
       expect(cloudflareCatchAllRoute).toContain('resolveSvedocsPageRoute');
@@ -721,7 +722,7 @@ describe('svedocs-cli Batch 0 shell', () => {
         ].join('\n'),
         'utf8'
       );
-      const font = new URL('../../../node_modules/.pnpm/katex@0.16.47/node_modules/katex/dist/fonts/KaTeX_Main-Regular.ttf', import.meta.url).pathname;
+      const font = path.join(path.dirname(createRequire(new URL('../../svedocs/package.json', import.meta.url)).resolve('katex')), 'fonts/KaTeX_Main-Regular.ttf');
       const result = await withCwd(tmp, () => runSvedocsCli(['og', '--format', 'svg', '--renderer', 'satori', '--font', font, '--out', path.join(tmp, 'og')]));
       const outputName = (await readdir(path.join(tmp, 'og'))).find((file) => file.startsWith('docs-') && file.endsWith('.svg'));
       const output = await readFile(path.join(tmp, 'og', outputName!), 'utf8');
@@ -826,7 +827,7 @@ describe('svedocs-cli Batch 0 shell', () => {
       expect(result.message).toContain('Initialized Cloudflare Pages deployment');
       expect(wrangler).toContain('name = "deploy-site"');
       expect(wrangler).toContain('pages_build_output_dir = "build"');
-      expect(platformTypes).toContain('declare namespace App');
+      expect(platformTypes).toContain('declare namespace Cloudflare');
       expect(log).toContain('vite build mode=static');
       expect(log).toContain('wrangler pages deploy build --project-name deploy-site');
     } finally {

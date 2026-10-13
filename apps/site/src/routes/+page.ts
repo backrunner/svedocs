@@ -1,5 +1,5 @@
 import config from 'virtual:svedocs/config';
-import { loadSvedocsRoute } from '$lib/loadPage';
+import { loadSvedocsRoute } from '#lib/loadPage.js';
 import { svedocsPagePrerender } from 'svedocs/cloudflare';
 import type { PageLoad } from './$types';
 

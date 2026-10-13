@@ -313,10 +313,10 @@ export default defineConfig({
 svedocs({
   theme: {
     components: {
-      Navbar: '$lib/theme/Navbar.svelte',
-      Article: '$lib/theme/Article.svelte',
-      Search: '$lib/theme/Search.svelte',
-      AskAi: '$lib/theme/AskAi.svelte'
+      Navbar: '#lib/theme/Navbar.svelte',
+      Article: '#lib/theme/Article.svelte',
+      Search: '#lib/theme/Search.svelte',
+      AskAi: '#lib/theme/AskAi.svelte'
     }
   }
 });
@@ -455,7 +455,7 @@ description: 使用单页模板展示产品更新。
 ```ts title="vite.config.ts"
 svedocs({
   layouts: {
-    feature: '$lib/FeatureLayout.svelte'
+    feature: '#lib/FeatureLayout.svelte'
   }
 });
 ```

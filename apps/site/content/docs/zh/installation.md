@@ -11,7 +11,7 @@ updatedTime: 2026-10-05
 
 ## 环境要求
 
-- Node.js 20.19 或更高版本。
+- Node.js 22.17 或更高版本。
 - 使用 ESM 的 SvelteKit 项目。
 - pnpm、npm、yarn 或 bun。模板默认偏向 pnpm，因为仓库本身使用 pnpm。
 
@@ -101,14 +101,25 @@ export default defineConfig({
 注册 Vite 插件：
 
 ```ts title="vite.config.ts"
+import adapter from '@sveltejs/adapter-auto';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 import { svedocs } from 'svedocs/vite';
-import svedocsConfig from './svedocs.config';
+import { svedocsPreprocess, svedocsSvelteExtensions } from 'svedocs/svelte';
+import svedocsConfig from './svedocs.config.ts';
 
 export default defineConfig({
-  plugins: [svedocs({ config: svedocsConfig }), tailwindcss(), sveltekit()]
+  plugins: [
+    svedocs({ config: svedocsConfig }),
+    tailwindcss(),
+    sveltekit({
+      adapter: adapter(),
+      extensions: svedocsSvelteExtensions,
+      preprocess: [vitePreprocess(), svedocsPreprocess()]
+    })
+  ]
 });
 ```
 
@@ -126,18 +137,17 @@ export default defineConfig({
 
 合并配置时，保留应用已有的 SvelteKit 插件和布局内容。这份最小配置使用本地搜索，暂时关闭 Ask AI，等添加对应的运行时路由后再启用。
 
-在 `svelte.config.js` 中注册内容扩展名和预处理器。下面使用 `adapter-auto`；已有部署目标的应用应保留当前 adapter 和其他 `kit` 设置。如果直接使用此示例，请将 `@sveltejs/adapter-auto` 安装为开发依赖。
+SvelteKit 3 将 adapter、扩展名和预处理器配置放在 `vite.config.ts` 的 `sveltekit({ ... })` 中。合并示例时保留已有 adapter；如使用示例中的 adapter，请安装 `@sveltejs/adapter-auto` 开发依赖。运行环境要求 Node.js 22.17+、Svelte 5.57+、Vite 8 和 TypeScript 6.x。移除应用旧的 `svelte.config.js`，将 `$lib` 导入改为 `#lib`，使用 `$app/env` 和 `$app/state`，并让 `tsconfig.json` 继承 `$app/tsconfig`。
 
-```js title="svelte.config.js"
-import adapter from '@sveltejs/adapter-auto';
-import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
-import { svedocsPreprocess, svedocsSvelteExtensions } from 'svedocs/svelte';
+在 `package.json` 中添加原生子路径导入；TypeScript/JavaScript 导入需包含文件扩展名（例如 `#lib/server/env.js`）。在 `tsconfig.json` 中设置 `"extends": "$app/tsconfig"`，并包含 `"include": ["src/**/*.ts", "src/**/*.svelte", ".svelte-kit/**/*.d.ts"]`。
 
-export default {
-  extensions: svedocsSvelteExtensions,
-  preprocess: [vitePreprocess(), svedocsPreprocess()],
-  kit: { adapter: adapter() }
-};
+```json title="package.json"
+{
+  "imports": {
+    "#lib": "./src/lib/index.js",
+    "#lib/*": "./src/lib/*"
+  }
+}
 ```
 
 ### 服务端文档属性和路由选项
@@ -277,3 +287,10 @@ svedocs upgrade --check-only
 | 编辑内容后路由没有更新。 | 确认 `vite.config.ts` 注册了 `svedocs({ config })`。 |
 | 搜索路由本地可用但生产不可用。 | 确认生产环境已经配置搜索服务凭据或 Cloudflare 绑定。 |
 | `spa` 模式构建失败。 | 优先使用 `edge` 或 `static`；只有主机必须依赖客户端回退时才使用 `spa`。 |
+
+
+## 从 0.2 升级
+
+0.3 需要 SvelteKit 3 和 Node.js 22.17+。先按 [SvelteKit 3 迁移指南](https://svelte.dev/docs/kit/migrating-to-sveltekit-3) 完成迁移，再合并上面的配置和路由模式。Cloudflare 项目还需改用 `cloudflare:workers` 读取运行时绑定，并保留生成模板中的静态/SPA 替代模块别名。
+
+`svedocs upgrade` 会同步更新框架和 CLI，但不会重写 SvelteKit 配置或升级其他依赖。请将 TypeScript 保持在 6.x，更新 SvelteKit adapters，并在部署前运行类型检查、生产构建和浏览器导航验证。

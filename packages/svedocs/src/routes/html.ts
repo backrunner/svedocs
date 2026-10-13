@@ -1,4 +1,4 @@
-import type { Handle } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit/hooks';
 import type { SvedocsResolvedConfig } from '../core/types.js';
 import { resolveSvedocsPageRoute, type SvedocsRouteTarget } from '../core/routes.js';
 import { normalizeRoutePath } from '../core/utils.js';
@@ -23,8 +23,18 @@ export function getSvedocsDocumentAttributes(options: SvedocsHtmlHandleOptions, 
 
 /** Set document attributes in SSR and prerendered HTML, before any JavaScript runs. */
 export function createSvedocsHtmlHandle(options: SvedocsHtmlHandleOptions): Handle {
+  const attributes = new Map<string, ReturnType<typeof getSvedocsDocumentAttributes>>();
+  for (const page of options.pages) {
+    const path = normalizeRoutePath(page.routePath);
+    if (!attributes.has(path)) attributes.set(path, getSvedocsDocumentAttributes({ ...options, pages: [page] }, path));
+  }
   return ({ event, resolve }) => {
-    const attrs = getSvedocsDocumentAttributes(options, event.url.pathname);
+    if (event.isDataRequest) return resolve(event);
+    let pathname = event.url.pathname;
+    try { pathname = decodeURI(pathname); } catch { /* Keep malformed escapes for normal routing. */ }
+    // Unknown routes only need the locale prefix (including localized 404s).
+    const attrs = attributes.get(normalizeRoutePath(pathname))
+      ?? getSvedocsDocumentAttributes({ config: options.config, pages: [] }, event.url.pathname);
     let pending = '';
     let transformed = false;
     return resolve(event, {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { dev } from '$app/environment';
+  import { dev } from '$app/env';
   import { onMount } from 'svelte';
   import type { SvedocsResolvedConfig } from '../core/types.js';
   import { trackGoogleAdsConversion } from '../integrations/browser.js';

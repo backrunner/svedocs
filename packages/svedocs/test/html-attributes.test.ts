@@ -1,4 +1,5 @@
-import type { Handle, RequestEvent, ResolveOptions } from '@sveltejs/kit';
+import type { RequestEvent } from '@sveltejs/kit';
+import type { Handle, ResolveOptions } from '@sveltejs/kit/hooks';
 import { describe, expect, it } from 'vitest';
 import { resolveSvedocsConfig } from '../src/core.js';
 import { createSvedocsHtmlHandle, getSvedocsDocumentAttributes } from '../src/routes.js';
@@ -14,8 +15,10 @@ describe('SSR document attributes', () => {
     ['/docs', 'en', 'ltr'], ['/docs/cn/', 'zh-CN', 'ltr'], ['/ar', 'ar', 'rtl'],
     ['/docs/ar/missing', 'ar', 'rtl'], ['/cn/missing', 'zh-CN', 'ltr'], ['/missing', 'en', 'ltr'],
     ['/cn', 'en', 'ltr'], ['/docs/%63n', 'zh-CN', 'ltr'], ['/docs/%zz', 'en', 'ltr']
-  ])('resolves %s to %s/%s', (pathname, lang, dir) => {
+  ])('resolves %s to %s/%s', async (pathname, lang, dir) => {
     expect(getSvedocsDocumentAttributes(options, pathname)).toEqual({ lang, dir });
+    expect(await render(['<html><body>Docs</body></html>'], pathname))
+      .toBe(`<html lang="${lang}" dir="${dir}"><body>Docs</body></html>`);
   });
 
   async function render(chunks: string[], pathname = '/ar') {

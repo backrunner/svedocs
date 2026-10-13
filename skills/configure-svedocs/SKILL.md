@@ -12,7 +12,7 @@ Keep `svedocs.config.ts` as the single configuration surface shared by the Vite 
 1. Read `svedocs.config.*` and `vite.config.*`.
 2. Confirm the installed svedocs version before using a field.
 3. Inspect runtime routes before changing search or Ask AI providers.
-4. Inspect `svelte.config.*`, Wrangler files, and environment examples before changing build or Cloudflare settings.
+4. Inspect `vite.config.*`, Wrangler files, and environment examples before changing build or Cloudflare settings.
 5. Preserve existing values and edit only the requested sections.
 
 Read [config-reference.md](references/config-reference.md) for the current public fields, defaults, provider choices, and cross-field constraints.

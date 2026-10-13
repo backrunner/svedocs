@@ -65,7 +65,7 @@ head:
 ```ts title="vite.config.ts"
 svedocs({
   config: svedocsConfig,
-  theme: { components: { Seo: '$lib/theme/Seo.svelte' } }
+  theme: { components: { Seo: '#lib/theme/Seo.svelte' } }
 });
 ```
 

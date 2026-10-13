@@ -3,7 +3,7 @@ title: Cloudflare
 seoTitle: Cloudflare deployment and edge caching
 description: Deploy svedocs to Cloudflare Pages with edge SSR, static output, Workers AI, and AI Search bindings.
 order: 3
-updatedTime: 2026-10-05
+updatedTime: 2026-10-13
 ---
 
 # Cloudflare
@@ -12,20 +12,20 @@ svedocs defaults to edge SSR on Cloudflare, but it can also produce a fully stat
 
 ## Build preset
 
-```ts title="svelte.config.js"
+```ts title="vite.config.ts"
 import adapterCloudflare from '@sveltejs/adapter-cloudflare';
 import adapterStatic from '@sveltejs/adapter-static';
+import { sveltekit } from '@sveltejs/kit/vite';
 import { createCloudflarePreset } from 'svedocs/cloudflare';
 
 const preset = createCloudflarePreset(process.env.SVEDOCS_BUILD_MODE ?? 'edge');
 
-export default {
-  kit: {
-    adapter: preset.adapter === '@sveltejs/adapter-cloudflare'
-      ? adapterCloudflare({ platformProxy: { remoteBindings: false, persist: false } })
-      : adapterStatic({ fallback: preset.mode === 'spa' ? '200.html' : undefined })
-  }
-};
+// Within the existing Vite plugins array; retain svedocs and the preprocessors.
+sveltekit({
+  adapter: preset.adapter === '@sveltejs/adapter-cloudflare'
+    ? adapterCloudflare({ platformProxy: { remoteBindings: false, persist: false } })
+    : adapterStatic(preset.mode === 'spa' ? { fallback: '200.html' } : { strict: false })
+});
 ```
 
 ## Wrangler
@@ -63,9 +63,11 @@ export default defineConfig({
 });
 ```
 
-The generated platform declaration types the `SVEDOCS_AI_SEARCH` binding. Workers AI can be enabled with `ai.provider = 'cloudflare-workers-ai'`, which emits the `AI` binding.
+Workers AI can be enabled with `ai.provider = 'cloudflare-workers-ai'`, which emits the `AI` binding.
 
 AI Search is opt-in. A default project keeps MiniSearch local search, and only emits AI Search bindings when `search.provider` or `ai.provider` is set to `cloudflare-ai-search`.
+
+Cloudflare adapter 8 reads bindings from `cloudflare:workers` (`env` and `waitUntil`), rather than `event.platform`. Generated templates keep a server-only fallback alias for static/SPA builds in `vite.config.ts`; retain it when switching build modes. Use `wrangler types` when adding platform APIs.
 
 ## Local development
 
@@ -78,7 +80,8 @@ Use `.dev.vars.example` for environment names and keep real tokens out of the re
 Markdown is compiled to HTML during the Vite build, so production SSR does not parse it again. For public documentation whose entire HTML is independent of cookies, headers, user identity and request-local data, `createSvedocsHtmlCacheHandle` can also reuse the rendered page within a Worker isolate. Enable this explicitly for selected routes:
 
 ```ts title="src/hooks.server.ts"
-import { building, dev } from '$app/environment';
+import { building, dev, version } from '$app/env';
+import { waitUntil } from 'cloudflare:workers';
 import { sequence } from '@sveltejs/kit/hooks';
 import { createSvedocsHtmlHandle } from 'svedocs/routes';
 import { createSvedocsAgentHandle } from 'svedocs/agent';
@@ -89,19 +92,32 @@ import markdown from 'virtual:svedocs/markdown';
 
 export const handle = sequence(
   createSvedocsHtmlHandle({ config, pages }),
-  createSvedocsAgentHandle({ config, pages, markdown }),
+  createSvedocsAgentHandle({ config, pages, markdown, waitUntil }),
   createSvedocsHtmlCacheHandle({
     config, pages,
     enabled: !dev && !building,
     include: (page) => page.kind === 'doc' && page.sourcePath.endsWith('.md')
       && (!page.frontmatter.layout || page.frontmatter.layout === 'docs'),
-    maxAge: 60
+    maxAge: 3600,
+    edgeCache: { version }, waitUntil
   })
 );
 ```
 
 The example assumes the default documentation theme and no request-dependent page overrides. Do not include personalized themes, custom layouts or components whose SSR output depends on a request. Keep authentication outside the cache, and put agent negotiation before it as shown.
 
-The cache defaults to 60 seconds, 128 entries, 8 MiB total body bytes and 512 KiB per page. Configure `maxAge`, `maxEntries`, `maxBytes` and `maxEntryBytes` on the handle. Responses larger than the limit, or bodies that do not finish within 100 ms, are returned normally without caching. Each hit gets its own response/body, while simultaneous eligible misses share the fill. Entries expire or are evicted when full; a new handle or deployment starts empty. This is in-memory reuse, not persistent Cloudflare Cache API storage, and it adds no public cache headers.
+The cache defaults to 60 seconds, 128 entries, 8 MiB total body bytes and 512 KiB per page. Configure `maxAge`, `maxEntries`, `maxBytes` and `maxEntryBytes` on the handle. Responses larger than the limit, or bodies that do not finish within 100 ms, are returned normally without caching. Each hit gets its own response/body, while simultaneous eligible misses in one isolate share the fill.
 
-Cookie/authorization requests, query strings, range/precondition requests, explicit revalidation, agent negotiation and non-page routes bypass the cache. Private/no-store responses, cookies set during rendering, non-200 responses, `Vary`, encoded responses and nonce CSP are not stored. HEAD and ETag conditional GET work on cached HTML. Static and SPA builds always bypass this hook; keep `!building` and `!dev` to disable it during prerendering and development as well.
+Without `edgeCache`, entries live only in memory. With `edgeCache: { version }`, a miss also checks a named Cloudflare Cache API cache before rendering. Cache API hits populate the bounded memory cache without extending the original expiration. Writes use `waitUntil` where available; a cache error falls back to rendering. Cache keys separate origins, paths, Accept headers and deployment versions. No public cache headers are added to the outgoing HTML.
+
+Use `$app/env`'s build `version` and change it on **every deployment**, including theme, config and framework changes. SvelteKit defaults to a build timestamp; a custom `version.name` must also change whenever output changes. The example uses a one-hour lifetime for deployment-static documentation. Keep a shorter lifetime for public content that changes independently of deployment. A new deployment starts with a separate cache namespace in its keys.
+
+Cookie/authorization requests, query strings, range/precondition requests, explicit revalidation, agent negotiation, SvelteKit navigation data and non-page routes bypass the cache. Private/no-store responses, cookies set during rendering, non-200 responses, `Vary`, encoded responses and nonce CSP are not stored. HEAD and ETag conditional GET work on cached HTML. Static and SPA builds always bypass this hook; keep `!building` and `!dev` to disable it during prerendering and development as well.
+
+## Reduce Worker CPU
+
+The Cache API skips SSR on a hit, but the Worker still executes. Its contents are local to a Cloudflare data center, so traffic in another location can miss. [Cloudflare Cache API behavior](https://developers.cloudflare.com/workers/runtime-apis/cache/).
+
+If the site does not need request-time agent negotiation, disable `agent.negotiation` and keep the edge adapter: known pages can be prerendered while search and Ask AI retain their server endpoints. Prerendered assets are served without rendering in the Worker; Markdown twins and `llms.txt` remain available. Keep negotiation enabled when agents must receive Markdown at the same page URL.
+
+Measure a production build with the local workerd CPU profiler, then compare production `cpuTimeMs` for the same routes and traffic mix after deployment. Network elapsed time and local profiler samples are not billed CPU time. The repository's `scripts/profile-worker-cpu.mjs` saves repeatable local profiles; `scripts/verify-rendering.mjs --ssr` checks cached and uncached HTML equality.

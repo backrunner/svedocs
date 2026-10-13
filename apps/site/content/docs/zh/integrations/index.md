@@ -38,10 +38,11 @@ order: 5
 import { createConfiguredSearchResponse } from 'svedocs/search';
 import config from 'virtual:svedocs/config';
 import records from 'virtual:svedocs/search';
+import { getRuntimeEnv } from '#lib/server/env.js';
 
-export const GET = ({ platform, request }) => {
+export const GET = ({ request }) => {
   return createConfiguredSearchResponse(config, records, request, {
-    env: platform?.env ?? process.env
+    env: getRuntimeEnv()
   });
 };
 ```

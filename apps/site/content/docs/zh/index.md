@@ -52,7 +52,6 @@ my-docs/
     robots.txt/+server.ts
   svedocs.config.ts
   vite.config.ts
-  svelte.config.js
 ```
 
 平时主要修改 `content/docs`、`content/pages` 和 `svedocs.config.ts`。路由文件只负责把 Vite 插件生成的数据接到主题和服务端接口上，通常不用改。

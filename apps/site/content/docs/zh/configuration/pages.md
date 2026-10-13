@@ -27,7 +27,7 @@ layout: page
 ```ts title="vite.config.ts"
 svedocs({
   pageComponents: {
-    '/playground': '$lib/Playground.svelte'
+    '/playground': '#lib/Playground.svelte'
   }
 });
 ```
@@ -49,7 +49,7 @@ svedocs({
 
 ## 替换页面布局
 
-通过 `svedocs({ layouts: { feature: '$lib/FeatureLayout.svelte' } })` 注册命名布局，再在 frontmatter 中设置 `layout: feature`。未注册的名称会产生包含页面路径和缺失布局名称的错误。
+通过 `svedocs({ layouts: { feature: '#lib/FeatureLayout.svelte' } })` 注册命名布局，再在 frontmatter 中设置 `layout: feature`。未注册的名称会产生包含页面路径和缺失布局名称的错误。
 
 命名布局接收 `SvedocsCustomLayoutProps`。组合默认根组件时继续传递路由数据，搜索、导航、元数据和主题替换才能正常工作：
 

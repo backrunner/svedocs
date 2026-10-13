@@ -27,7 +27,7 @@ Map its canonical route to a Svelte component in the Vite plugin:
 ```ts title="vite.config.ts"
 svedocs({
   pageComponents: {
-    '/playground': '$lib/Playground.svelte'
+    '/playground': '#lib/Playground.svelte'
   }
 });
 ```
@@ -49,7 +49,7 @@ Call `useSvedocsTheme()` during component initialization. It returns a store tha
 
 ## Replace the layout
 
-Register a named layout with `svedocs({ layouts: { feature: '$lib/FeatureLayout.svelte' } })`, then set `layout: feature` in the page’s frontmatter. Unknown names produce an error that identifies the page and missing registration.
+Register a named layout with `svedocs({ layouts: { feature: '#lib/FeatureLayout.svelte' } })`, then set `layout: feature` in the page’s frontmatter. Unknown names produce an error that identifies the page and missing registration.
 
 Named layouts receive `SvedocsCustomLayoutProps`. Forward the route data when composing the default root so search, navigation, metadata, and theme replacements continue to work:
 

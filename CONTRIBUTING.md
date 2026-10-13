@@ -12,7 +12,7 @@ pnpm test
 pnpm lint
 ```
 
-Use Node.js `>=20.19.0` and the pinned pnpm version in `package.json`.
+Use Node.js `>=22.17.0` and the pinned pnpm version in `package.json`.
 
 ## Code Guidelines
 

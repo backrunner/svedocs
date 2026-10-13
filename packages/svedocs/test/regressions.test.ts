@@ -79,14 +79,14 @@ describe('content and component loading', () => {
     const compiled = vi.fn();
     const vite = plugin({
       config: { images: false, markdown: { remarkPlugins: [() => compiled] } },
-      pageComponents: { '/docs': '$lib/CustomPage.svelte' },
-      layouts: { custom: '$lib/CustomLayout.svelte' }
+      pageComponents: { '/docs': '#lib/CustomPage.svelte' },
+      layouts: { custom: '#lib/CustomLayout.svelte' }
     });
     await vite.configResolved({ root });
     await vite.buildStart.call({ addWatchFile() {} });
     expect(compiled).toHaveBeenCalledTimes(1);
-    expect(await vite.load('\0virtual:svedocs/component-loaders')).toContain('() => import("$lib/CustomPage.svelte")');
-    expect(await vite.load('\0virtual:svedocs/layout-loaders')).toContain('() => import("$lib/CustomLayout.svelte")');
+    expect(await vite.load('\0virtual:svedocs/component-loaders')).toContain('() => import("#lib/CustomPage.svelte")');
+    expect(await vite.load('\0virtual:svedocs/layout-loaders')).toContain('() => import("#lib/CustomLayout.svelte")');
   });
 });
 

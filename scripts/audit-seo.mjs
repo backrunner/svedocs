@@ -1,9 +1,9 @@
+import { loadProductionServer } from './load-production-server.mjs';
 // Build the framework and site first. Default: static; --edge: production SSR;
 // --spa: known prerendered SPA pages; --live: capture-seo-live.py snapshot.
 import assert from 'node:assert/strict';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { chromium } from '@playwright/test';
 import { loadConfigFromFile } from 'vite';
 import { snapshotSeo, detailedSeoErrors, internalLinkErrors } from './seo-audit-details.mjs';
@@ -33,10 +33,7 @@ const probes = snapshot?.probes ?? [];
 const probePages = [];
 let server;
 if (edge) {
-  const { Server } = await import(pathToFileURL(path.join(site, '.svelte-kit/output/server/index.js')));
-  const { manifest: routes } = await import(pathToFileURL(path.join(site, '.svelte-kit/output/server/manifest.js')));
-  server = new Server(routes);
-  await server.init({ env: {} });
+  server = await loadProductionServer(site);
 }
 const respond = (url) => server.respond(new Request(url, { headers: { accept: 'text/html', 'user-agent': 'Googlebot' } }), { getClientAddress: () => '127.0.0.1' });
 const endpoint = (name) => readFile(live ? path.join(root, 'artifacts/seo-live-input', name)

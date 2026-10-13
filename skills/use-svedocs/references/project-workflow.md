@@ -14,8 +14,7 @@ Generated projects keep these responsibilities separate:
 | File | Responsibility |
 | --- | --- |
 | `svedocs.config.ts` | Serializable user configuration |
-| `vite.config.ts` | `svedocs` Vite plugin, authoring components, layouts, theme component paths |
-| `svelte.config.js` | Svedocs extensions/preprocessor and build-mode adapter |
+| `vite.config.ts` | `svedocs` Vite plugin, authoring components, layouts, theme component paths, Svelte extensions/preprocessors and adapter |
 | `src/app.d.ts` | Type declarations for generated virtual modules |
 | `src/routes/+layout.svelte` | Import global theme CSS once |
 | `src/routes/+layout.ts` | SSR and trailing-slash helpers |
@@ -59,19 +58,20 @@ pnpm add -D svedocs-cli
 
 Keep `createSvedocsHtmlHandle({ config, pages })` in server hooks and `svedocsSsr()` / `svedocsTrailingSlash()` in the route layout. Then use `defineConfig` from `svedocs/config`, register `svedocs({ config })` before `sveltekit()`, and import `svedocs/theme/styles.css` once. Keep Tailwind CSS v4 through `@tailwindcss/vite` when using the bundled theme.
 
-Merge these Svelte settings with existing extensions and preprocessors:
+Requires Node.js 22.17+, SvelteKit 3, Svelte 5.57+, Vite 8 and TypeScript 6.x. Use `#lib`, `$app/env`, `$app/state`, and `$app/tsconfig`. Merge these Svelte settings into `sveltekit({ ... })` in `vite.config.ts`:
 
 ```js
+import { sveltekit } from '@sveltejs/kit/vite';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import {
   svedocsPreprocess,
   svedocsSvelteExtensions
 } from 'svedocs/svelte';
 
-export default {
+sveltekit({
   extensions: svedocsSvelteExtensions,
   preprocess: [vitePreprocess(), svedocsPreprocess()]
-};
+});
 ```
 
 Use `@sveltejs/adapter-static` for static/SPA output and `@sveltejs/adapter-cloudflare` for the generated edge setup. Keep `src/app.d.ts` virtual-module declarations from the matching template.

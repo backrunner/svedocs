@@ -16,8 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 12.3.4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -34,8 +32,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 12.3.4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -48,6 +44,10 @@ jobs:
       - run: SVEDOCS_BUILD_MODE=spa pnpm --filter @svedocs/site build
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm --filter @svedocs/site test:e2e
+      - name: Verify content hot reload
+        run: SVEDOCS_E2E_HMR=1 pnpm --filter @svedocs/site test:e2e e2e/hmr.spec.ts --workers=1
+      - name: Verify optional integrations
+        run: SVEDOCS_E2E_INTEGRATIONS=1 pnpm --filter @svedocs/site test:e2e e2e/integrations.spec.ts
       - name: Build composed theme and SEO fixtures
         run: SVEDOCS_E2E_BORDERS=1 SVEDOCS_E2E_SEO=1 pnpm --filter @svedocs/site build
       - name: Verify theme frames and custom SEO in production
@@ -58,8 +58,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 12.3.4
       - uses: actions/setup-node@v4
         with:
           node-version: 24

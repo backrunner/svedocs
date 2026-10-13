@@ -148,15 +148,9 @@ export function createWranglerToml(config: SvedocsResolvedConfig): string {
 
 export function createCloudflareEnvDts(config: SvedocsResolvedConfig): string {
   const lines = [
-    'declare namespace App {',
-    '  interface Platform {',
-    '    env: {',
+    'declare namespace Cloudflare {',
+    '  interface Env {',
     ...createCloudflareBindingLines(config),
-    '    };',
-    '    context: {',
-    '      waitUntil(promise: Promise<unknown>): void;',
-    '    };',
-    '    caches: CacheStorage;',
     '  }',
     '}'
   ];
@@ -186,8 +180,8 @@ function createCloudflareBindingLines(config: SvedocsResolvedConfig): string[] {
   if (usesCloudflareWorkersAi(config)) {
     addBindingType(bindings, 'AI', `import('svedocs/ai').CloudflareWorkersAiBinding`);
   }
-  const lines = Array.from(bindings.entries()).map(([name, types]) => `      ${formatBindingProperty(name)}: ${types.join(' & ')};`);
-  return lines.length > 0 ? lines : ['      [key: string]: unknown;'];
+  const lines = Array.from(bindings.entries()).map(([name, types]) => `    ${formatBindingProperty(name)}: ${types.join(' & ')};`);
+  return lines.length > 0 ? lines : ['    [key: string]: unknown;'];
 }
 
 function addBindingType(bindings: Map<string, string[]>, name: string, type: string): void {

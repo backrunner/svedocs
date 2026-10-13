@@ -14,10 +14,11 @@ svedocs creates search records for each page and section. Local MiniSearch, Algo
 import { createConfiguredSearchResponse } from 'svedocs/search';
 import config from 'virtual:svedocs/config';
 import records from 'virtual:svedocs/search';
+import { getRuntimeEnv } from '#lib/server/env.js';
 
-export const GET = ({ platform, request }) => {
+export const GET = ({ request }) => {
   return createConfiguredSearchResponse(config, records, request, {
-    env: platform?.env ?? process.env
+    env: getRuntimeEnv()
   });
 };
 ```
@@ -28,12 +29,13 @@ Generated templates use this runtime route. It reads `svedocs.config.ts` and sel
 import { createConfiguredAskResponse, createMemoryRateLimiter } from 'svedocs/ai';
 import config from 'virtual:svedocs/config';
 import records from 'virtual:svedocs/search';
+import { getRuntimeEnv } from '#lib/server/env.js';
 
 const rateLimiter = createMemoryRateLimiter({ windowMs: 60_000, max: 30 });
 
-export const POST = ({ platform, request }) => {
+export const POST = ({ request }) => {
   return createConfiguredAskResponse(config, records, request, {
-    env: platform?.env ?? process.env,
+    env: getRuntimeEnv(),
     rateLimiter
   });
 };
@@ -84,9 +86,10 @@ When you need lower-level control, import `createAlgoliaSearchProvider`, `create
 
 ```ts
 import { createCloudflareKvRateLimiter } from 'svedocs/ai';
+import { env } from 'cloudflare:workers';
 
 const rateLimiter = createCloudflareKvRateLimiter({
-  namespace: platform.env.SVEDOCS_RATE_LIMIT,
+  namespace: env.SVEDOCS_RATE_LIMIT,
   windowMs: 60_000,
   max: 30
 });

@@ -4,6 +4,10 @@ export function normalizePath(value: string): string {
 
 /** Route identity ignores query/hash and resolves dot segments consistently. */
 export function normalizeRoutePath(value: string): string {
+  // Generated route paths are already canonical. Avoid splitting and rebuilding
+  // them for every navigation link on every SSR request. Unusual paths retain
+  // the full normalization below (including dot segments and backslashes).
+  if (value === '/' || value.startsWith('/') && !/[\\?#.]|\/\/|\/$/.test(value)) return value;
   const [pathname = ''] = normalizePath(value).split(/[?#]/, 1);
   const segments: string[] = [];
   for (const segment of pathname.split('/')) {

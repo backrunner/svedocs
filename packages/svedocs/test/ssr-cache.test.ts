@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Handle, RequestEvent } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit/hooks';
+import type { RequestEvent } from '@sveltejs/kit';
 import { createSvedocsHtmlCacheHandle } from '../src/cloudflare/html-cache';
 import { resolveSvedocsConfig } from '../src/core/config';
 import { createServerConfigModule } from '../src/vite/config';
@@ -38,6 +39,19 @@ describe('explicit public SSR HTML cache', () => {
     expect(resolve).toHaveBeenCalledOnce();
   });
 
+  it('keeps cached bytes intact when a consumer mutates the replay stream', async () => {
+    const handle = cache();
+    const resolve = vi.fn(async () => html());
+    await (await run(handle, resolve)).text();
+    const response = await run(handle, resolve);
+    const reader = response.body!.getReader();
+    const chunk = await reader.read();
+    chunk.value!.fill(0);
+    await reader.cancel();
+    expect(await (await run(handle, resolve)).text()).toBe('<h1>Docs</h1>');
+    expect(resolve).toHaveBeenCalledOnce();
+  });
+
   it('coalesces eligible concurrent misses without replaying uncacheable responses', async () => {
     let done!: () => void;
     const gate = new Promise<void>((resolve) => { done = resolve; });
@@ -61,8 +75,7 @@ describe('explicit public SSR HTML cache', () => {
       const resolve = vi.fn(async () => html());
       const handle = cache({ maxAge: 1, maxEntries: 1 });
       await run(handle, resolve);
-      const other = event();
-      other.url = new URL('https://other.example/docs');
+      const other = { ...event(), url: new URL('https://other.example/docs') };
       await run(handle, resolve, other);
       await run(handle, resolve);
       expect(resolve).toHaveBeenCalledTimes(3);
@@ -88,6 +101,7 @@ describe('explicit public SSR HTML cache', () => {
     await run(handle, resolve);
     for (const request of [
       event('/docs?query=1'), event('/docs/__data.json'), event('/docs', { method: 'POST' }),
+      { ...event(), isDataRequest: true },
       ...[{ cookie: 'session=1' }, { authorization: 'Bearer token' }, { range: 'bytes=0-3' },
         { 'cache-control': 'no-cache' }, { accept: 'text/markdown' }, { 'user-agent': 'GPTBot' }].map((headers) => event('/docs', { headers })),
       { ...event(), cookies: { getAll: () => [{ name: 'new', value: 'cookie' }] } } as unknown as RequestEvent

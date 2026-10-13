@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
 import { svedocs } from 'svedocs/vite';
-import config from '../../svedocs.config';
-import siteVite from '../../vite.config';
+import config from '../../svedocs.config.ts';
+import siteVite from '../../vite.config.ts';
 
 // Fake provider IDs are used only by the isolated integration smoke tests.
 export default defineConfig({
@@ -28,8 +28,8 @@ export default defineConfig({
           indexNow: { key: 'svedocs-indexnow-test' }
         }
       },
-      components: { Callout: '$lib/Callout.svelte' },
-      layouts: { feature: '$lib/FeatureLayout.svelte', 'site-home': '$lib/SiteHome.svelte' },
+      components: { Callout: '#lib/Callout.svelte' },
+      layouts: { feature: '#lib/FeatureLayout.svelte', 'site-home': '#lib/SiteHome.svelte' },
       pageComponents: { '/theme-preview': fileURLToPath(new URL('./IntegrationTheme.svelte', import.meta.url)) }
     }),
     ...(siteVite.plugins ?? []).slice(1)

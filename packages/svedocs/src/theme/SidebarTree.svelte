@@ -25,7 +25,7 @@
     if (event.button !== 0) return;
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
-    void goto(href, { keepFocus: false });
+    void goto(href);
   }
 
   function normalizeHref(href: string | undefined): string {

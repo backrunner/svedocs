@@ -1,8 +1,8 @@
+import { loadProductionServer } from './load-production-server.mjs';
 // Build the official site in edge/static mode before running the matching verification.
 import assert from 'node:assert/strict';
 import { readFile, readdir, stat, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { createServer } from 'node:http';
 import { performance } from 'node:perf_hooks';
 import { chromium } from '@playwright/test';
@@ -20,10 +20,7 @@ const summarize = (times) => {
   return { medianMs: round((times[99] + times[100]) / 2), p95Ms: round(times[189]) };
 };
 if (process.argv.includes('--ssr')) {
-  const { Server } = await import(pathToFileURL(path.join(site, '.svelte-kit/output/server/index.js')));
-  const { manifest } = await import(pathToFileURL(path.join(site, '.svelte-kit/output/server/manifest.js')));
-  const server = new Server(manifest);
-  await server.init({ env: {} });
+  const server = await loadProductionServer(site);
   const respond = (headers = {}, method = 'GET') => server.respond(new Request('https://svedocs.pwp.sh/docs/configuration', {
     method, headers: { accept: 'text/html', 'user-agent': 'Mozilla/5.0', ...headers }
   }), { getClientAddress: () => '127.0.0.1' });

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { afterNavigate } from '$app/navigation';
-  import { dev } from '$app/environment';
+  import { dev } from '$app/env';
   import { tick } from 'svelte';
   import type { SvedocsResolvedConfig } from '../core/types.js';
   import { trackIntegrationPage } from '../integrations/browser.js';

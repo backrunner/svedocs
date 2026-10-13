@@ -313,10 +313,10 @@ Register replacement components in the Vite plugin:
 svedocs({
   theme: {
     components: {
-      Navbar: '$lib/theme/Navbar.svelte',
-      Article: '$lib/theme/Article.svelte',
-      Search: '$lib/theme/Search.svelte',
-      AskAi: '$lib/theme/AskAi.svelte'
+      Navbar: '#lib/theme/Navbar.svelte',
+      Article: '#lib/theme/Article.svelte',
+      Search: '#lib/theme/Search.svelte',
+      AskAi: '#lib/theme/AskAi.svelte'
     }
   }
 });
@@ -455,7 +455,7 @@ Register named layouts in the Vite plugin:
 ```ts title="vite.config.ts"
 svedocs({
   layouts: {
-    feature: '$lib/FeatureLayout.svelte'
+    feature: '#lib/FeatureLayout.svelte'
   }
 });
 ```

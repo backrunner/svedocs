@@ -97,7 +97,7 @@
     if (event.key === 'Enter' && event.target === input) {
       event.preventDefault();
       const result = activeController.select();
-      if (result) void goto(result.url, { keepFocus: false });
+      if (result) void goto(result.url);
     }
   }
 

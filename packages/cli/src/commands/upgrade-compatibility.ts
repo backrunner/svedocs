@@ -27,7 +27,14 @@ export interface CompatibilityReport {
   notices: CompatibilityNotice[];
 }
 
-export const upgradeCompatibilityRules: UpgradeCompatibilityRule[] = [];
+export const upgradeCompatibilityRules: UpgradeCompatibilityRule[] = [{
+  code: 'sveltekit-3-migration',
+  introducedIn: '0.3.0',
+  severity: 'warning',
+  message: 'svedocs 0.3 requires Node.js 22.17+, SvelteKit 3, Svelte 5.57+, Vite 8 and TypeScript 6.x. '
+    + 'Upgrade these dependencies and migrate SvelteKit configuration, #lib imports and Cloudflare bindings first; '
+    + 'svedocs upgrade updates only the svedocs packages. See https://svedocs.pwp.sh/docs/installation.'
+}];
 
 export function checkUpgradeCompatibility(input: {
   currentSpec?: string;
@@ -46,7 +53,7 @@ export function checkUpgradeCompatibility(input: {
       notices.push({
         code: 'upgrade-span-unknown',
         severity: 'warning',
-        message: `Cannot fully evaluate ${rule.code} because the current or target version is not concrete.`
+        message: `Cannot fully evaluate ${rule.code} because the current or target version is not concrete. ${rule.message}`
       });
       continue;
     }

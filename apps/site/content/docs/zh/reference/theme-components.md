@@ -45,10 +45,10 @@ import type {
 svedocs({
   theme: {
     components: {
-      Navbar: '$lib/theme/Navbar.svelte',
-      Article: '$lib/theme/Article.svelte',
-      Search: '$lib/theme/Search.svelte',
-      AskAi: '$lib/theme/AskAi.svelte'
+      Navbar: '#lib/theme/Navbar.svelte',
+      Article: '#lib/theme/Article.svelte',
+      Search: '#lib/theme/Search.svelte',
+      AskAi: '#lib/theme/AskAi.svelte'
     }
   }
 });

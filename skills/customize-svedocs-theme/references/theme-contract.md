@@ -38,8 +38,8 @@ svedocs({
   config: svedocsConfig,
   theme: {
     components: {
-      Navbar: '$lib/theme/Navbar.svelte',
-      Article: '$lib/theme/Article.svelte'
+      Navbar: '#lib/theme/Navbar.svelte',
+      Article: '#lib/theme/Article.svelte'
     }
   }
 });
