@@ -15,7 +15,11 @@ test('cached public pages match SSR and keep agent and data responses separate',
     const head = await request.head(path, { headers });
     expect(head.status()).toBe(200);
     expect(await head.body()).toHaveLength(0);
-    const conditional = await request.get(path, { headers: { ...headers, 'if-none-match': fresh.headers().etag! } });
+    // CDN HTML transformations may remove ETags. Keep exact validator coverage
+    // mandatory locally, and verify wildcard revalidation through the live CDN.
+    const etag = fresh.headers().etag;
+    if (!process.env.SVEDOCS_E2E_CDN) expect(etag).toBeTruthy();
+    const conditional = await request.get(path, { headers: { ...headers, 'if-none-match': etag ?? '*' } });
     expect(conditional.status()).toBe(304);
     const data = await request.get(`${path === '/' ? '' : path}/__data.json`, { headers });
     expect(data.headers()['content-type']).toContain('application/json');

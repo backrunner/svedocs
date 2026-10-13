@@ -65,6 +65,10 @@ export const POST = ({ request }) => {
 
 ## 索引
 
+建立索引前，先在 AI Search 实例的 `custom_metadata` 中把 `locale` 和 `kind` 配置为 `text` 字段。默认主题发送的过滤条件依赖这两个字段；未配置时会出现 `metadata_filter_unknown_field` 错误。创建 Worker 绑定不会自动上传文档。
+
+设置 `CLOUDFLARE_ACCOUNT_ID` 和具备 AI Search 写入权限的 `CLOUDFLARE_API_TOKEN`，然后上传索引：
+
 ```sh
 svedocs index --provider cloudflare-ai-search --dry-run
 svedocs index --provider cloudflare-ai-search --strategy replace --wait

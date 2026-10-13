@@ -12,6 +12,7 @@
 
 ### Patch Changes
 
+- Document the AI Search metadata schema and initial indexing requirements.
 - 90ed837: Add opt-in, deployment-versioned Cloudflare HTML caching across Worker isolates. Avoid repeated route scans in HTML and agent hooks, reuse cached markdown ETags without decoding bodies, and keep SvelteKit data requests out of HTML caching and agent negotiation.
 
 ## 0.2.4

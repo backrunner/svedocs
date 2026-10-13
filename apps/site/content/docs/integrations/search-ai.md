@@ -65,6 +65,10 @@ This integration supports the current `ai_search` and `ai_search_namespaces` bin
 
 ## Indexing
 
+Before indexing, configure `locale` and `kind` as `text` fields in the AI Search instance's `custom_metadata` schema. These fields are required for the filters sent by the default theme; an empty schema causes `metadata_filter_unknown_field` errors. Creating a Worker binding does not upload your documents.
+
+Set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` with AI Search write access, then upload the index:
+
 ```sh
 svedocs index --provider cloudflare-ai-search --dry-run
 svedocs index --provider cloudflare-ai-search --strategy replace --wait
