@@ -1,3 +1,4 @@
+import manifest from '../../package.json' with { type: 'json' };
 import type { SvedocsResolvedIntegrations } from '../config.js';
 
 export interface SvedocsSeoMetaTag {
@@ -541,5 +542,5 @@ export interface SvedocsContentManifest {
 
 export const svedocsPackage = {
   name: 'svedocs',
-  version: '0.0.0'
+  version: manifest.version
 } as const;

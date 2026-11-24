@@ -167,6 +167,8 @@ export function svedocs(options: SvedocsVitePluginOptions = {}): Plugin {
     },
     config() {
       return {
+        // Keep hooks and the dev SSR runtime on the same SvelteKit request store.
+        ssr: { optimizeDeps: { exclude: ['@sveltejs/kit'] } },
         define: {
           __SVEDOCS_CONFIG_FILE__: JSON.stringify(options.configFile ?? process.env.SVEDOCS_CONFIG_FILE ?? 'svedocs.config.ts')
         }

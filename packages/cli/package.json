@@ -42,7 +42,7 @@
     "dev": "tsup src/index.ts src/svedocs.ts src/create-svedocs.ts --format esm --dts --watch"
   },
   "dependencies": {
-    "commander": "15.0.0",
+    "commander": "15.1.0",
     "cross-spawn": "7.0.6",
     "svedocs": "workspace:*"
   },

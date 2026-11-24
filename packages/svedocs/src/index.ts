@@ -1,3 +1,5 @@
+import { svedocsPackage } from './core/types.js';
+
 export { defineConfig } from './config.js';
 export type { SvedocsConfig, SvedocsResolvedConfig } from './config.js';
 export {
@@ -26,4 +28,4 @@ export type {
   SvedocsTreeItem
 } from './core.js';
 
-export const version = '0.0.0';
+export const version = svedocsPackage.version;
