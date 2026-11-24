@@ -66,7 +66,7 @@ export function createPageToolsController(config: SvedocsResolvedConfig): Svedoc
 }
 
 export async function copyTextToClipboard(source: string): Promise<void> {
-  await navigator.clipboard.writeText(source.trim());
+  await navigator.clipboard.writeText(source);
 }
 
 export async function copyCodeToClipboard(button: HTMLButtonElement, source: string, copiedLabel = 'Copied', idleLabel = 'Copy code'): Promise<void> {

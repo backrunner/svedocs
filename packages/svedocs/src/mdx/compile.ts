@@ -9,7 +9,7 @@ import remarkRehype from 'remark-rehype';
 import { unified } from 'unified';
 import type { SvedocsCodeBlock, SvedocsHeading } from '../core/types.js';
 import { outlineFromAst, plainTextFromAst, parseMarkdownAst, type MarkdownNode } from './ast.js';
-import { extractCodeBlocks, rehypeCodeBlocks, remarkSvedocsCodeBlocks, type SvedocsMarkdownMessages } from './code.js';
+import { rehypeCodeBlocks, remarkSvedocsCodeBlocks, type SvedocsMarkdownMessages } from './code.js';
 import { createDiffRows, createDiffSplitRows } from './diff.js';
 import { rehypeSvedocsHeadingAnchors } from './headings.js';
 import { rehypeSvedocsLinks } from './links.js';
@@ -48,7 +48,7 @@ export async function compileMarkdown(
 /** Analysis stays separate from the mutable rendering plugin tree. */
 export async function compileMarkdownWithAst(markdown: string, options: CompileMarkdownOptions, analysis: MarkdownNode): Promise<CompiledMarkdown> {
   const extracted = outlineFromAst(analysis);
-  const codeBlocks = extractCodeBlocks(markdown);
+  const codeBlocks: SvedocsCodeBlock[] = [];
   const processor = unified()
     .use(remarkParse)
     .use(remarkGfm)
@@ -61,8 +61,8 @@ export async function compileMarkdownWithAst(markdown: string, options: CompileM
   processor
     .use(
       remarkSvedocsCodeBlocks,
-      codeBlocks,
       {
+        onBlock: (block: SvedocsCodeBlock) => { codeBlocks.push(block); },
         ...(options.codeTheme ? { theme: options.codeTheme } : {}),
         ...(options.codeThemes ? { themes: options.codeThemes } : {}),
         ...(options.shikiTransformers ? { transformers: options.shikiTransformers } : {}),
@@ -85,7 +85,7 @@ export async function compileMarkdownWithAst(markdown: string, options: CompileM
     processor.use(plugin as never);
   }
 
-  processor.use(rehypeCodeBlocks, codeBlocks);
+  processor.use(rehypeCodeBlocks);
   if (options.imageOptimization) {
     processor.use(rehypeSvedocsImages, options.imageOptimization);
   }
@@ -103,4 +103,4 @@ export async function compileMarkdownWithAst(markdown: string, options: CompileM
   };
 }
 
-export { createDiffRows, createDiffSplitRows, extractCodeBlocks, markdownToPlainText };
+export { createDiffRows, createDiffSplitRows, markdownToPlainText };

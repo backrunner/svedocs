@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { get } from 'svelte/store';
 import type { Component } from 'svelte';
+import { compile } from 'svelte/compiler';
 import { loadSvedocsContent, resolveSvedocsConfig } from '../src/core';
 import { createAskResponse, createCloudflareKvRateLimiter, createMockAiProvider, createWorkersAiProvider } from '../src/ai';
 import { createAgentCacheVersion, createSvedocsAgentHandle } from '../src/agent';
@@ -56,6 +57,21 @@ describe('content and component loading', () => {
     expect(shell.html).toContain('KEEP_THIS_COMMENT');
     const markdown = await vite.load('\0virtual:svedocs/markdown') as string;
     expect(markdown).toContain('"content-pages-index":""');
+  });
+
+  it('applies the configured highlighting, wrap and copy settings to SVX components', async () => {
+    const root = await fixture({ 'content/docs/sample.svx': '# Sample\n\n~~~ts\nconst x = { value: 1 };\n~~~\n\n~~~diff split\n-{a}\n+{b}\n~~~' });
+    const vite = plugin({ config: {
+      theme: { defaultMode: 'dark', codeTheme: { dark: 'github-dark' }, code: { wrap: true, lineNumbers: false, copyButton: false } }
+    } });
+    await vite.configResolved({ root });
+    const { code } = await vite.load('\0virtual:svedocs/component/content-docs-sample.svelte') as { code: string };
+    expect(code).toContain('shiki github-dark sd-code');
+    expect(code).toContain('data-wrap="true"');
+    expect(code).toContain('data-no-line-numbers="true"');
+    expect(code).not.toContain('data-sd-copy');
+    expect(code).toContain('&#123;');
+    expect(() => compile(code, { generate: 'server' })).not.toThrow();
   });
 
   it('loads only the selected component and layout, in parallel with its page data', async () => {

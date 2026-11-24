@@ -4,7 +4,7 @@ import rehypeKatex from 'rehype-katex';
 import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
-import { extractCodeBlocks, rehypeCodeBlocks, remarkSvedocsCodeBlocks } from './mdx/code.js';
+import { rehypeCodeBlocks, remarkSvedocsCodeBlocks, type SvedocsMarkdownMessages } from './mdx/code.js';
 import { rehypeSvedocsHeadingAnchors } from './mdx/headings.js';
 import { rehypeSvedocsLinks } from './mdx/links.js';
 import { rehypeSvedocsImages, type SvedocsImageOptimizationOptions } from './mdx/images.js';
@@ -35,29 +35,35 @@ export function svedocsPreprocess(options: MdsvexOptions = {}): SvedocsPreproces
 }
 
 export function createSvedocsMdsvexOptions(
-  source: string,
+  _source: string,
   options: MdsvexOptions = {},
   svedocsOptions: {
     codeTheme?: string;
     codeThemes?: { light?: string; dark?: string };
     shikiTransformers?: unknown[];
     codeCopyButton?: boolean;
+    codeLineNumbers?: boolean;
+    codeWrap?: boolean;
     headingAnchorLabel?: string;
+    messages?: SvedocsMarkdownMessages;
     resolveHref?: (href: string) => string;
     imageOptimization?: SvedocsImageOptimizationOptions;
   } = {}
 ): MdsvexOptions {
-  const codeBlocks = extractCodeBlocks(source);
   return {
     extensions: [...svedocsContentExtensions],
     ...options,
     remarkPlugins: [
       remarkGfm,
       remarkMath,
-      [remarkSvedocsCodeBlocks, codeBlocks, {
+      [remarkSvedocsCodeBlocks, {
+        svelte: true,
+        messages: svedocsOptions.messages,
         theme: svedocsOptions.codeTheme,
         themes: svedocsOptions.codeThemes,
         transformers: svedocsOptions.shikiTransformers,
+        lineNumbers: svedocsOptions.codeLineNumbers,
+        wrap: svedocsOptions.codeWrap,
         ...(typeof svedocsOptions.codeCopyButton === 'boolean' ? { copyButton: svedocsOptions.codeCopyButton } : {})
       }],
       ...((options.remarkPlugins ?? []) as any[])
@@ -67,7 +73,7 @@ export function createSvedocsMdsvexOptions(
       [rehypeSvedocsHeadingAnchors, { label: svedocsOptions.headingAnchorLabel }],
       rehypeKatex,
       [rehypeSvedocsLinks, { resolveHref: svedocsOptions.resolveHref }],
-      [rehypeCodeBlocks, codeBlocks],
+      rehypeCodeBlocks,
       ...((options.rehypePlugins ?? []) as any[]),
       ...(svedocsOptions.imageOptimization
         ? [[rehypeSvedocsImages, svedocsOptions.imageOptimization]]

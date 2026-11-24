@@ -81,6 +81,14 @@
   scrollbar-gutter: auto;
 }
 
+/* Non-wrapping highlighted lines have a known height before layout. */
+@media screen {
+  .sd-prose > pre.shiki:nth-child(n+5):not([data-wrap="true"]) > code[style*="--sd-code-lines:"] {
+    content-visibility: auto;
+    contain-intrinsic-block-size: auto calc(var(--sd-code-lines) * 1lh);
+  }
+}
+
 .sd-code[data-wrap="true"] code,
 .sd-prose pre[data-wrap="true"] code:where(:not(.not-prose, .not-prose *)) {
   white-space: pre-wrap;

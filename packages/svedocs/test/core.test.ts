@@ -77,6 +77,51 @@ describe('svedocs Batch 0 skeleton', () => {
     expect(compiled.html).toContain('style="color:#F97583 !important"');
   });
 
+  it('keeps metadata and copy text with each parsed code block', async () => {
+    const source = [
+      '~~~~md title="Fence" {1-900000} no-wrap', '  ```ts', '  const n = 1;', '  ```', '~~~~',
+      '', '<pre><code>raw HTML</code></pre>', '', '```diff split', '-old', '+new', '```',
+      '', '```js title="Example"', 'console.log(1)', '```'
+    ].join('\n');
+    const { codeBlocks, html } = await compileMarkdown(source);
+    expect(codeBlocks.map((block) => block.language)).toEqual(['md', 'diff', 'js']);
+    expect(codeBlocks[0]).toMatchObject({
+      raw: '  ```ts\n  const n = 1;\n  ```\n', title: 'Fence', highlightLines: [1, 2, 3], wrap: false
+    });
+    expect(html.match(/data-copy=/g)).toHaveLength(3);
+    expect(html).toMatch(/<pre[^>]*data-language="text"[^>]*><code>raw HTML/);
+    expect(html.match(/data-title="Example"/g)).toHaveLength(1);
+  });
+
+  it('keeps fence titles separate from flags and gives unknown languages the usual controls', async () => {
+    const { html, codeBlocks } = await compileMarkdown([
+      '~~~constructor title="diff split no-line-numbers wrap {2}" focus="1, 2" {1, 2}',
+      '  {example} <tag>', 'next', '', '~~~'
+    ].join('\n'));
+    expect(codeBlocks[0]).toMatchObject({ diff: false, focusLines: [1, 2], highlightLines: [1, 2] });
+    expect(html).toContain('data-sd-copy');
+    expect(html).toContain('class="sd-line-no"');
+    expect(html).toContain('data-line="3"');
+    expect(html).not.toContain('data-wrap=');
+    expect(html.slice(html.indexOf('<code'))).not.toContain('<tag>');
+    expect(html).toContain('CONSTRUCTOR');
+  });
+
+  it('preserves highlighted source lines and attributes supplied by line transformers', async () => {
+    const { html } = await compileMarkdown('~~~js\nfirst\nsecond\n~~~', {
+      shikiTransformers: [{ line(node: { properties: Record<string, unknown> }, line: number) {
+        if (line === 1) {
+          node.properties.class = 'line custom';
+          node.properties['data-note'] = 'marked';
+        }
+      } }]
+    });
+    expect(html).toContain('first');
+    expect(html).toContain('second');
+    expect(html).toContain('data-note="marked"');
+    expect(html).toContain('data-line="2"');
+  });
+
   it('resolves localized shell messages with defaults, overrides, fallback, and interpolation', () => {
     const singleLocale = resolveSvedocsConfig({ i18n: false });
     expect(singleLocale.i18n.messages.en!['ask.label']).toBe('Ask AI');

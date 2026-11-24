@@ -18,7 +18,7 @@ export function stripInlineMarkdown(value: string): string {
     .trim();
 }
 
-export function parseLineSet(value: string | undefined): number[] {
+export function parseLineSet(value: string | undefined, lineCount: number): number[] {
   if (!value) return [];
   const lines = new Set<number>();
   for (const part of value.split(',')) {
@@ -26,16 +26,11 @@ export function parseLineSet(value: string | undefined): number[] {
     const start = Number(startRaw);
     const end = Number(endRaw ?? startRaw);
     if (!Number.isInteger(start) || !Number.isInteger(end)) continue;
-    for (let line = Math.min(start, end); line <= Math.max(start, end); line += 1) {
-      if (line > 0) lines.add(line);
+    for (let line = Math.max(1, Math.min(start, end)); line <= Math.min(lineCount, Math.max(start, end)); line += 1) {
+      lines.add(line);
     }
   }
   return [...lines].sort((a, b) => a - b);
-}
-
-export function readQuotedMeta(meta: string, key: string): string | undefined {
-  const match = new RegExp(`${key}=("[^"]+"|'[^']+'|[^\\s]+)`).exec(meta);
-  return match?.[1]?.replace(/^["']|["']$/g, '');
 }
 
 export function mergeHtmlClass(attrs: string, className: string): string {

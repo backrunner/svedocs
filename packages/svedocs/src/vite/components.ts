@@ -85,9 +85,9 @@ export async function loadPageComponent(
   const raw = await readFile(path.join(root, page.sourcePath), 'utf8');
   const parsed = matter(raw);
   const source = injectSvedocsComponentImports(page.markdown ?? parsed.content, components);
-  const headingAnchorLabel = manifestConfig.i18n.messages[
+  const messages = manifestConfig.i18n.messages[
     page.locale ?? manifestConfig.i18n.defaultLocale ?? 'en'
-  ]?.['heading.anchor'];
+  ];
   try {
     const transformedSource = await transformSvedocsImageComponents(source, {
       ...manifestConfig.images,
@@ -111,7 +111,9 @@ export async function loadPageComponent(
               }
             : { codeTheme: manifestConfig.theme.codeTheme[manifestConfig.theme.defaultMode] }),
           codeCopyButton: manifestConfig.theme.code.copyButton,
-          ...(headingAnchorLabel ? { headingAnchorLabel } : {}),
+          codeLineNumbers: manifestConfig.theme.code.lineNumbers,
+          codeWrap: manifestConfig.theme.code.wrap,
+          ...(messages ? { messages, headingAnchorLabel: messages['heading.anchor'] } : {}),
           resolveHref: (href) => resolveSvedocsHref({
             href,
             pages,
@@ -121,7 +123,7 @@ export async function loadPageComponent(
           ...(rawConfig?.markdown?.shiki?.transformers ? { shikiTransformers: rawConfig.markdown.shiki.transformers } : {}),
           imageOptimization: {
             ...manifestConfig.images,
-      onDependency,
+            onDependency,
             projectRoot: root,
             sourcePath: page.sourcePath,
             skip: shouldSkipPageImages(parsed.data as Record<string, unknown>)
