@@ -1,0 +1,729 @@
+{
+  "date": "2026-11-24",
+  "browser": "Linux arm64 Chromium 156.0.8078.108",
+  "viewport": [
+    1280,
+    800
+  ],
+  "metric": "Programmatic sidebar click to hydrated route change and a synchronous article layout read (ms). Cached modules, reduced motion, no artificial throttling. Excludes first four navigations of each run.",
+  "routeModuleSizes": {
+    "pages": 46,
+    "bytes": [
+      3065698,
+      2442821
+    ],
+    "gzip": [
+      360972,
+      353792
+    ],
+    "brotli": [
+      291636,
+      291655
+    ],
+    "changed": []
+  },
+  "summary": {
+    "6483136": {
+      "/docs/configuration": {
+        "n": 40,
+        "p50": 11.5,
+        "p95": 12.2
+      },
+      "/docs/configuration/theme": {
+        "n": 40,
+        "p50": 32.0,
+        "p95": 36.5
+      }
+    },
+    "working tree": {
+      "/docs/configuration": {
+        "n": 40,
+        "p50": 9.4,
+        "p95": 10
+      },
+      "/docs/configuration/theme": {
+        "n": 40,
+        "p50": 28.95,
+        "p95": 33.1
+      }
+    }
+  },
+  "runs": [
+    {
+      "samples": [
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 31.29999999993015
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 12.400000000023283
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 31.900000000023283
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 12.20000000006985
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 32.09999999997672
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.899999999906868
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 33.39999999990687
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.5
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 34.79999999993015
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.599999999976717
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 30.100000000093132
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.5
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 36.40000000002328
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 12
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 36.40000000002328
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 12
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 30.800000000046566
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.599999999976717
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 30.79999999993015
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.599999999976717
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 29
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.699999999953434
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 35
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.699999999953434
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 30.699999999953434
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.699999999953434
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 36.40000000002328
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.5
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 31.800000000046566
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.899999999906868
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 36.29999999993015
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.20000000006985
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 32.20000000006985
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.100000000093132
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 36.5
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.20000000006985
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 35.79999999993015
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.199999999953434
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 33.29999999993015
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11
+        }
+      ],
+      "dom": 2832,
+      "chunk": [
+        "DArW3946.js"
+      ],
+      "revision": "6483136"
+    },
+    {
+      "samples": [
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 32.39999999990687
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.300000000046566
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 26.400000000023283
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 8.599999999976717
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 28.20000000006985
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.699999999953434
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 28.599999999976717
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.599999999976717
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 29.900000000023283
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.400000000023283
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 28.899999999906868
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.400000000023283
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 28
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.899999999906868
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 29.699999999953434
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.599999999976717
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 30.70000000006985
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 8.899999999906868
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 34.699999999953434
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 33.09999999997672
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.599999999976717
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 29
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 10.5
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 31.300000000046566
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 31.70000000006985
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.099999999976717
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 32.300000000046566
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.599999999976717
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 33.09999999997672
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.5
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 22.099999999976717
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.800000000046566
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 31.599999999976717
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.800000000046566
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 24.599999999976717
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 30.400000000023283
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 10.100000000093132
+        }
+      ],
+      "dom": 2736,
+      "chunk": [
+        "BAmOug9K.js"
+      ],
+      "revision": "working tree"
+    },
+    {
+      "samples": [
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 29.400000000023283
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.400000000023283
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 29.099999999976717
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.900000000023283
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 32.800000000046566
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 10
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 32
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.800000000046566
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 29
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.199999999953434
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 27
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.199999999953434
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 25
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.599999999976717
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 28.29999999993015
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.699999999953434
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 27.20000000006985
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 8.100000000093132
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 27
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.900000000023283
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 27.29999999993015
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.400000000023283
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 32.79999999993015
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.29999999993015
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 30.599999999976717
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 8.800000000046566
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 25.300000000046566
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 8.5
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 26.300000000046566
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 8.599999999976717
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 24.5
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 8.20000000006985
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 24.199999999953434
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 8.5
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 26.599999999976717
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.399999999906868
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 26.900000000023283
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 9.300000000046566
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 26.5
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 8.699999999953434
+        }
+      ],
+      "dom": 2736,
+      "chunk": [
+        "BAmOug9K.js"
+      ],
+      "revision": "working tree"
+    },
+    {
+      "samples": [
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 31.599999999976717
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 12.699999999953434
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 31.5
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.900000000023283
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 30.199999999953434
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.900000000023283
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 28.900000000023283
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.599999999976717
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 31.29999999993015
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.70000000006985
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 37.89999999990687
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.300000000046566
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 29.699999999953434
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 10.800000000046566
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 32.79999999993015
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.300000000046566
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 29.599999999976717
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.199999999953434
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 28.300000000046566
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 29.5
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.300000000046566
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 27.899999999906868
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.300000000046566
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 33.40000000002328
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.400000000023283
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 34.40000000002328
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.099999999976717
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 34.800000000046566
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.099999999976717
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 33.699999999953434
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.099999999976717
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 27.099999999976717
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.5
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 35
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 37.29999999993015
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11.5
+        },
+        {
+          "route": "/docs/configuration/theme",
+          "duration": 30.20000000006985
+        },
+        {
+          "route": "/docs/configuration",
+          "duration": 11
+        }
+      ],
+      "dom": 2832,
+      "chunk": [
+        "DArW3946.js"
+      ],
+      "revision": "6483136"
+    }
+  ]
+}
