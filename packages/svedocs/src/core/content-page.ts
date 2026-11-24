@@ -30,7 +30,7 @@ export async function loadContentFile(
   const originalAst = parseMarkdownAst(markdown);
   const prepared = prepareMarkdownTitleFromAst(markdown, originalAst, stringFrontmatter(frontmatter.title));
   const renderMarkdown = prepared.markdown;
-  const bodyAst = parseMarkdownAst(renderMarkdown);
+  const bodyAst = renderMarkdown === markdown ? originalAst : parseMarkdownAst(renderMarkdown);
   const routePath = route.routePath;
   const currentRoute: SvedocsRouteTarget = {
     kind,

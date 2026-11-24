@@ -54,8 +54,29 @@ export function createPageLoadersModule(pages: SvedocsPage[]): string {
 export function loadPageDataModule(id: string, pages: SvedocsPage[]): string {
   const pageId = decodeURIComponent(id.slice(`\0${pageVirtualPrefix}`.length).replace(/\.js$/, ''));
   const page = pages.find((item) => item.id === pageId);
-  const [data] = page ? stripPageMarkdown([page]) : [undefined];
-  return `export default ${JSON.stringify(data)};`;
+  if (!page) return 'export default undefined;';
+  const { markdown: _markdown, search, ...data } = page;
+  const { plainText } = data;
+  // Search records repeat the article and its sections. Reference exact UTF-16
+  // slices to keep the lazy route chunk small while exporting ordinary strings.
+  let offset = 0;
+  const records = search.map(({ content, ...record }) => {
+    let expression: string | undefined;
+    if (content === plainText) {
+      expression = 'text';
+    } else if (content.length > 32) {
+      const start = plainText.indexOf(content, offset);
+      if (start >= 0) {
+        offset = start + content.length;
+        expression = `text.slice(${start}, ${offset})`;
+      }
+    }
+    return `{...${JSON.stringify(record)}, content: ${expression ?? JSON.stringify(content)}}`;
+  });
+  return `const page = ${JSON.stringify(data)};
+const text = page.plainText;
+page.search = [${records.join(',')}];
+export default page;`;
 }
 
 export function createNamedImportModule(entries: Record<string, string | undefined>): string {

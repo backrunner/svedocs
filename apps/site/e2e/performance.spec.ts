@@ -34,6 +34,7 @@ test('keeps local search usable when worker creation fails', async ({ page }) =>
     window.Worker = class { constructor() { throw new Error('Worker disabled by host'); } } as unknown as typeof Worker;
   });
   await page.goto('/docs');
+  await expect(page.locator('html')).toHaveAttribute('data-svedocs-route', '/docs');
   await page.locator('.sd-search-trigger').click();
   await page.getByRole('combobox').fill('configuration');
   await expect(page.getByRole('option').first()).toBeVisible();

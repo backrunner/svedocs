@@ -3,7 +3,7 @@ import { tick } from 'svelte';
 /** Reveal the current page without scrolling the document or moving focus. */
 export function revealSidebarPage(node: HTMLElement, currentPath: string) {
   let generation = 0;
-  let visible = node.getBoundingClientRect().height > 0;
+  let visible = false;
 
   function reveal() {
     const active = node.querySelector<HTMLElement>('a[aria-current="page"]');
@@ -30,7 +30,7 @@ export function revealSidebarPage(node: HTMLElement, currentPath: string) {
     const active = node.querySelector<HTMLElement>('a[aria-current="page"]');
     // A user may have closed the current branch before navigating into it.
     for (let parent = active?.parentElement; parent && node.contains(parent); parent = parent.parentElement) {
-      if (parent instanceof HTMLDetailsElement) parent.open = true;
+      if (parent instanceof HTMLDetailsElement && !parent.open) parent.open = true;
     }
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     if (version !== generation) return;
@@ -41,23 +41,23 @@ export function revealSidebarPage(node: HTMLElement, currentPath: string) {
       && animation.effect.target instanceof HTMLDetailsElement
       && animation.effect.getComputedTiming().endTime !== Infinity
     );
+    if (expansions.length === 0) return;
     await Promise.allSettled(expansions.map((animation) => animation.finished));
     if (version === generation) reveal();
   }
 
-  const observer = new ResizeObserver(() => {
-    const nextVisible = node.getBoundingClientRect().height > 0;
+  const observer = new ResizeObserver(([entry]) => {
+    const nextVisible = (entry?.contentRect.height ?? 0) > 0;
     if (nextVisible && !visible) void schedule();
     visible = nextVisible;
   });
   observer.observe(node);
-  void schedule();
 
   return {
     update(path: string) {
       if (path === currentPath) return;
       currentPath = path;
-      void schedule();
+      if (visible) void schedule();
     },
     destroy() {
       generation++;

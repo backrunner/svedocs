@@ -5,9 +5,10 @@ export function mountScrollbarVisibility() {
   let windowTimer: number | undefined;
 
   function markWindowScrolling() {
-    root.classList.add('sd-is-window-scrolling');
-    body.classList.add('sd-is-window-scrolling');
-    if (windowTimer !== undefined) window.clearTimeout(windowTimer);
+    if (windowTimer === undefined) {
+      root.classList.add('sd-is-window-scrolling');
+      body.classList.add('sd-is-window-scrolling');
+    } else window.clearTimeout(windowTimer);
     windowTimer = window.setTimeout(() => {
       root.classList.remove('sd-is-window-scrolling');
       body.classList.remove('sd-is-window-scrolling');
@@ -18,10 +19,11 @@ export function mountScrollbarVisibility() {
   function markElementScrolling(event: Event) {
     const target = event.target;
     if (!(target instanceof HTMLElement) || target === root || target === body) return;
-    if (!isScrollableElement(target)) return;
-    target.classList.add('sd-is-scrolling');
     const existingTimer = elementTimers.get(target);
-    if (existingTimer !== undefined) window.clearTimeout(existingTimer);
+    if (existingTimer === undefined) {
+      if (!isScrollableElement(target)) return;
+      target.classList.add('sd-is-scrolling');
+    } else window.clearTimeout(existingTimer);
     elementTimers.set(target, window.setTimeout(() => {
       target.classList.remove('sd-is-scrolling');
       elementTimers.delete(target);

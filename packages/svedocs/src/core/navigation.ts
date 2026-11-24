@@ -42,6 +42,7 @@ export function createPageTree(pages: readonly SvedocsPage[] = []): SvedocsTreeI
     }
   }
 
+  for (const item of root) computeTreeWeight(item);
   return finalizeTree(root);
 }
 
@@ -141,9 +142,6 @@ function applyPageToTreeItem(item: MutableTreeItem, page: SvedocsPage) {
 }
 
 function finalizeTree(items: MutableTreeItem[]): SvedocsTreeItem[] {
-  for (const item of items) {
-    computeTreeWeight(item);
-  }
   return items
     .sort(compareTreeItems)
     .map((item) => {
@@ -165,17 +163,14 @@ function computeTreeWeight(item: MutableTreeItem): number {
   // A page or section index with an explicit `order` pins its own weight; the
   // min-of-children propagation only applies to nodes without one, so authors can
   // position a section by setting `order` on its index page alone.
-  if (typeof item.order === 'number') {
-    item._weight = item.order;
-    return item._weight;
-  }
-  item._weight = Math.min(item._weight, ...item.children.map((child) => computeTreeWeight(child)));
+  let childWeight = Number.POSITIVE_INFINITY;
+  for (const child of item.children) childWeight = Math.min(childWeight, computeTreeWeight(child));
+  item._weight = item.order ?? Math.min(item._weight, childWeight);
   return item._weight;
 }
 
 function compareTreeItems(a: MutableTreeItem, b: MutableTreeItem): number {
-  const byWeight = a._weight - b._weight;
-  if (Number.isFinite(byWeight) && byWeight !== 0) return byWeight;
+  if (a._weight !== b._weight) return a._weight - b._weight;
   if (a.path && b.path) return a.path.localeCompare(b.path);
   return a.title.localeCompare(b.title);
 }
@@ -183,8 +178,7 @@ function compareTreeItems(a: MutableTreeItem, b: MutableTreeItem): number {
 function comparePagesForNavigation(a: SvedocsPage, b: SvedocsPage): number {
   const orderA = a.order ?? Number.POSITIVE_INFINITY;
   const orderB = b.order ?? Number.POSITIVE_INFINITY;
-  const byOrder = orderA - orderB;
-  return byOrder === 0 ? a.routePath.localeCompare(b.routePath) : byOrder;
+  return orderA === orderB ? a.routePath.localeCompare(b.routePath) : orderA - orderB;
 }
 
 function groupDocsByScope(docs: SvedocsPage[]): Map<string, SvedocsPage[]> {

@@ -69,6 +69,7 @@ test('reveals the current child when opening mobile navigation', async ({ page }
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/docs/reference/cli');
   await expect(page.locator('html')).toHaveAttribute('data-svedocs-route', '/docs/reference/cli');
+  await expect(page.locator('.sd-mobile-docnav')).toHaveCount(0);
   await page.getByRole('button', { name: 'Open menu' }).click();
   await expectCurrentPageVisible(page, '.sd-mobile-docnav');
   expect(await page.locator('.sd-topbar-menu').evaluate((node) => node.scrollTop)).toBeGreaterThan(0);

@@ -1,3 +1,4 @@
+import { loadPageDataModule } from '../src/vite/modules.js';
 import { mkdtemp, mkdir, writeFile, rm, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
@@ -94,6 +95,21 @@ describe('incremental content snapshots', () => {
     expect(replaced).toEqual(await loadSvedocsContent(options));
     await rm(file);
     expect(await session.load(options, new Set([file]))).toEqual(await loadSvedocsContent(options));
+  });
+
+  it('round-trips page and section text in the lazy module, including custom records', async () => {
+    const root = await fixture();
+    const body = '中文 👩🏾‍💻 "quoted" and repeated text '.repeat(10);
+    await writeFile(path.join(root, 'content/docs/a.md'), ['# A', '## One', body, '## Two', body].join('\n\n'));
+    const manifest = await loadSvedocsContent({ projectRoot: root });
+    const page = manifest.pages.find((item) => item.routePath === '/docs/a')!;
+    const extra = { ...page.search[0]!, content: 'Text supplied by an external index, outside the article.' };
+    const input = { ...page, search: [...page.search, extra] };
+    const code = loadPageDataModule(`\0virtual:svedocs/page/${page.id}.js`, [input]);
+    expect(code).toContain('text.slice(');
+    const { markdown: _, ...expected } = input;
+    const loaded = await import(/* @vite-ignore */ `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
+    expect(loaded.default).toEqual(expected);
   });
 
   it('invalidates changed virtual output without invalidating an unchanged page module', async () => {

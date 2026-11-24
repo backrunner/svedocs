@@ -17,6 +17,9 @@
   export let themeComponents: Partial<SvedocsThemeComponentMap> = {};
   export let onToggleMobileMenu: () => void = () => undefined;
 
+  let mobileNavMounted = false;
+  $: if (mobileMenuOpen) mobileNavMounted = true;
+
   $: BrandComponent = themeComponents.Brand ?? Brand;
   $: TopNavComponent = themeComponents.TopNav ?? TopNav;
   $: Search = themeComponents.Search ?? SearchDialog;
@@ -48,7 +51,9 @@
     {#if context.config.theme.defaultMode === 'system'}
       <svelte:component this={Toggle} defaultMode={context.config.theme.defaultMode} {context} />
     {/if}
-    <svelte:component this={Mobile} items={mobileTree} currentPath={mobileCurrentPath} {themeComponents} {context} />
+    {#if mobileNavMounted || themeComponents.MobileNav || themeComponents.Sidebar}
+      <svelte:component this={Mobile} items={mobileTree} currentPath={mobileCurrentPath} {themeComponents} {context} />
+    {/if}
   </div>
   {#if context.config.search.enabled}
     <button

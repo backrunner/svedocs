@@ -29,6 +29,14 @@ describe('navigation scope', () => {
     expect(flattenPageTree(context.tree).map((item) => item.path).sort()).toEqual(pages.filter((page) => page.locale === 'zh').map((page) => page.routePath).sort());
   });
 
+  it('places ordered pages and groups before alphabetically earlier unordered pages', () => {
+    const docs = ['/docs/apple', '/docs/zebra', '/docs/yellow/child'].map((scopePath, index) =>
+      createFixturePage({ scopePath, routePath: scopePath, ...(index ? { order: index } : {}) })
+    );
+    expect(createPageTree(docs).map((item) => item.path ?? item.children?.[0]?.path))
+      .toEqual(['/docs/zebra', '/docs/yellow/child', '/docs/apple']);
+  });
+
   it('keeps the same hierarchy in each language and preserves localized links', () => {
     for (const locale of ['en', 'zh']) {
       const tree = createPageTree(pages.filter((page) => page.locale === locale));
